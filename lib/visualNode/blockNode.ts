@@ -1,4 +1,4 @@
-import { NodeType } from '../nodeType';
+import { NodeType } from './nodeType';
 import { BasicNode } from './basicNode';
 
 export class BlockNode extends BasicNode {

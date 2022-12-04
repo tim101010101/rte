@@ -1,4 +1,4 @@
-import { NodeType } from '../nodeType';
+import { NodeType } from './nodeType';
 
 export class BasicNode {
   private type: NodeType;
