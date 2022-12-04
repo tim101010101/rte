@@ -1,0 +1,13 @@
+node_modules/
+dist/
+
+.DS_Store
+
+# dev
+localDemo/
+
+# test
+coverage/
+
+# package manager
+*-lock.*
