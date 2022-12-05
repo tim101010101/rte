@@ -1,17 +1,4 @@
-interface VirtualNode {
-  nodeType: number;
-  props: VirtualNodeProps;
-  children: VirtualNodeChildren;
-
-  el: HTMLElement | null;
-}
-
-interface VirtualNodeProps {
-  className: string[];
-  id: string;
-}
-
-type VirtualNodeChildren = Array<VirtualNode> | string;
+import { VirtualNode, VirtualNodeChildren, VirtualNodeProps } from '../types';
 
 export const h = (
   nodeType: number,
