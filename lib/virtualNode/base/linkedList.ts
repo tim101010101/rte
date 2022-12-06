@@ -8,9 +8,9 @@ export class ListNode {
   }
 }
 
-export class LinkedList {
-  head: ListNode | null;
-  tail: ListNode | null;
+export class LinkedList<T extends ListNode> {
+  head: T | null;
+  tail: T | null;
   length: number;
 
   constructor() {
@@ -24,19 +24,19 @@ export class LinkedList {
     while (count < length && cur) {
       yield cur;
       count++;
-      cur = cur.next;
+      cur = cur.next as T;
     }
   }
 
-  contains(node: ListNode) {
+  contains(node: T) {
     return Array.from(this.iter()).includes(node);
   }
 
-  append(...nodes: Array<ListNode>) {
+  append(...nodes: Array<T>) {
     nodes.forEach(node => this.insertBefore(node));
   }
 
-  insertBefore(node: ListNode) {
+  insertBefore(node: T) {
     if (this.tail) {
       this.tail.next = node;
       node.prev = this.tail;
@@ -46,9 +46,11 @@ export class LinkedList {
       this.head = node;
       this.tail = node;
     }
+
+    this.length++;
   }
 
-  remove(node: ListNode) {
+  remove(node: T) {
     if (!this.contains(node)) return;
 
     if (node.prev) {
@@ -60,17 +62,17 @@ export class LinkedList {
     }
 
     if (this.head === node) {
-      this.head = node.next;
+      this.head = node.next as T;
     }
 
     if (this.tail === node) {
-      this.tail = node.prev;
+      this.tail = node.prev as T;
     }
 
     this.length--;
   }
 
-  offset(node: ListNode) {
+  offset(node: T) {
     return Array.from(this.iter()).indexOf(node);
   }
 
@@ -79,7 +81,7 @@ export class LinkedList {
     return Array.from(this.iter())[idx];
   }
 
-  forEach(callback: (node: ListNode, idx: number) => void) {
+  forEach(callback: (node: T, idx: number) => void) {
     return Array.from(this.iter()).forEach(callback);
   }
 

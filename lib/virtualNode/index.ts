@@ -1,1 +1,1 @@
-export * from './linkedList';
+export * from './base/linkedList';
