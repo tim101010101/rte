@@ -1,8 +1,24 @@
 import { entries } from './obj';
 
+export const appendChild = (
+  parent: HTMLElement,
+  ...children: Array<HTMLElement | Text>
+) => {
+  parent.append(...children);
+};
+
+export const createFragment = () => {
+  return document.createDocumentFragment();
+};
+
+export const createTextNode = (text: string) => {
+  return document.createTextNode(text);
+};
+
 export const createDomNode = (
   tagName: string,
-  { classList = [], attributes = {} } = {}
+  classList: Array<string> = [],
+  attributes: Object = {}
 ) => {
   const dom = document.createElement(tagName);
 
