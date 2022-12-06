@@ -8,3 +8,7 @@
   height: 500px;
   border: 1px solid #ccc;
 }
+
+.r-line-test {
+  border: 1px solid red;
+}
