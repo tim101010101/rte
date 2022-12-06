@@ -1,0 +1,14 @@
+* {
+  margin: 0;
+  padding: 0;
+}
+
+#editor {
+  width: 500px;
+  height: 500px;
+  border: 1px solid #ccc;
+}
+
+.r-line-test {
+  border: 1px solid red;
+}
