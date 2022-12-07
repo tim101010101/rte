@@ -1,10 +1,11 @@
 import { entries } from './obj';
 
 export const appendChild = (
-  parent: HTMLElement,
-  ...children: Array<HTMLElement | Text>
-) => {
-  parent.append(...children);
+  parent: HTMLElement | DocumentFragment,
+  ...children: Array<HTMLElement | Text | DocumentFragment>
+): HTMLElement | DocumentFragment => {
+  children.forEach(child => parent.appendChild(child));
+  return parent;
 };
 
 export const createFragment = () => {
