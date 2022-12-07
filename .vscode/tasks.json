@@ -1,0 +1,13 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "npm",
+      "label": "npm:dbg",
+      "script": "dbg",
+      "isBackground": true,
+      "problemMatcher": [],
+      "detail": "vite serve ./example --port 8080"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "chrome",
+      "request": "launch",
+      "name": "Debug app in Chrome",
+      "url": "http://localhost:8080",
+      "webRoot": "${workspaceFolder}",
+      "preLaunchTask": "npm:dbg",
+      "serverReadyAction": {
+        "action": "debugWithChrome",
+        "pattern": "listening on port ([0-9]+)",
+        "uriFormat": "http://localhost:%s",
+        "webRoot": "${workspaceFolder}"
+      }
+    }
+  ]
+}
