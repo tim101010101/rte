@@ -25,6 +25,7 @@
   "scripts": {
     "build": "rollup -c",
     "dev": "vite serve ./example",
+    "dbg": "vite serve ./example --port 8080",
     "test": "jest --no-cache",
     "test:cover": "jest --coverage"
   },
