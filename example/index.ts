@@ -1,43 +1,29 @@
 import { Editor } from '../lib/index';
 import '../lib/asset/index.css';
 import { Block } from '../lib/virtualNode/block';
-import { NodeTypes } from '../lib/virtualNode/nodeTypes';
 import { h } from '../lib/virtualNode/h';
 import { keydownHandler } from '../lib/virtualNode/events/keydownHandler';
 import { EventName } from '../lib/virtualNode/events/eventNames';
 
 const blockNode1 = new Block(
   h(
-    NodeTypes.BLOCK,
-    { contentEditable: 'true' },
-    [h(NodeTypes.BOLD | NodeTypes.PLAIN_TEXT, {}, 'hello world1')],
+    'div',
+    { classList: ['r-line-test'], contenteditable: 'true' },
+    [
+      h('span', { classList: ['r-hide'] }, '**'),
+      h('strong', {}, [
+        h('span', { classList: ['r-plain-text-test'] }, 'hello world1 '),
+      ]),
+      h('span', { classList: ['r-hide'] }, '**'),
+    ],
     [[EventName.KEYDOWN, keydownHandler, false]]
   )
 );
 const blockNode2 = new Block(
-  h(
-    NodeTypes.BLOCK,
-    {},
-    [h(NodeTypes.BOLD | NodeTypes.PLAIN_TEXT, {}, 'hello world2')],
-    [[EventName.KEYDOWN, keydownHandler, false]]
-  )
+  h('div', { classList: ['r-line-test'], contenteditable: 'true' }, [
+    h('span', {}, 'hello world2'),
+  ])
 );
-const blockNode3 = new Block(
-  h(
-    NodeTypes.BLOCK,
-    {},
-    [h(NodeTypes.BOLD | NodeTypes.PLAIN_TEXT, {}, 'hello world3')],
-    [[EventName.KEYDOWN, keydownHandler, false]]
-  )
-);
-const blockNode4 = new Block(
-  h(
-    NodeTypes.BLOCK,
-    {},
-    [h(NodeTypes.BOLD | NodeTypes.PLAIN_TEXT, {}, 'hello world4')],
-    [[EventName.KEYDOWN, keydownHandler, false]]
-  )
-);
-
 const e = new Editor({ container: '#editor' });
-e.init([blockNode1, blockNode2, blockNode3, blockNode4]);
+e.init([blockNode1, blockNode2]);
+// e.init([blockNode1]);

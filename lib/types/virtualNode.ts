@@ -1,7 +1,7 @@
 import { EventName } from '../virtualNode/events/eventNames';
 
 export interface VirtualNode {
-  nodeType: number;
+  tagName: string;
   props: VirtualNodeProps;
   children: VirtualNodeChildren;
 
@@ -12,7 +12,7 @@ export interface VirtualNode {
 
 export type VirtualNodeProps = Partial<
   {
-    className: string[];
+    classList: string[];
     id: string;
   } & Record<string, any>
 >;
