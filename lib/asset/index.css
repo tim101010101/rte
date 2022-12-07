@@ -12,3 +12,14 @@
 .r-line-test {
   border: 1px solid red;
 }
+
+.r-active {
+  border: 1px solid yellow;
+}
+
+.r-hide {
+  display: inline-block;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
