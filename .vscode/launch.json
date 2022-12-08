@@ -12,7 +12,8 @@
         "action": "debugWithChrome",
         "pattern": "listening on port ([0-9]+)",
         "uriFormat": "http://localhost:%s",
-        "webRoot": "${workspaceFolder}"
+        "webRoot": "${workspaceFolder}",
+        "killOnServerStop": true
       }
     }
   ]
