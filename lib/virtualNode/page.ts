@@ -1,3 +1,4 @@
+import { VirtualNode } from '../types';
 import { LinkedList } from './base/linkedList';
 import { Block } from './block';
 
@@ -13,8 +14,11 @@ export class Page extends LinkedList<Block> {
     this.activeNode = null;
   }
 
-  init(blocks: Array<Block>) {
-    this.append(...blocks);
-    this.forEach(block => block.render(this.container));
+  init(nodeList: Array<VirtualNode>) {
+    nodeList.forEach(node => {
+      const block = new Block(this.container);
+      this.append(block);
+      block.patch(node);
+    });
   }
 }

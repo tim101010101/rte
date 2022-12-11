@@ -1,4 +1,4 @@
-import { Block } from './virtualNode/block';
+import { lexer, parser } from './parser';
 import { Page } from './virtualNode/page';
 
 export class Editor {
@@ -13,8 +13,8 @@ export class Editor {
     this.page = null;
   }
 
-  init(blockList: Array<Block>) {
+  init(text: string) {
     this.page = new Page(this.container);
-    this.page.init(blockList);
+    this.page.init(text.split('\n').map(line => parser(lexer(line))));
   }
 }
