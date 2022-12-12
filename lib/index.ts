@@ -15,6 +15,6 @@ export class Editor {
 
   init(text: string) {
     this.page = new Page(this.container);
-    this.page.init(text.split('\n').map(line => parser(lexer(line))));
+    this.page.init(text.split('\n').map(lineText => parser(lexer(lineText))));
   }
 }

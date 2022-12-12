@@ -1,7 +1,7 @@
 import { entries } from './obj';
 
 export const appendChild = (
-  parent: HTMLElement,
+  parent: HTMLElement | DocumentFragment,
   ...children: Array<HTMLElement | Text | DocumentFragment>
 ): HTMLElement | DocumentFragment => {
   children.forEach(child => parent.appendChild(child));
@@ -49,6 +49,15 @@ export const removeClassName = (dom: HTMLElement, className: string) => {
 export const insertBefore = (newNode: HTMLElement, oldNode: HTMLElement) => {
   const parentNode = oldNode.parentNode;
   parentNode?.insertBefore(newNode, oldNode);
+};
+
+export const replaceOldNode = (
+  parent: HTMLElement,
+  newNode: HTMLElement,
+  oldNode: HTMLElement
+) => {
+  parent.insertBefore(newNode, oldNode);
+  parent.removeChild(oldNode);
 };
 
 export const insertAfter = (newNode: HTMLElement, oldNode: HTMLElement) => {

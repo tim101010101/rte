@@ -10,7 +10,7 @@ import {
 export const materialize = (vNode: VirtualNode): HTMLElement => {
   const { tagName, children } = vNode;
 
-  if (!vNode.el) vNode.el = createDomNode(tagName);
+  vNode.el = createDomNode(tagName);
 
   mountProps(vNode);
   mountListener(vNode);
