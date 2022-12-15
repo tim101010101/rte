@@ -1,6 +1,6 @@
+import { Page } from './page';
 import { lexer, parser } from './parser';
 import { EditorConfig } from './types/config';
-import { Page } from './virtualNode/page';
 
 export class Editor {
   private options: any;

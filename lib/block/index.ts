@@ -5,7 +5,7 @@ import {
   getVisiableTextRectList,
   measureCharWidth,
 } from '../utils';
-import { ListNode } from './base/linkedList';
+import { ListNode } from '../virtualNode';
 
 export class Block extends ListNode {
   private container: HTMLElement;

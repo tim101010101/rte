@@ -1,10 +1,10 @@
+import { Block } from '../block';
+import { EventName } from '../event';
 import { Selection } from '../selection';
 import { VirtualNode } from '../types';
 import { EditorConfig } from '../types/config';
 import { getNearestIdx } from '../utils';
-import { LinkedList } from './base/linkedList';
-import { Block } from './block';
-import { EventName } from './events/eventNames';
+import { LinkedList } from '../virtualNode';
 
 export class Page extends LinkedList<Block> {
   private container: HTMLElement;
