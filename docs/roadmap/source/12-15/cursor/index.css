@@ -1,0 +1,10 @@
+.rect {
+  display: inline-block;
+  position: absolute;
+  border: 1px solid red;
+}
+.cursor {
+  display: inline-block;
+  position: absolute;
+  border-left: 1px solid green;
+}
