@@ -1,6 +1,6 @@
 export class ListNode {
-  prev: ListNode | null;
-  next: ListNode | null;
+  prev: this | null;
+  next: this | null;
 
   constructor() {
     this.prev = null;

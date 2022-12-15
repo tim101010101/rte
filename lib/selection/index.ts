@@ -4,12 +4,12 @@ import { Block } from '../virtualNode/block';
 export class Selection {
   private el: HTMLElement;
   private activeBlock: Block | null;
-  private fenseOffset: number | null;
+  private fenceOffset: number | null;
 
   constructor(container: HTMLElement) {
     this.el = createDomNode('span', ['r-cursor-test']);
     this.activeBlock = null;
-    this.fenseOffset = null;
+    this.fenceOffset = null;
 
     appendChild(container, this.el);
   }
@@ -18,7 +18,7 @@ export class Selection {
     return this.activeBlock!.fence;
   }
 
-  focusOn(activeBlock = this.activeBlock, fenseOffset = this.fenseOffset) {
+  focusOn(activeBlock = this.activeBlock, fenseOffset = this.fenceOffset) {
     if (activeBlock === null || fenseOffset === null) return;
 
     if (!this.activeBlock) {
@@ -26,7 +26,7 @@ export class Selection {
     }
 
     this.activeBlock = activeBlock;
-    this.fenseOffset = fenseOffset;
+    this.fenceOffset = fenseOffset;
 
     const fence = this.fence;
     const x = fence[fenseOffset];
@@ -43,47 +43,60 @@ export class Selection {
     if (this.activeBlock) {
       this.el.style.display = 'none';
 
-      this.fenseOffset = null;
+      this.fenceOffset = null;
       this.activeBlock = null;
     }
   }
 
-  // friendly testing
   left() {
-    if (this.fenseOffset !== null && this.fenseOffset !== 0) {
-      this.fenseOffset--;
+    if (this.fenceOffset !== null && this.fenceOffset !== 0) {
+      this.fenceOffset--;
       this.focusOn();
     }
   }
 
   right() {
     if (
-      this.fenseOffset !== null &&
-      this.fenseOffset !== this.fence.length - 2
+      this.fenceOffset !== null &&
+      this.fenceOffset !== this.fence.length - 2
     ) {
-      this.fenseOffset++;
+      this.fenceOffset++;
       this.focusOn();
     }
   }
 
   up() {
     if (
-      this.fenseOffset !== null &&
+      this.fenceOffset !== null &&
       this.activeBlock &&
       this.activeBlock.prev
     ) {
-      this.activeBlock = this.activeBlock.prev as Block;
+      const prevOffset = this.fenceOffset;
+      this.activeBlock = this.activeBlock.prev;
+      const curFence = this.fence;
+      this.fenceOffset =
+        prevOffset >= curFence.length - 2
+          ? curFence.length - 2
+          : this.fenceOffset;
+
       this.focusOn();
     }
   }
 
   down() {
     if (
-      this.fenseOffset !== null &&
+      this.fenceOffset !== null &&
       this.activeBlock &&
       this.activeBlock.next
     ) {
-      this.activeBlock = this.activeBlock.next as Block;
+      const prevOffset = this.fenceOffset;
+      this.activeBlock = this.activeBlock.next;
+      const curFence = this.fence;
+      this.fenceOffset =
+        prevOffset >= curFence.length - 2
+          ? curFence.length - 2
+          : this.fenceOffset;
+
       this.focusOn();
     }
   }
