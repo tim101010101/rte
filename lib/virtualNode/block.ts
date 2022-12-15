@@ -1,36 +1,62 @@
 import { patch } from '../render';
 import { VirtualNode } from '../types';
+import { flatTreeToText, measureCharWidth, posNode } from '../utils';
 import { ListNode } from './base/linkedList';
 
 export class Block extends ListNode {
   private container: HTMLElement;
   private vNode: VirtualNode | null;
-  private _active: boolean;
+  private font: string;
 
-  constructor(container: HTMLElement) {
+  constructor(container: HTMLElement, font: string) {
     super();
 
     this.container = container;
     this.vNode = null;
-    this._active = false;
+    this.font = font;
   }
 
-  switchFocus() {
-    if (!this.vNode) return;
+  get el() {
+    return this.vNode?.el;
+  }
 
-    const { props } = this.vNode;
-    const newVNode = {
-      ...this.vNode,
-      props: {
-        ...props,
-        classList: this._active
-          ? props.classList?.filter(className => className !== 'r-active')
-          : [...(props.classList as string[]), 'r-active'],
-      },
-    };
+  get rectList() {
+    return posNode(this.el!);
+  }
 
-    this._active = !this._active;
-    this.patch(newVNode);
+  get fence() {
+    const textList = flatTreeToText(this.el!);
+    const rectList = this.rectList;
+
+    if (!textList.length || !rectList.length) return [];
+
+    const { left } = rectList.shift()!;
+    const res = [left];
+
+    let len = textList.length;
+    let prev = left;
+
+    while (len--) {
+      const text = textList.shift()!;
+      rectList.shift();
+
+      // TODO font family
+      const font = '20px arial';
+
+      Array.from(text).forEach(char => {
+        const width = measureCharWidth(char, font) + prev;
+        res.push(width);
+        prev = width;
+      });
+
+      if (len) {
+        const width = rectList.shift()!.width + prev;
+        res.push(width);
+        prev = width;
+      }
+    }
+
+    return res;
   }
 
   patch(newVNode: VirtualNode) {

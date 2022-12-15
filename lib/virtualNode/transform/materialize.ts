@@ -5,6 +5,7 @@ import {
   createFragment,
   createTextNode,
   entries,
+  set,
 } from '../../utils';
 
 export const materialize = (vNode: VirtualNode): HTMLElement => {
@@ -16,6 +17,8 @@ export const materialize = (vNode: VirtualNode): HTMLElement => {
   mountListener(vNode);
   appendChild(vNode.el!, materializeChildren(children));
 
+  set(vNode.el, 'vNode', vNode);
+
   return vNode.el!;
 };
 
@@ -24,11 +27,12 @@ const materializeChildren = (
 ): DocumentFragment | Text => {
   return typeof children === 'string'
     ? createTextNode(children)
-    : children.reduce(
-        (fragment, child) =>
-          appendChild(fragment, materialize(child)) as DocumentFragment,
-        createFragment()
-      );
+    : children.reduce((fragment, child) => {
+        return appendChild(
+          fragment,
+          typeof child === 'string' ? createTextNode(child) : materialize(child)
+        ) as DocumentFragment;
+      }, createFragment());
 };
 
 const mountProps = (vNode: VirtualNode) => {

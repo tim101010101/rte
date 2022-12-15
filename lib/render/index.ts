@@ -1,10 +1,5 @@
-import { VirtualNode, VirtualNodeChildren } from '../types';
-import {
-  appendChild,
-  insertBefore,
-  removeChild,
-  replaceOldNode,
-} from '../utils';
+import { VirtualNode } from '../types';
+import { appendChild, replaceOldNode } from '../utils';
 import { materialize } from '../virtualNode';
 
 export const render = (vNode: VirtualNode, container: HTMLElement) => {
@@ -23,22 +18,4 @@ export const patch = (
   } else {
     replaceOldNode(container, newVNode.el!, oldVNode.el!);
   }
-};
-
-export const patchChildren = (
-  oldChildren: any,
-  newChildren: any,
-  parent: HTMLElement
-) => {
-  if (oldChildren) {
-    oldChildren.forEach((child: any) => {
-      const { el } = child;
-      el && removeChild(parent, el);
-    });
-  }
-
-  newChildren.forEach((child: any) => {
-    const el = materialize(child);
-    appendChild(parent, el);
-  });
 };
