@@ -13,12 +13,29 @@ const getClickHanlder = (page: Page, block: Block) => (e: MouseEvent) => {
   const idx = getNearestIdx(fence, target);
   const offset = fence[idx];
 
-  page.setFocus(block, offset, fence[idx + 1] - fence[idx]);
+  page.setFocus(block, offset, fence[idx + 1] - fence[idx], idx);
+};
+
+const getKeydownHandler = (page: Page) => (e: KeyboardEvent) => {
+  const { key } = e;
+  switch (key) {
+    case 'ArrowLeft':
+      page.selection.left();
+      break;
+    case 'ArrowRight':
+      page.selection.right();
+      break;
+
+    case 'ArrowUp':
+    case 'ArrowDown':
+      console.log('x');
+      break;
+  }
 };
 
 export class Page extends LinkedList<Block> {
   private container: HTMLElement;
-  private selection: Selection;
+  selection: Selection;
   private config: EditorConfig;
 
   constructor(container: HTMLElement, config: EditorConfig) {
@@ -43,10 +60,14 @@ export class Page extends LinkedList<Block> {
         ],
       });
     });
+
+    window.addEventListener('keydown', e => {
+      getKeydownHandler(this)(e);
+    });
   }
 
-  setFocus(block: Block, x: number, width: number = 1) {
+  setFocus(block: Block, x: number, width: number, fenseOffset: number) {
     const { height, top } = block.rectList[0];
-    this.selection.setPos(x, top, width, height);
+    this.selection.setPos(x, top, width, height, block, fenseOffset);
   }
 }

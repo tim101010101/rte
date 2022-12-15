@@ -1,8 +1,6 @@
 * {
   margin: 0;
   padding: 0;
-
-  font: 20px arial;
 }
 
 #editor {
@@ -13,6 +11,8 @@
 
 .r-line-test {
   border: 1px solid #ccc;
+
+  font-size: 0;
 }
 
 .r-active {
@@ -21,9 +21,21 @@
 
 .r-hide {
   display: inline-block;
+
   width: 0;
   height: 0;
+
+  font: 20px arial;
+
   overflow: hidden;
+}
+
+.r-bold {
+  font: bold 20px arial;
+}
+
+.r-plain-text {
+  font: 20px arial;
 }
 
 .r-cursor-test {

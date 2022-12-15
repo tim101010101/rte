@@ -1,6 +1,10 @@
 import { patch } from '../render';
 import { VirtualNode } from '../types';
-import { flatTreeToText, measureCharWidth, posNode } from '../utils';
+import {
+  flatTreeToText,
+  getVisiableTextRectList,
+  measureCharWidth,
+} from '../utils';
 import { ListNode } from './base/linkedList';
 
 export class Block extends ListNode {
@@ -21,7 +25,7 @@ export class Block extends ListNode {
   }
 
   get rectList() {
-    return posNode(this.el!);
+    return getVisiableTextRectList(this.el!);
   }
 
   get fence() {
@@ -30,33 +34,11 @@ export class Block extends ListNode {
 
     if (!textList.length || !rectList.length) return [];
 
-    const { left } = rectList.shift()!;
-    const res = [left];
+    const fense = calcFence(textList, rectList);
 
-    let len = textList.length;
-    let prev = left;
+    // renderRect(rectList);
 
-    while (len--) {
-      const text = textList.shift()!;
-      rectList.shift();
-
-      // TODO font family
-      const font = '20px arial';
-
-      Array.from(text).forEach(char => {
-        const width = measureCharWidth(char, font) + prev;
-        res.push(width);
-        prev = width;
-      });
-
-      if (len) {
-        const width = rectList.shift()!.width + prev;
-        res.push(width);
-        prev = width;
-      }
-    }
-
-    return res;
+    return fense;
   }
 
   patch(newVNode: VirtualNode) {
@@ -64,3 +46,42 @@ export class Block extends ListNode {
     this.vNode = newVNode;
   }
 }
+
+const calcFence = (textList: Array<string>, rectList: Array<DOMRect>) => {
+  let prev = rectList[0].left;
+  const res = [prev];
+
+  while (textList.length) {
+    const text = textList.shift()!;
+    Array.from(text).forEach(char => {
+      const width = measureCharWidth(char, `bold 20px arial`) + prev;
+      res.push(width);
+      prev = width;
+    });
+  }
+
+  return res;
+};
+
+// const renderRect = (rectList: Array<DOMRect>) => {
+//   let t = 0;
+//   const render = (x: number, y: number, width: number, height: number) => {
+//     const dom = document.createElement('span');
+//     dom.style.width = `${width}px`;
+//     dom.style.height = `${height}px`;
+//     dom.style.left = `${x}px`;
+//     dom.style.top = `${y + height + t}px`;
+//     dom.style.display = 'inline-block';
+//     dom.style.position = 'absolute';
+//     dom.style.border = '1px solid red';
+
+//     document.body.appendChild(dom);
+
+//     t += height;
+//   };
+
+//   rectList.forEach(rect => {
+//     const { left, top, width, height } = rect;
+//     render(left, top, width, height);
+//   });
+// };

@@ -1,5 +1,4 @@
 import { entries } from './obj';
-import { isEmptyString } from './typeJudgument';
 
 export const appendChild = (
   parent: HTMLElement | DocumentFragment,
@@ -88,21 +87,43 @@ export const posNode = (node: HTMLElement) => {
   return res;
 };
 
-export const flatTreeToText = (el: Node) => {
-  const res: Array<string> = [];
+export const walkVisiableTextNode = (
+  el: HTMLElement,
+  callback: (node: Text) => void
+) => {
   const nodeList = [...el.childNodes];
-
   while (nodeList.length) {
     const node = nodeList.shift()!;
-    if (node.nodeType === 3) {
-      const data = (node as any).data;
-      isEmptyString(data) || res.push(data);
+
+    if (node.nodeType === 1 && !isELementVisiable(node as HTMLElement)) {
+      continue;
+    } else if (node.nodeType === 3) {
+      callback(node as Text);
     } else {
       nodeList.unshift(...node.childNodes);
     }
   }
+};
 
+export const flatTreeToText = (el: HTMLElement) => {
+  const res: Array<string> = [];
+  walkVisiableTextNode(el, node => {
+    if (!/\n/.test(node.data)) {
+      res.push(node.data);
+    }
+  });
   return res;
+};
+
+export const getVisiableTextRectList = (el: HTMLElement) => {
+  const rectList: Array<DOMRect> = [];
+  walkVisiableTextNode(el, textNode => {
+    if (!/\n/.test(textNode.data)) {
+      rectList.push(...posNode(textNode as unknown as HTMLElement));
+    }
+  });
+
+  return rectList;
 };
 
 const ctx = document.createElement('canvas').getContext('2d')!;
@@ -110,4 +131,18 @@ export const measureCharWidth = (char: string, font: string) => {
   ctx.font = font;
   const metrics = ctx.measureText(char);
   return metrics.width;
+};
+
+export const isELementVisiable = (el: HTMLElement) => {
+  const rect = el.getBoundingClientRect();
+  const { top, left, width, height, bottom, right } = rect;
+
+  if (!width && !height) return false;
+
+  return (
+    top >= 0 &&
+    left >= 0 &&
+    bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+    right <= (window.innerWidth || document.documentElement.clientWidth)
+  );
 };
