@@ -1,4 +1,5 @@
 import { entries } from './obj';
+import { isEmptyString } from './typeJudgument';
 
 export const appendChild = (
   parent: HTMLElement | DocumentFragment,
@@ -68,4 +69,45 @@ export const insertAfter = (newNode: HTMLElement, oldNode: HTMLElement) => {
   } else {
     parentNode?.appendChild(newNode);
   }
+};
+
+export const createRangeFromPoint = (x: number, y: number): Range | null => {
+  return (document as any).caretPositionFromPoint
+    ? (document as any).caretPositionFromPoint(x, y)
+    : document.caretRangeFromPoint
+    ? document.caretRangeFromPoint(x, y)
+    : null;
+};
+
+export const posNode = (node: HTMLElement) => {
+  const range = document.createRange();
+  range.selectNode(node);
+  const res = Array.from(range.getClientRects());
+  range.detach();
+
+  return res;
+};
+
+export const flatTreeToText = (el: Node) => {
+  const res: Array<string> = [];
+  const nodeList = [...el.childNodes];
+
+  while (nodeList.length) {
+    const node = nodeList.shift()!;
+    if (node.nodeType === 3) {
+      const data = (node as any).data;
+      isEmptyString(data) || res.push(data);
+    } else {
+      nodeList.unshift(...node.childNodes);
+    }
+  }
+
+  return res;
+};
+
+const ctx = document.createElement('canvas').getContext('2d')!;
+export const measureCharWidth = (char: string, font: string) => {
+  ctx.font = font;
+  const metrics = ctx.measureText(char);
+  return metrics.width;
 };
