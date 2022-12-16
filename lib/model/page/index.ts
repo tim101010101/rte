@@ -1,10 +1,6 @@
-import { VirtualNode } from 'lib/types';
-import { EditorConfig } from 'lib/types';
+import { EditorConfig, VirtualNode } from 'lib/types';
 import { getNearestIdx } from 'lib/utils';
-import { Block } from 'lib/model/block';
-import { EventName } from 'lib/model/event';
-import { Selection } from 'lib/model/selection';
-import { LinkedList } from 'lib/model/virtualNode';
+import { Block, EventName, Selection, LinkedList } from 'lib/model';
 
 export class Page extends LinkedList<Block> {
   private container: HTMLElement;
@@ -62,7 +58,6 @@ export class Page extends LinkedList<Block> {
 }
 
 const getClickHanlder = (page: Page, block: Block) => (e: MouseEvent) => {
-  console.log(block.fence);
   const target = e.clientX;
   const idx = getNearestIdx(
     block.fence.fenceList.map(({ cursorOffset }) => cursorOffset),

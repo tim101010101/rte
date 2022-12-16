@@ -1,19 +1,34 @@
+import { deepClone } from 'lib/utils';
 import { VirtualNode } from 'lib/types';
-import { h } from './h';
+
+export const walkNode = (
+  vNode: VirtualNode,
+  callback: (node: VirtualNode, parent: VirtualNode | null) => void
+) => {
+  let prevNode: VirtualNode | null = null;
+  const dfs = (cur: VirtualNode | null) => {
+    if (!cur) return;
+
+    callback(cur, prevNode);
+
+    const { children } = cur;
+    if (typeof children === 'string') {
+      return;
+    } else {
+      children.forEach(child => {
+        prevNode = cur;
+        dfs(child);
+        prevNode = child;
+      });
+    }
+  };
+
+  dfs(vNode);
+};
 
 // TODO
 export const activeMarker = (vNode: VirtualNode, target: VirtualNode) => {
-  const { tagName, events, props } = vNode;
-  return h(
-    tagName,
-    props,
-    [
-      h('span', { classList: ['r-bold'] }, '**'),
-      target,
-      h('span', { classList: ['r-bold'] }, '**'),
-    ],
-    events
-  );
+  const newVNode = deepClone(vNode);
 };
 
 // TODO

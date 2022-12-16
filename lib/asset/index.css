@@ -30,6 +30,10 @@
   overflow: hidden;
 }
 
+.r-grey {
+  font: 20px arial;
+}
+
 .r-bold {
   font: bold 20px arial;
 }

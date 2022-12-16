@@ -1,4 +1,4 @@
-export class ListNode implements ListNode {
+export class ListNode {
   prev: this | null;
   next: this | null;
 
@@ -8,7 +8,7 @@ export class ListNode implements ListNode {
   }
 }
 
-export class LinkedList<T extends ListNode> implements LinkedList<T> {
+export class LinkedList<T extends ListNode> {
   head: T | null;
   tail: T | null;
   length: number;
@@ -85,14 +85,11 @@ export class LinkedList<T extends ListNode> implements LinkedList<T> {
     return Array.from(this.iter()).forEach(callback);
   }
 
-  map<U>(callback: (node: ListNode, idx: number) => U) {
+  map<U>(callback: (node: T, idx: number) => U) {
     return Array.from(this.iter()).map(callback);
   }
 
-  reduce<U>(
-    callback: (res: U, cur: ListNode, idx: number) => U,
-    initialValue = this.head
-  ) {
+  reduce<U>(callback: (res: U, cur: T, idx: number) => U, initialValue: U) {
     return Array.from(this.iter()).reduce(callback as any, initialValue);
   }
 }

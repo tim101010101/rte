@@ -1,6 +1,12 @@
 import { patch } from 'lib/render';
 import { VirtualNode } from 'lib/types';
-import { ListNode, posNode } from 'lib/model/virtualNode';
+import { posNode } from 'lib/model';
+import { ListNode } from 'lib/model/virtualNode';
+
+// TODO bug here
+// TODO Cannot access 'ListNode' before initialization
+// import { posNode, ListNode } from 'lib/model';
+
 import { calcFence, Fence } from './fence';
 
 export class Block extends ListNode {

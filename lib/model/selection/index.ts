@@ -1,6 +1,6 @@
-import { appendChild, createDomNode } from 'lib/utils';
-import { Block } from 'lib/model/block';
-import { activeMarker, textContent } from 'lib/model/virtualNode';
+import { appendChild, createDomNode, deepClone } from 'lib/utils';
+import { Block, textContent, walkNode } from 'lib/model';
+import { VirtualNode } from 'lib/types';
 
 export class Selection {
   private el: HTMLElement;
@@ -42,8 +42,33 @@ export class Selection {
     const { isInVNode, vNode, textOffset } = this.fence.fenceList[fenceOffset];
     if (isInVNode && vNode?.props.classList?.includes('r-bold')) {
       if (textOffset === 0 || textOffset === textContent(vNode).length - 1) {
-        // TODO active the marker node
-        const newVNode = activeMarker(activeBlock.vNode!, vNode);
+        // TODO deep clone for this time being
+        const newVNode = deepClone(activeBlock.vNode!);
+        walkNode(newVNode, (cur, parent) => {
+          if (
+            parent &&
+            cur.type === vNode.type &&
+            cur.tagName === vNode.tagName
+          ) {
+            const children = parent.children as Array<VirtualNode>;
+            const prefix = children.shift()!;
+            const suffix = children.pop()!;
+            children.unshift({
+              ...prefix,
+              props: {
+                classList: ['r-grey'],
+              },
+            });
+            children.push({
+              ...suffix,
+              props: {
+                classList: ['r-grey'],
+              },
+            });
+            parent.children = children;
+          }
+        });
+
         activeBlock.patch(newVNode);
       }
     }
