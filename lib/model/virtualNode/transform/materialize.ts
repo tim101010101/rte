@@ -1,4 +1,4 @@
-import { VirtualNode, VirtualNodeChildren } from '../../../types';
+import { VirtualNode, VirtualNodeChildren } from 'lib/types';
 import {
   appendChild,
   createDomNode,
@@ -6,7 +6,7 @@ import {
   createTextNode,
   entries,
   set,
-} from '../../../utils';
+} from 'lib/utils';
 
 export const materialize = (vNode: VirtualNode): HTMLElement => {
   const { tagName, children } = vNode;

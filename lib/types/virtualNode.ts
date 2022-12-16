@@ -1,4 +1,4 @@
-import { EventName } from '../event';
+import { EventName } from 'lib/model';
 
 export interface VirtualNode {
   tagName: string;

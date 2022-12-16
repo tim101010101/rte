@@ -1,6 +1,6 @@
-import { appendChild, createDomNode } from '../../utils';
-import { Block } from '../block';
-import { activeMarker, textContent } from '../virtualNode';
+import { appendChild, createDomNode } from 'lib/utils';
+import { Block } from 'lib/model/block';
+import { activeMarker, textContent } from 'lib/model/virtualNode';
 
 export class Selection {
   private el: HTMLElement;

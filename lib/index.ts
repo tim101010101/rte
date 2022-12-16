@@ -1,6 +1,6 @@
 import { Page } from './model';
 import { lexer, parser } from './parser';
-import { EditorConfig } from './types/config';
+import { EditorConfig } from './types';
 
 export class Editor {
   private options: any;

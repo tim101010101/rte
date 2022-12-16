@@ -1,11 +1,11 @@
-import { VirtualNode } from '../../types';
-import { measureCharWidth, panicAt } from '../../utils';
+import { VirtualNode } from 'lib/types';
+import { measureCharWidth, panicAt } from 'lib/utils';
 import {
   flatTreeToText,
   getVisiableTextRectList,
   posNode,
   walkVisiableNode,
-} from '../virtualNode';
+} from 'lib/model/virtualNode';
 
 interface FenceItem {
   isInVNode: boolean;

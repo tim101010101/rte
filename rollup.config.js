@@ -9,8 +9,11 @@ import babel from '@rollup/plugin-babel';
 
 import { terser } from 'rollup-plugin-terser';
 
+import { join } from 'path';
+
 const entries = ['lib/index.ts'];
 
+const resolveDir = dir => join(__dirname, dir);
 const plugins = [
   babel({
     babelrc: false,
@@ -20,7 +23,9 @@ const plugins = [
   resolve({
     preferBuiltins: true,
   }),
-  alias(),
+  alias({
+    entries: [{ find: 'lib', replacement: resolveDir('lib') }],
+  }),
   json(),
   typescript(),
   commonjs(),

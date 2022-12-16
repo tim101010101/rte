@@ -1,6 +1,5 @@
-import { VirtualNode } from '../../types';
-import { Token } from '../../types/token';
-import { h } from '../../virtualNode/h';
+import { Token, VirtualNode } from 'lib/types';
+import { h } from 'lib/model';
 
 export const bold = (token: Token): Array<VirtualNode> => {
   const { content } = token;

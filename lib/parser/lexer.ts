@@ -1,4 +1,4 @@
-import { Token } from '../types/token';
+import { Token } from 'lib/types/token';
 
 const boldReg = /\*\*([^\*]+)\*\*/;
 

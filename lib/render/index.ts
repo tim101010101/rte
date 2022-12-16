@@ -1,6 +1,6 @@
-import { VirtualNode } from '../types';
-import { appendChild, replaceOldNode } from '../utils';
-import { materialize } from '../virtualNode';
+import { VirtualNode } from 'lib/types';
+import { appendChild, replaceOldNode } from 'lib/utils';
+import { materialize } from 'lib/model';
 
 export const render = (vNode: VirtualNode, container: HTMLElement) => {
   const node = materialize(vNode);

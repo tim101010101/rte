@@ -1,6 +1,6 @@
-import { patch } from '../../render';
-import { VirtualNode } from '../../types';
-import { ListNode, posNode } from '../virtualNode';
+import { patch } from 'lib/render';
+import { VirtualNode } from 'lib/types';
+import { ListNode, posNode } from 'lib/model/virtualNode';
 import { calcFence, Fence } from './fence';
 
 export class Block extends ListNode {

@@ -1,6 +1,5 @@
-import { Token } from '../types/token';
-import { VirtualNode, VirtualNodeChildren } from '../types/virtualNode';
-import { h } from '../virtualNode/h';
+import { Token, VirtualNode, VirtualNodeChildren } from 'lib/types';
+import { h } from 'lib/model';
 
 const getInlineNode = (
   content: VirtualNode,

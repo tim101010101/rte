@@ -7,7 +7,11 @@
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "skipLibCheck": true,
-    "isolatedModules": false
+    "isolatedModules": false,
+    "baseUrl": ".",
+    "paths": {
+      "lib": ["lib/*"]
+    }
   },
   "include": ["lib/**/*"]
 }

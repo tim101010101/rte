@@ -3,7 +3,7 @@ import {
   VirtualNodeChildren,
   VirtualNodeEvents,
   VirtualNodeProps,
-} from '../../types';
+} from 'lib/types';
 
 export function h(tagName: string): VirtualNode;
 export function h(tagName: string, props: VirtualNodeProps): VirtualNode;
