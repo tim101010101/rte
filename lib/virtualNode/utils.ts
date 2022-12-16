@@ -1,58 +1,63 @@
 import { VirtualNode } from '../types';
 
-export const textContent = (vNode: VirtualNode): string => {
-  const { children } = vNode;
-
-  return typeof children === 'string'
-    ? children
-    : children.reduce<string>(
-        (res, cur) =>
-          typeof cur === 'string' ? res + cur : res + textContent(cur),
-        ''
-      );
+export const isElementVisiable = (vNode: VirtualNode) => {
+  const { el } = vNode;
+  return el ? !el.classList.contains('r-hide') : false;
 };
 
-export const trackNode = (
-  origin: VirtualNode,
-  target: VirtualNode
-): Array<number> => {
-  const res: Array<number> = [];
+export const posNode = (vNode: VirtualNode) => {
+  const { el } = vNode;
+  if (!el) return null;
 
-  const backTrack = (
-    cur: VirtualNode,
-    target: VirtualNode,
-    path: Array<number>
-  ) => {
-    if (cur === target) {
-      res.push(...path);
-      return;
+  const range = document.createRange();
+  range.selectNode(el);
+  const res = Array.from(range.getClientRects());
+  range.detach();
+
+  return res.shift()!;
+};
+
+export const walkVisiableNode = (
+  vNode: VirtualNode,
+  callback: (node: VirtualNode) => void
+) => {
+  const { children } = vNode;
+  if (typeof children === 'string') return;
+
+  const nodeList = [...vNode.children];
+  while (nodeList.length) {
+    const node = nodeList.shift()!;
+
+    if (typeof node === 'string' || !isElementVisiable(node)) {
+      continue;
+    } else {
+      callback(node);
     }
 
-    const { children } = cur;
-    if (typeof children !== 'string') {
-      for (let i = 0; i < children.length; i++) {
-        const child = children[i];
+    nodeList.unshift(...node.children);
+  }
+};
 
-        if (typeof child !== 'string') {
-          path.push(i);
-          backTrack(child, target, path);
-          path.pop();
-        }
-      }
+export const flatTreeToText = (vNode: VirtualNode) => {
+  const res: Array<string> = [];
+  walkVisiableNode(vNode, node => {
+    const { children } = node;
+    if (typeof children === 'string') {
+      res.push(children);
     }
-  };
-
-  backTrack(origin, target, []);
-
+  });
   return res;
 };
 
-export const setTextContent = (
-  vNode: VirtualNode,
-  path: number[],
-  newContent: string
-): VirtualNode => {
-  let paren = vNode;
-  while (path) paren = paren.children[path.shift()!] as VirtualNode;
-  return vNode;
+export const getVisiableTextRectList = (vNode: VirtualNode) => {
+  const rectList: Array<DOMRect> = [];
+  walkVisiableNode(vNode, node => {
+    const { children } = node;
+    if (typeof children === 'string') {
+      const rect = posNode(node);
+      rect && rectList.push(rect);
+    }
+  });
+
+  return rectList;
 };
