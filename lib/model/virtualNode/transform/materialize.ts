@@ -1,4 +1,4 @@
-import { VirtualNode, VirtualNodeChildren } from 'lib/types';
+import { VirtualNode } from 'lib/types';
 import {
   appendChild,
   createDomNode,
@@ -15,7 +15,12 @@ export const materialize = (vNode: VirtualNode): HTMLElement => {
 
   mountProps(vNode);
   mountListener(vNode);
-  appendChild(vNode.el!, materializeChildren(children));
+  appendChild(
+    vNode.el!,
+    typeof children === 'string'
+      ? createTextNode(children)
+      : materializeChildren(children)
+  );
 
   set(vNode.el, 'vNode', vNode);
 
@@ -23,16 +28,11 @@ export const materialize = (vNode: VirtualNode): HTMLElement => {
 };
 
 const materializeChildren = (
-  children: VirtualNodeChildren
-): DocumentFragment | Text => {
-  return typeof children === 'string'
-    ? createTextNode(children)
-    : children.reduce((fragment, child) => {
-        return appendChild(
-          fragment,
-          typeof child === 'string' ? createTextNode(child) : materialize(child)
-        ) as DocumentFragment;
-      }, createFragment());
+  children: Array<VirtualNode>
+): DocumentFragment => {
+  return children.reduce((fragment, child) => {
+    return appendChild(fragment, materialize(child));
+  }, createFragment());
 };
 
 const mountProps = (vNode: VirtualNode) => {

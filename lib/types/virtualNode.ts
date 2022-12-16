@@ -1,26 +1,25 @@
+import { NodeType, TagName } from 'lib/static';
 import { EventName } from 'lib/model';
 
-export interface VirtualNode {
-  tagName: string;
+interface BasicNode {
+  type: NodeType;
+  tagName: TagName;
   props: VirtualNodeProps;
-  children: VirtualNodeChildren;
-
   events: VirtualNodeEvents;
 
   el: HTMLElement | null;
-
-  marker: Marker | null;
+}
+export interface VirtualNode extends BasicNode {
+  children: VirtualNodeChildren | string;
 }
 
 export type VirtualNodeProps = Partial<
   {
-    classList: string[];
+    classList: Array<string>;
     id: string;
   } & Record<string, any>
 >;
-
-export type VirtualNodeChildren = Array<VirtualNode | string> | string;
-
+export type VirtualNodeChildren = Array<VirtualNode>;
 type EventHandler<E> = (e: E) => void;
 type EventDetail =
   | [EventName.CLICK, EventHandler<MouseEvent>, boolean]
@@ -32,8 +31,3 @@ type EventDetail =
   | [EventName.KEYUP, EventHandler<KeyboardEvent>, boolean]
   | [EventName, EventListenerOrEventListenerObject, boolean];
 export type VirtualNodeEvents = Array<EventDetail>;
-
-export interface Marker {
-  prefix: VirtualNode;
-  suffix: VirtualNode;
-}

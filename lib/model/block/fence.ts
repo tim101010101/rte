@@ -5,7 +5,7 @@ import {
   getVisiableTextRectList,
   posNode,
   walkVisiableNode,
-} from 'lib/model/virtualNode';
+} from 'lib/model';
 
 interface FenceItem {
   isInVNode: boolean;

@@ -1,3 +1,4 @@
+import { NodeType, TagName } from 'lib/static';
 import {
   VirtualNode,
   VirtualNodeChildren,
@@ -5,34 +6,32 @@ import {
   VirtualNodeProps,
 } from 'lib/types';
 
-export function h(tagName: string): VirtualNode;
-export function h(tagName: string, props: VirtualNodeProps): VirtualNode;
+export function h(type: NodeType, tagName: TagName): VirtualNode;
 export function h(
-  tagName: string,
-  props: VirtualNodeProps,
-  children: VirtualNodeChildren
+  type: NodeType,
+  tagName: TagName,
+  props: VirtualNodeProps
 ): VirtualNode;
 export function h(
-  tagName: string,
+  type: NodeType,
+  tagName: TagName,
   props: VirtualNodeProps,
-  children: VirtualNodeChildren,
-  events: VirtualNodeEvents
+  children: VirtualNodeChildren | string
 ): VirtualNode;
 export function h(
-  tagName: string,
+  type: NodeType,
+  tagName: TagName,
   props: VirtualNodeProps = {},
-  children: VirtualNodeChildren = [],
+  children: VirtualNodeChildren | string = [],
   events: VirtualNodeEvents = []
 ): VirtualNode {
   return {
+    type,
     tagName,
     props,
     children,
 
     events,
-
     el: null,
-
-    marker: null,
   };
 }
