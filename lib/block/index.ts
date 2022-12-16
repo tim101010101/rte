@@ -1,35 +1,32 @@
 import { patch } from '../render';
 import { VirtualNode } from '../types';
 import { ListNode, posNode } from '../virtualNode';
-import { calcFence } from './fence';
+import { calcFence, Fence } from './fence';
 
 export class Block extends ListNode {
   private container: HTMLElement;
-  private vNode: VirtualNode | null;
-  private font: string;
+  vNode: VirtualNode | null;
+  private _fence: Fence | null;
 
   constructor(container: HTMLElement, font: string) {
     super();
 
     this.container = container;
     this.vNode = null;
-    this.font = font;
-  }
-
-  get el() {
-    return this.vNode?.el;
+    this._fence = null;
   }
 
   get fence() {
-    const fence = calcFence(this.vNode!);
-
-    // renderCursor(fence);
-
-    return fence;
+    return this._fence!;
+  }
+  set fence(fence: Fence) {
+    this._fence = fence;
   }
 
   patch(newVNode: VirtualNode) {
     patch(this.vNode, newVNode, this.container);
+
+    this.fence = calcFence(newVNode);
     this.vNode = newVNode;
   }
 }

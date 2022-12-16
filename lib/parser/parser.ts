@@ -1,24 +1,17 @@
 import { Token } from '../types/token';
 import { VirtualNode, VirtualNodeChildren } from '../types/virtualNode';
-import { EventName } from '../virtualNode/events/eventNames';
 import { h } from '../virtualNode/h';
-
-const clickHandler = (e: MouseEvent) => {
-  console.log('click', e.target);
-  const selection = document.getSelection();
-  console.log(selection);
-  selection?.removeAllRanges();
-};
 
 const getInlineNode = (
   content: VirtualNode,
   marker: string
 ): Array<VirtualNode> => {
-  return [
-    h('span', { classList: ['r-hide'] }, marker),
-    content,
-    h('span', { classList: ['r-hide'] }, marker),
-  ];
+  const prefix = h('span', { classList: ['r-hide'] }, marker);
+  const suffix = h('span', { classList: ['r-hide'] }, marker);
+
+  content.marker = { prefix, suffix };
+
+  return [prefix, content, suffix];
 };
 
 const getLineNode = (children: VirtualNodeChildren): VirtualNode => {
@@ -41,6 +34,7 @@ export const parser = (tokens: Array<Token>): VirtualNode => {
 
       children: content,
       el: null,
+      marker: null,
     };
 
     if (type === 'bold') {

@@ -13,12 +13,13 @@ interface FenceItem {
   vNode?: VirtualNode;
   textOffset?: number;
 }
-interface Fence {
+export interface Fence {
   lineHeight: number;
   fenceList: Array<FenceItem>;
   x: number;
   y: number;
 }
+
 export const calcFence = (blockVNode: VirtualNode): Fence => {
   const textList = flatTreeToText(blockVNode);
   const rectList = getVisiableTextRectList(blockVNode);
@@ -40,7 +41,7 @@ export const calcFence = (blockVNode: VirtualNode): Fence => {
     const { children } = node;
     if (typeof children === 'string') {
       Array.from(children).forEach((char, i) => {
-        prevOffset += measureCharWidth(char, `20px arial`);
+        prevOffset += measureCharWidth(char, `bold 20px arial`);
         fenceList.push({
           isInVNode: true,
           cursorOffset: prevOffset,

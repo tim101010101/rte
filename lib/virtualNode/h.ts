@@ -1,4 +1,5 @@
 import {
+  Marker,
   VirtualNode,
   VirtualNodeChildren,
   VirtualNodeEvents,
@@ -32,5 +33,7 @@ export function h(
     events,
 
     el: null,
+
+    marker: null,
   };
 }

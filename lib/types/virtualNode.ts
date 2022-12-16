@@ -8,6 +8,8 @@ export interface VirtualNode {
   events: VirtualNodeEvents;
 
   el: HTMLElement | null;
+
+  marker: Marker | null;
 }
 
 export type VirtualNodeProps = Partial<
@@ -30,3 +32,8 @@ type EventDetail =
   | [EventName.KEYUP, EventHandler<KeyboardEvent>, boolean]
   | [EventName, EventListenerOrEventListenerObject, boolean];
 export type VirtualNodeEvents = Array<EventDetail>;
+
+export interface Marker {
+  prefix: VirtualNode;
+  suffix: VirtualNode;
+}

@@ -62,6 +62,7 @@ export class Page extends LinkedList<Block> {
 }
 
 const getClickHanlder = (page: Page, block: Block) => (e: MouseEvent) => {
+  console.log(block.fence);
   const target = e.clientX;
   const idx = getNearestIdx(
     block.fence.fenceList.map(({ cursorOffset }) => cursorOffset),

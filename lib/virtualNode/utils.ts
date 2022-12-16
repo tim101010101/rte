@@ -1,4 +1,30 @@
 import { VirtualNode } from '../types';
+import { h } from './h';
+
+// TODO
+export const activeMarker = (vNode: VirtualNode, target: VirtualNode) => {
+  const { tagName, events, props } = vNode;
+  return h(
+    tagName,
+    props,
+    [
+      h('span', { classList: ['r-bold'] }, '**'),
+      target,
+      h('span', { classList: ['r-bold'] }, '**'),
+    ],
+    events
+  );
+};
+
+// TODO
+export const textContent = (vNode: VirtualNode | string): string => {
+  if (typeof vNode === 'string') return vNode;
+
+  const { children } = vNode;
+  return typeof children === 'string'
+    ? children
+    : children.reduce<string>((res, cur) => res + textContent(cur), '');
+};
 
 export const isElementVisiable = (vNode: VirtualNode) => {
   const { el } = vNode;

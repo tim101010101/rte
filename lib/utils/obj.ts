@@ -6,7 +6,9 @@ export const keys = (o: object) => Reflect.ownKeys(o);
 
 export const entries = (o: object) => Object.entries(o);
 
-export const deepClone = (source: object) => {
+export const deepClone = <T extends Object | Function | Array<any>>(
+  source: T
+): T => {
   if (!source || typeof source !== 'object' || source instanceof HTMLElement)
     return source;
   if (typeof source === 'function') {
@@ -15,37 +17,34 @@ export const deepClone = (source: object) => {
     return fn;
   }
 
-  return entries(source).reduce(
-    (newObj, [k, v]) => {
-      switch (Object.prototype.toString.call(v)) {
-        case '[object Date]':
-          const d = new Date();
-          d.setTime(v.getTime());
-          set(newObj, k, d);
-          break;
-        case '[object RegExp]':
-          set(newObj, k, new RegExp(v));
-          break;
-        case '[object Object]':
-        case '[object Array]':
-          set(
-            newObj,
-            k,
-            Reflect.ownKeys(v).reduce(
-              (subObj, subK) => {
-                set(subObj, subK, deepClone(v[subK]));
-                return subObj;
-              },
-              Array.isArray(v) ? [] : {}
-            )
-          );
-          break;
-        default:
-          set(newObj, k, v);
-      }
+  return entries(source).reduce((newObj, [k, v]) => {
+    switch (Object.prototype.toString.call(v)) {
+      case '[object Date]':
+        const d = new Date();
+        d.setTime(v.getTime());
+        set(newObj, k, d);
+        break;
+      case '[object RegExp]':
+        set(newObj, k, new RegExp(v));
+        break;
+      case '[object Object]':
+      case '[object Array]':
+        set(
+          newObj,
+          k,
+          Reflect.ownKeys(v).reduce(
+            (subObj, subK) => {
+              set(subObj, subK, deepClone(v[subK]));
+              return subObj;
+            },
+            Array.isArray(v) ? [] : {}
+          )
+        );
+        break;
+      default:
+        set(newObj, k, v);
+    }
 
-      return newObj;
-    },
-    Array.isArray(source) ? [] : {}
-  );
+    return newObj;
+  }, (Array.isArray(source) ? [] : {}) as T);
 };

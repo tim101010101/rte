@@ -1,5 +1,7 @@
 import { Block } from '../block';
-import { appendChild, createDomNode } from '../utils';
+import { VirtualNode } from '../types';
+import { appendChild, createDomNode, deepClone } from '../utils';
+import { activeMarker, textContent } from '../virtualNode';
 
 export class Selection {
   private el: HTMLElement;
@@ -36,6 +38,16 @@ export class Selection {
     this.el.style.top = `${y}px`;
     this.el.style.width = `${2}px`;
     this.el.style.height = `${lineHeight}px`;
+
+    // TODO patch when focus on the edge of syntax nodes
+    const { isInVNode, vNode, textOffset } = this.fence.fenceList[fenceOffset];
+    if (isInVNode && vNode?.props.classList?.includes('r-bold')) {
+      if (textOffset === 0 || textOffset === textContent(vNode).length - 1) {
+        // TODO active the marker node
+        const newVNode = activeMarker(activeBlock.vNode!, vNode);
+        activeBlock.patch(newVNode);
+      }
+    }
   }
 
   unFocus() {
