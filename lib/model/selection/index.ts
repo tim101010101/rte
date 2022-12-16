@@ -1,6 +1,5 @@
+import { appendChild, createDomNode } from '../../utils';
 import { Block } from '../block';
-import { VirtualNode } from '../types';
-import { appendChild, createDomNode, deepClone } from '../utils';
 import { activeMarker, textContent } from '../virtualNode';
 
 export class Selection {

@@ -1,4 +1,4 @@
-import { Page } from './page';
+import { Page } from './model';
 import { lexer, parser } from './parser';
 import { EditorConfig } from './types/config';
 

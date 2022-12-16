@@ -1,4 +1,4 @@
-import { VirtualNode } from '../types';
+import { VirtualNode } from '../../types';
 import { h } from './h';
 
 // TODO

@@ -1,9 +1,9 @@
+import { VirtualNode } from '../../types';
+import { EditorConfig } from '../../types/config';
+import { getNearestIdx } from '../../utils';
 import { Block } from '../block';
 import { EventName } from '../event';
 import { Selection } from '../selection';
-import { VirtualNode } from '../types';
-import { EditorConfig } from '../types/config';
-import { getNearestIdx } from '../utils';
 import { LinkedList } from '../virtualNode';
 
 export class Page extends LinkedList<Block> {

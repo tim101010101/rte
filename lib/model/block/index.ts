@@ -1,5 +1,5 @@
-import { patch } from '../render';
-import { VirtualNode } from '../types';
+import { patch } from '../../render';
+import { VirtualNode } from '../../types';
 import { ListNode, posNode } from '../virtualNode';
 import { calcFence, Fence } from './fence';
 

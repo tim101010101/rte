@@ -1,4 +1,4 @@
-import { lexer } from '../parser';
+import { lexer } from '../../parser';
 
 export const inputHandler = (e: KeyboardEvent) => {
   const text = (e.target as any).innerText;

@@ -1,5 +1,5 @@
-import { VirtualNode } from '../../types';
-import { entries } from '../../utils';
+import { VirtualNode } from '../../../types';
+import { entries } from '../../../utils';
 
 export const mountProps = (vNode: VirtualNode) => {
   const { el, props } = vNode;

@@ -1,5 +1,5 @@
-import { VirtualNode } from '../types';
-import { measureCharWidth, panicAt } from '../utils';
+import { VirtualNode } from '../../types';
+import { measureCharWidth, panicAt } from '../../utils';
 import {
   flatTreeToText,
   getVisiableTextRectList,

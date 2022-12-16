@@ -1,10 +1,9 @@
 import {
-  Marker,
   VirtualNode,
   VirtualNodeChildren,
   VirtualNodeEvents,
   VirtualNodeProps,
-} from '../types';
+} from '../../types';
 
 export function h(tagName: string): VirtualNode;
 export function h(tagName: string, props: VirtualNodeProps): VirtualNode;
