@@ -1,9 +1,9 @@
 import { entries } from './obj';
 
-export const appendChild = (
-  parent: HTMLElement | DocumentFragment,
-  ...children: Array<HTMLElement | Text | DocumentFragment>
-): HTMLElement | DocumentFragment => {
+export const appendChild = <T extends Node>(
+  parent: T,
+  ...children: Array<Node>
+): T => {
   children.forEach(child => parent.appendChild(child));
   return parent;
 };
