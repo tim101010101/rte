@@ -1,5 +1,5 @@
+import { Block } from '../block';
 import { appendChild, createDomNode } from '../utils';
-import { Block } from '../virtualNode/block';
 
 export class Selection {
   private el: HTMLElement;
@@ -18,25 +18,24 @@ export class Selection {
     return this.activeBlock!.fence;
   }
 
-  focusOn(activeBlock = this.activeBlock, fenseOffset = this.fenceOffset) {
-    if (activeBlock === null || fenseOffset === null) return;
+  focusOn(activeBlock = this.activeBlock, fenceOffset = this.fenceOffset) {
+    if (activeBlock === null || fenceOffset === null) return;
 
     if (!this.activeBlock) {
       this.el.style.display = 'inline-block';
     }
 
     this.activeBlock = activeBlock;
-    this.fenceOffset = fenseOffset;
+    this.fenceOffset = fenceOffset;
 
-    const fence = this.fence;
-    const x = fence[fenseOffset];
-    const { height, y } = activeBlock.rectList[0];
-    const width = fence[fenseOffset + 1] - fence[fenseOffset];
+    const { fenceList, lineHeight, y } = this.fence;
+    const { cursorOffset: curOffset } = fenceList[fenceOffset];
+    // const { cursorOffset: nextOffset } = fenceList[fenceOffset + 1];
 
-    this.el.style.left = `${x}px`;
+    this.el.style.left = `${curOffset}px`;
     this.el.style.top = `${y}px`;
-    this.el.style.width = `${width}px`;
-    this.el.style.height = `${height}px`;
+    this.el.style.width = `${2}px`;
+    this.el.style.height = `${lineHeight}px`;
   }
 
   unFocus() {
@@ -58,7 +57,8 @@ export class Selection {
   right() {
     if (
       this.fenceOffset !== null &&
-      this.fenceOffset !== this.fence.length - 2
+      // this.fenceOffset !== this.fence.fenceList.length - 2
+      this.fenceOffset !== this.fence.fenceList.length - 1
     ) {
       this.fenceOffset++;
       this.focusOn();
@@ -73,11 +73,9 @@ export class Selection {
     ) {
       const prevOffset = this.fenceOffset;
       this.activeBlock = this.activeBlock.prev;
-      const curFence = this.fence;
+      const curLength = this.fence.fenceList.length;
       this.fenceOffset =
-        prevOffset >= curFence.length - 2
-          ? curFence.length - 2
-          : this.fenceOffset;
+        prevOffset >= curLength - 2 ? curLength - 2 : this.fenceOffset;
 
       this.focusOn();
     }
@@ -91,11 +89,9 @@ export class Selection {
     ) {
       const prevOffset = this.fenceOffset;
       this.activeBlock = this.activeBlock.next;
-      const curFence = this.fence;
+      const curLength = this.fence.fenceList.length;
       this.fenceOffset =
-        prevOffset >= curFence.length - 2
-          ? curFence.length - 2
-          : this.fenceOffset;
+        prevOffset >= curLength - 2 ? curLength - 2 : this.fenceOffset;
 
       this.focusOn();
     }

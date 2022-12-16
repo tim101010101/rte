@@ -1,11 +1,7 @@
 import { patch } from '../render';
 import { VirtualNode } from '../types';
-import {
-  flatTreeToText,
-  getVisiableTextRectList,
-  measureCharWidth,
-} from '../utils';
-import { ListNode } from '../virtualNode';
+import { ListNode, posNode } from '../virtualNode';
+import { calcFence } from './fence';
 
 export class Block extends ListNode {
   private container: HTMLElement;
@@ -24,21 +20,12 @@ export class Block extends ListNode {
     return this.vNode?.el;
   }
 
-  get rectList() {
-    return getVisiableTextRectList(this.el!);
-  }
-
   get fence() {
-    const textList = flatTreeToText(this.el!);
-    const rectList = this.rectList;
+    const fence = calcFence(this.vNode!);
 
-    if (!textList.length || !rectList.length) return [];
+    // renderCursor(fence);
 
-    const fense = calcFence(textList, rectList);
-
-    // renderRect(rectList);
-
-    return fense;
+    return fence;
   }
 
   patch(newVNode: VirtualNode) {
@@ -47,41 +34,42 @@ export class Block extends ListNode {
   }
 }
 
-const calcFence = (textList: Array<string>, rectList: Array<DOMRect>) => {
-  let prev = rectList[0].left;
-  const res = [prev];
+const renderRect = (rectList: Array<DOMRect>) => {
+  let t = 0;
+  const render = (x: number, y: number, width: number, height: number) => {
+    const dom = document.createElement('span');
+    dom.style.width = `${width}px`;
+    dom.style.height = `${height}px`;
+    dom.style.left = `${x}px`;
+    dom.style.top = `${y}px`;
+    dom.style.display = 'inline-block';
+    dom.style.position = 'absolute';
+    dom.style.border = '1px solid red';
 
-  while (textList.length) {
-    const text = textList.shift()!;
-    Array.from(text).forEach(char => {
-      const width = measureCharWidth(char, `bold 20px arial`) + prev;
-      res.push(width);
-      prev = width;
-    });
-  }
+    document.body.appendChild(dom);
 
-  return res;
+    t += height;
+  };
+
+  rectList.forEach(rect => {
+    const { left, top, width, height } = rect;
+    render(left, top, width, height);
+  });
 };
 
-// const renderRect = (rectList: Array<DOMRect>) => {
-//   let t = 0;
-//   const render = (x: number, y: number, width: number, height: number) => {
-//     const dom = document.createElement('span');
-//     dom.style.width = `${width}px`;
-//     dom.style.height = `${height}px`;
-//     dom.style.left = `${x}px`;
-//     dom.style.top = `${y + height + t}px`;
-//     dom.style.display = 'inline-block';
-//     dom.style.position = 'absolute';
-//     dom.style.border = '1px solid red';
+const renderCursor = (fence: Array<any>) => {
+  const render = (left: number, height: number, top: number) => {
+    const dom = document.createElement('span');
+    dom.style.position = 'absolute';
+    dom.style.display = 'inline-block';
+    dom.style.borderLeft = '1px solid red';
+    dom.style.width = `${1}px`;
+    dom.style.height = `${height}px`;
+    dom.style.left = `${left}px`;
+    dom.style.top = `${top}px`;
+    document.body.appendChild(dom);
+  };
 
-//     document.body.appendChild(dom);
-
-//     t += height;
-//   };
-
-//   rectList.forEach(rect => {
-//     const { left, top, width, height } = rect;
-//     render(left, top, width, height);
-//   });
-// };
+  const { height, top } = posNode(Array.from(fence)[1].vNode)!;
+  fence.forEach(({ cursorOffset }) => render(cursorOffset, height, top));
+};

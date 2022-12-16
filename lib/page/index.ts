@@ -63,6 +63,9 @@ export class Page extends LinkedList<Block> {
 
 const getClickHanlder = (page: Page, block: Block) => (e: MouseEvent) => {
   const target = e.clientX;
-  const idx = getNearestIdx(block.fence, target);
+  const idx = getNearestIdx(
+    block.fence.fenceList.map(({ cursorOffset }) => cursorOffset),
+    target
+  );
   page.setFocus(block, idx);
 };
