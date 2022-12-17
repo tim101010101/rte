@@ -11,6 +11,7 @@ interface BasicNode {
 }
 export interface VirtualNode extends BasicNode {
   children: VirtualNodeChildren | string;
+  meta: VirtualNodeMetaData;
 }
 
 export type VirtualNodeProps = Partial<
@@ -19,7 +20,11 @@ export type VirtualNodeProps = Partial<
     id: string;
   } & Record<string, any>
 >;
+
 export type VirtualNodeChildren = Array<VirtualNode>;
+
+export type VirtualNodeMetaData = Record<PropertyKey, any>;
+
 type EventHandler<E> = (e: E) => void;
 type EventDetail =
   | [EventName.CLICK, EventHandler<MouseEvent>, boolean]
