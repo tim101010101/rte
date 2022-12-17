@@ -1,16 +1,18 @@
-import { appendChild, createDomNode, deepClone } from 'lib/utils';
-import { Block, textContent, walkNode } from 'lib/model';
-import { VirtualNode } from 'lib/types';
+import { appendChild, createDomNode } from 'lib/utils';
+import { Block, textContent } from 'lib/model';
+import { activeNode, cancelActiveNode } from './switchActiveMarker';
 
 export class Selection {
   private el: HTMLElement;
   private activeBlock: Block | null;
   private fenceOffset: number | null;
+  private isActiveMaker: boolean;
 
   constructor(container: HTMLElement) {
     this.el = createDomNode('span', ['r-cursor-test']);
     this.activeBlock = null;
     this.fenceOffset = null;
+    this.isActiveMaker = false;
 
     appendChild(container, this.el);
   }
@@ -29,49 +31,37 @@ export class Selection {
     this.activeBlock = activeBlock;
     this.fenceOffset = fenceOffset;
 
+    // TODO patch when focus on the edge of syntax nodes
+    const {
+      isInVNode,
+      vNode: target,
+      textOffset,
+    } = this.fence.fenceList[fenceOffset];
+    if (isInVNode) {
+      if (
+        !this.isActiveMaker &&
+        (textOffset === 0 || textOffset === textContent(target!).length - 1)
+      ) {
+        activeNode(target!, activeBlock);
+
+        this.isActiveMaker = true;
+        this.fenceOffset += 2;
+      } else if (this.isActiveMaker) {
+        cancelActiveNode(target!, activeBlock);
+
+        this.isActiveMaker = false;
+        this.fenceOffset -= 2;
+      }
+    }
+
     const { fenceList, lineHeight, y } = this.fence;
-    const { cursorOffset: curOffset } = fenceList[fenceOffset];
+    const { cursorOffset: curOffset } = fenceList[this.fenceOffset];
     // const { cursorOffset: nextOffset } = fenceList[fenceOffset + 1];
 
     this.el.style.left = `${curOffset}px`;
     this.el.style.top = `${y}px`;
     this.el.style.width = `${2}px`;
     this.el.style.height = `${lineHeight}px`;
-
-    // TODO patch when focus on the edge of syntax nodes
-    const { isInVNode, vNode, textOffset } = this.fence.fenceList[fenceOffset];
-    if (isInVNode && vNode?.props.classList?.includes('r-bold')) {
-      if (textOffset === 0 || textOffset === textContent(vNode).length - 1) {
-        // TODO deep clone for this time being
-        const newVNode = deepClone(activeBlock.vNode!);
-        walkNode(newVNode, (cur, parent) => {
-          if (
-            parent &&
-            cur.type === vNode.type &&
-            cur.tagName === vNode.tagName
-          ) {
-            const children = parent.children as Array<VirtualNode>;
-            const prefix = children.shift()!;
-            const suffix = children.pop()!;
-            children.unshift({
-              ...prefix,
-              props: {
-                classList: ['r-grey'],
-              },
-            });
-            children.push({
-              ...suffix,
-              props: {
-                classList: ['r-grey'],
-              },
-            });
-            parent.children = children;
-          }
-        });
-
-        activeBlock.patch(newVNode);
-      }
-    }
   }
 
   unFocus() {

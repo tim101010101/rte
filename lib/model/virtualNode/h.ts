@@ -3,6 +3,7 @@ import {
   VirtualNode,
   VirtualNodeChildren,
   VirtualNodeEvents,
+  VirtualNodeMetaData,
   VirtualNodeProps,
 } from 'lib/types';
 
@@ -21,9 +22,17 @@ export function h(
 export function h(
   type: NodeType,
   tagName: TagName,
+  props: VirtualNodeProps,
+  children: VirtualNodeChildren | string,
+  events: VirtualNodeEvents
+): VirtualNode;
+export function h(
+  type: NodeType,
+  tagName: TagName,
   props: VirtualNodeProps = {},
   children: VirtualNodeChildren | string = [],
-  events: VirtualNodeEvents = []
+  events: VirtualNodeEvents = [],
+  meta: VirtualNodeMetaData = {}
 ): VirtualNode {
   return {
     type,
@@ -33,5 +42,7 @@ export function h(
 
     events,
     el: null,
+
+    meta,
   };
 }

@@ -1,4 +1,3 @@
-import { deepClone } from 'lib/utils';
 import { VirtualNode } from 'lib/types';
 
 export const walkNode = (
@@ -24,11 +23,6 @@ export const walkNode = (
   };
 
   dfs(vNode);
-};
-
-// TODO
-export const activeMarker = (vNode: VirtualNode, target: VirtualNode) => {
-  const newVNode = deepClone(vNode);
 };
 
 // TODO
