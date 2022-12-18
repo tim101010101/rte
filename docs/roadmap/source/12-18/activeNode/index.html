@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <script>
+      const walkNode = (vNode, callback) => {
+        let prevNode = null;
+        const dfs = cur => {
+          if (!cur) return cur;
+
+          callback(cur, prevNode);
+          const { nodeType, tagName, isActive, children } = cur;
+          const newObj = {
+            nodeType,
+            tagName,
+            isActive,
+          };
+
+          if (typeof children === 'string') {
+            newObj['children'] = children;
+            return newObj;
+          } else {
+            const newChildren = [];
+            children.forEach(child => {
+              prevNode = cur;
+              newChildren.push(dfs(child));
+              prevNode = child;
+            });
+
+            newObj['children'] = newChildren;
+
+            return newObj;
+          }
+        };
+
+        return dfs(vNode);
+      };
+
+      const target = {
+        nodeType: 'plain-text',
+        tagName: 'span',
+        children: 'this is ',
+      };
+      const vnode1 = {
+        nodeType: 'bold',
+        tagName: 'span',
+        isActive: true,
+        children: [
+          {
+            nodeType: 'prefix',
+            tagName: 'span',
+            children: '**',
+          },
+          target,
+          {
+            nodeType: 'em',
+            tagName: 'em',
+            isActive: false,
+            children: [
+              {
+                nodeType: 'plain-text',
+                tagName: 'span',
+                children: 'hello world',
+              },
+            ],
+          },
+          {
+            nodeType: 'suffix',
+            tagName: 'span',
+            children: '**',
+          },
+        ],
+      };
+
+      const newVNode = walkNode(vnode1, (node, parent) => {
+        if (node === target) {
+          parent.children.pop();
+          parent.children.shift();
+        }
+      });
+      console.log(newVNode);
+    </script>
+  </body>
+</html>
