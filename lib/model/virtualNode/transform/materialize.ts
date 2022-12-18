@@ -1,28 +1,25 @@
-import { VirtualNode } from 'lib/types';
+import { isTextNode } from 'lib/model';
+import { SyntaxNode, VirtualNode } from 'lib/types';
 import {
   appendChild,
   createDomNode,
   createFragment,
   createTextNode,
   entries,
-  set,
 } from 'lib/utils';
 
 export const materialize = (vNode: VirtualNode): HTMLElement => {
-  const { tagName, children } = vNode;
-
-  vNode.el = createDomNode(tagName);
+  vNode.el = createDomNode(vNode.tagName);
 
   mountProps(vNode);
-  mountListener(vNode);
-  appendChild(
-    vNode.el!,
-    typeof children === 'string'
-      ? createTextNode(children)
-      : materializeChildren(children)
-  );
-
-  set(vNode.el, 'vNode', vNode);
+  if (isTextNode(vNode)) {
+    const { text } = vNode;
+    appendChild(vNode.el!, createTextNode(text));
+  } else {
+    const { children } = vNode;
+    mountListener(vNode);
+    appendChild(vNode.el!, materializeChildren(children));
+  }
 
   return vNode.el!;
 };
@@ -48,7 +45,7 @@ const mountProps = (vNode: VirtualNode) => {
   }
 };
 
-const mountListener = (vNode: VirtualNode) => {
+const mountListener = (vNode: SyntaxNode) => {
   const { el, events } = vNode;
   if (el && events) {
     events.forEach(([event, listener, capture]) =>

@@ -1,5 +1,5 @@
 import { patch } from 'lib/render';
-import { VirtualNode } from 'lib/types';
+import { SyntaxNode, VirtualNode } from 'lib/types';
 import { posNode } from 'lib/model';
 import { ListNode } from 'lib/model/virtualNode';
 
@@ -11,7 +11,7 @@ import { calcFence, Fence } from './fence';
 
 export class Block extends ListNode {
   private container: HTMLElement;
-  vNode: VirtualNode | null;
+  vNode: SyntaxNode | null;
   private _fence: Fence | null;
 
   constructor(container: HTMLElement, font: string) {
@@ -29,7 +29,7 @@ export class Block extends ListNode {
     this._fence = fence;
   }
 
-  patch(newVNode: VirtualNode) {
+  patch(newVNode: SyntaxNode) {
     patch(this.vNode, newVNode, this.container);
 
     this.fence = calcFence(newVNode);

@@ -1,14 +1,13 @@
-import { VirtualNode } from 'lib/types';
+import { SyntaxNode, VirtualNode } from 'lib/types';
 import { measureCharWidth, panicAt } from 'lib/utils';
 import {
   flatTreeToText,
   getVisiableTextRectList,
   posNode,
-  walkVisiableNode,
+  walkTextNode,
 } from 'lib/model';
 
 interface FenceItem {
-  isInVNode: boolean;
   cursorOffset: number;
   vNode?: VirtualNode;
   textOffset?: number;
@@ -20,9 +19,12 @@ export interface Fence {
   y: number;
 }
 
-export const calcFence = (blockVNode: VirtualNode): Fence => {
+export const calcFence = (blockVNode: SyntaxNode): Fence => {
   const textList = flatTreeToText(blockVNode);
   const rectList = getVisiableTextRectList(blockVNode);
+
+  console.log(textList);
+  console.log(rectList);
 
   if (!textList.length || !rectList.length) {
     // TODO
@@ -30,27 +32,24 @@ export const calcFence = (blockVNode: VirtualNode): Fence => {
   }
 
   const { height, left, top } = posNode(blockVNode)!;
+  const fenceList: Array<FenceItem> = [];
   let prevOffset = left;
-  const fenceList: Array<FenceItem> = [
-    { isInVNode: false, cursorOffset: prevOffset },
-  ];
 
   // **hello world**
   // 11
-  walkVisiableNode(blockVNode, node => {
-    const { children } = node;
-    if (typeof children === 'string') {
-      Array.from(children).forEach((char, i) => {
-        prevOffset += measureCharWidth(char, `bold 20px arial`);
-        fenceList.push({
-          isInVNode: true,
-          cursorOffset: prevOffset,
-          vNode: node,
-          textOffset: i,
-        });
+  walkTextNode(blockVNode, textNode => {
+    const { text, font } = textNode;
+    Array.from(text).forEach((char, i) => {
+      fenceList.push({
+        cursorOffset: prevOffset,
+        vNode: textNode,
+        textOffset: i,
       });
-    }
+      prevOffset += measureCharWidth(char, font);
+    });
   });
+
+  console.log(fenceList);
 
   return {
     lineHeight: height,

@@ -5,14 +5,20 @@ interface BasicNode {
   type: NodeType;
   tagName: TagName;
   props: VirtualNodeProps;
-  events: VirtualNodeEvents;
+  meta: VirtualNodeMetaData;
 
   el: HTMLElement | null;
 }
-export interface VirtualNode extends BasicNode {
-  children: VirtualNodeChildren | string;
-  meta: VirtualNodeMetaData;
+export interface SyntaxNode extends BasicNode {
+  isActive: boolean;
+  events: VirtualNodeEvents;
+  children: VirtualNodeChildren;
 }
+export interface TextNode extends BasicNode {
+  font: string;
+  text: string;
+}
+export type VirtualNode = SyntaxNode | TextNode;
 
 export type VirtualNodeProps = Partial<
   {

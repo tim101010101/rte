@@ -19,7 +19,7 @@
   border: 1px solid yellow;
 }
 
-.r-hide {
+/* .r-hide {
   display: inline-block;
 
   width: 0;
@@ -28,7 +28,7 @@
   font: 20px arial;
 
   overflow: hidden;
-}
+} */
 
 .r-grey {
   font: 20px arial;
@@ -39,7 +39,7 @@
 }
 
 .r-plain-text {
-  font: 20px arial;
+  font: bold 20px arial;
 }
 
 .r-cursor-test {

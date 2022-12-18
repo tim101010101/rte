@@ -1,4 +1,4 @@
-import { EditorConfig, VirtualNode } from 'lib/types';
+import { EditorConfig, SyntaxNode } from 'lib/types';
 import { getNearestIdx } from 'lib/utils';
 import { Block, EventName, Selection, LinkedList } from 'lib/model';
 
@@ -15,7 +15,7 @@ export class Page extends LinkedList<Block> {
     this.config = config;
   }
 
-  init(lines: Array<VirtualNode>) {
+  init(lines: Array<SyntaxNode>) {
     const { font } = this.config;
 
     lines.forEach(line => {

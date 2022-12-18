@@ -1,43 +1,48 @@
-import { VirtualNode } from 'lib/types';
+import { SyntaxNode, TextNode, VirtualNode } from 'lib/types';
+import { NodeType } from 'lib/static';
+import { set } from 'lib/utils';
 
-export const walkNode = (
+export const isTextNode = (vNode: VirtualNode): vNode is TextNode =>
+  !!(vNode.type & NodeType.PLAIN_TEXT);
+
+export const deepCloneWithTrackNode = (
   vNode: VirtualNode,
-  callback: (node: VirtualNode, parent: VirtualNode | null) => void
-) => {
-  let prevNode: VirtualNode | null = null;
-  const dfs = (cur: VirtualNode | null) => {
-    if (!cur) return;
+  target: VirtualNode
+): [VirtualNode, Array<number>] => {
+  const path: Array<number> = [];
+  let hasFound = false;
 
-    callback(cur, prevNode);
+  const dfs = (cur: VirtualNode) => {
+    if (!cur) return cur;
+    if (cur === target) hasFound = true;
 
-    const { children } = cur;
-    if (typeof children === 'string') {
-      return;
-    } else {
-      children.forEach(child => {
-        prevNode = cur;
-        dfs(child);
-        prevNode = child;
-      });
-    }
+    const newVNode = { ...cur };
+
+    set(
+      newVNode,
+      'children',
+      isTextNode(cur)
+        ? cur.text
+        : cur.children.reduce<Array<VirtualNode>>((res, child, i) => {
+            hasFound || path.unshift(i);
+            res.push(dfs(child));
+            hasFound || path.shift();
+            return res;
+          }, [])
+    );
+
+    return newVNode;
   };
 
-  dfs(vNode);
+  return [dfs(vNode), path];
 };
 
-// TODO
-export const textContent = (vNode: VirtualNode | string): string => {
-  if (typeof vNode === 'string') return vNode;
-
-  const { children } = vNode;
-  return typeof children === 'string'
-    ? children
-    : children.reduce<string>((res, cur) => res + textContent(cur), '');
-};
-
-export const isElementVisiable = (vNode: VirtualNode) => {
-  const { el } = vNode;
-  return el ? !el.classList.contains('r-hide') : false;
+export const textContent = (vNode: VirtualNode): string => {
+  if (isTextNode(vNode)) {
+    return vNode.text;
+  } else {
+    return vNode.children.reduce((res, cur) => res + textContent(cur), '');
+  }
 };
 
 export const posNode = (vNode: VirtualNode) => {
@@ -52,46 +57,34 @@ export const posNode = (vNode: VirtualNode) => {
   return res.shift()!;
 };
 
-export const walkVisiableNode = (
-  vNode: VirtualNode,
-  callback: (node: VirtualNode) => void
+export const walkTextNode = (
+  vNode: SyntaxNode,
+  callback: (textNode: TextNode) => void
 ) => {
-  const { children } = vNode;
-  if (typeof children === 'string') return;
-
   const nodeList = [...vNode.children];
   while (nodeList.length) {
     const node = nodeList.shift()!;
-
-    if (typeof node === 'string' || !isElementVisiable(node)) {
-      continue;
-    } else {
+    if (isTextNode(node)) {
       callback(node);
+    } else {
+      nodeList.unshift(...node.children);
     }
-
-    nodeList.unshift(...node.children);
   }
 };
 
-export const flatTreeToText = (vNode: VirtualNode) => {
+export const flatTreeToText = (vNode: SyntaxNode) => {
   const res: Array<string> = [];
-  walkVisiableNode(vNode, node => {
-    const { children } = node;
-    if (typeof children === 'string') {
-      res.push(children);
-    }
+  walkTextNode(vNode, textNode => {
+    res.push(textNode.text);
   });
   return res;
 };
 
-export const getVisiableTextRectList = (vNode: VirtualNode) => {
+export const getVisiableTextRectList = (vNode: SyntaxNode) => {
   const rectList: Array<DOMRect> = [];
-  walkVisiableNode(vNode, node => {
-    const { children } = node;
-    if (typeof children === 'string') {
-      const rect = posNode(node);
-      rect && rectList.push(rect);
-    }
+  walkTextNode(vNode, textNode => {
+    const rect = posNode(textNode);
+    rect && rectList.push(rect);
   });
 
   return rectList;

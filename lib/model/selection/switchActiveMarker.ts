@@ -1,65 +1,63 @@
-import { deepClone } from 'lib/utils';
-import { Block, walkNode } from 'lib/model';
-import { VirtualNode } from 'lib/types';
+import { SyntaxNode, TextNode, VirtualNode } from 'lib/types';
+import { NodeType, TagName } from 'lib/static';
+import { deepCloneWithTrackNode, isTextNode } from 'lib/model';
 
-export const activeNode = (target: VirtualNode, block: Block) => {
-  if (target?.props.classList?.includes('r-bold')) {
-    // TODO deep clone for this time being
-    const { vNode } = block;
-    const newVNode = deepClone(vNode!);
+const { SPAN } = TagName;
+const { PLAIN_TEXT, PREFIX, SUFFIX, BOLD } = NodeType;
 
-    walkNode(newVNode, (cur, parent) => {
-      if (parent && cur.el === target.el) {
-        const children = parent.children as Array<VirtualNode>;
-        const prefix = children.shift()!;
-        const suffix = children.pop()!;
-        children.unshift({
-          ...prefix,
-          props: {
-            classList: ['r-grey'],
-          },
-        });
-        children.push({
-          ...suffix,
-          props: {
-            classList: ['r-grey'],
-          },
-        });
-        parent.children = children;
-      }
-    });
-
-    block.patch(newVNode);
-  }
+const textNode = (text: string): TextNode => {
+  return {
+    type: PLAIN_TEXT,
+    tagName: SPAN,
+    props: {},
+    el: null,
+    meta: {},
+    font: '',
+    text,
+  };
 };
 
-export const cancelActiveNode = (target: VirtualNode, block: Block) => {
-  if (target?.props.classList?.includes('r-bold')) {
-    // TODO deep clone for this time being
-    const { vNode } = block;
-    const newVNode = deepClone(vNode!);
+const marker = (text: string, isPrefix: boolean): SyntaxNode => {
+  return {
+    type: isPrefix ? PREFIX : SUFFIX,
+    isActive: false,
+    tagName: SPAN,
+    props: {},
+    el: null,
+    meta: {},
+    events: [],
 
-    walkNode(newVNode, (cur, parent) => {
-      if (parent && cur.el === target.el) {
-        const children = parent.children as Array<VirtualNode>;
-        const prefix = children.shift()!;
-        const suffix = children.pop()!;
-        children.unshift({
-          ...prefix,
-          props: {
-            classList: ['r-hide'],
-          },
-        });
-        children.push({
-          ...suffix,
-          props: {
-            classList: ['r-hide'],
-          },
-        });
-        parent.children = children;
-      }
-    });
+    children: [textNode(text)],
+  };
+};
 
-    block.patch(newVNode);
+const switchActiveByPath = (root: VirtualNode, path: Array<number>) => {
+  let cur = root;
+  while (path.length !== 1) {
+    if (!isTextNode(cur)) {
+      cur = cur.children[path.pop()!];
+    }
   }
+
+  if (isTextNode(cur)) return root;
+
+  const { isActive } = cur;
+  if (isActive) {
+    cur.children.pop();
+    cur.children.shift();
+    cur.isActive = false;
+  } else {
+    const prefix = marker(cur.type & BOLD ? '**' : '*', true);
+    const suffix = marker(cur.type & BOLD ? '**' : '*', false);
+    cur.children.unshift(prefix);
+    cur.children.push(suffix);
+    cur.isActive = true;
+  }
+
+  return root;
+};
+
+export const switchActiveNode = (root: VirtualNode, target: VirtualNode) => {
+  const [newRoot, path] = deepCloneWithTrackNode(root, target);
+  return switchActiveByPath(newRoot, path);
 };

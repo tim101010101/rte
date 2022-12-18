@@ -1,6 +1,6 @@
-import { VirtualNode } from 'lib/types';
+import { SyntaxNode } from 'lib/types';
 
-export const serialize = (vNode: VirtualNode): string => {
+export const serialize = (vNode: SyntaxNode): string => {
   // TODO
   return '';
 };

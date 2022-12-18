@@ -1,48 +1,77 @@
-import { Token, VirtualNode, VirtualNodeChildren } from 'lib/types';
-import { h } from 'lib/model';
+import { Token, SyntaxNode, VirtualNodeChildren, VirtualNode } from 'lib/types';
+import { s, t } from 'lib/model';
 import { ClassName, NodeType, TagName } from 'lib/static';
 
 const { LINE, PLAIN_TEXT, PREFIX, SUFFIX, BOLD } = NodeType;
 const { DIV, SPAN, STRONG } = TagName;
-const { RTE_HIDE } = ClassName;
+const { RTE_HIDE, RTE_PLAIN_TEXT, RTE_LINE } = ClassName;
 
 const getInlineNode = (
   content: VirtualNode,
   marker: string
 ): Array<VirtualNode> => {
-  const prefix = h(
-    PLAIN_TEXT & PREFIX,
-    SPAN,
-    { classList: [RTE_HIDE] },
-    marker
-  );
-  const suffix = h(
-    PLAIN_TEXT & SUFFIX,
-    SPAN,
-    { classList: [RTE_HIDE] },
-    marker
-  );
+  const prefix = s(PREFIX, SPAN, { classList: [] }, [
+    t(
+      PLAIN_TEXT,
+      SPAN,
+      { classList: [RTE_PLAIN_TEXT] },
+      marker,
+      'bold 20px arial'
+    ),
+  ]);
+  const suffix = s(SUFFIX, SPAN, { classList: [] }, [
+    t(
+      PLAIN_TEXT,
+      SPAN,
+      { classList: [RTE_PLAIN_TEXT] },
+      marker,
+      'bold 20px arial'
+    ),
+  ]);
 
   return [prefix, content, suffix];
 };
 
-const getLineNode = (children: VirtualNodeChildren): VirtualNode => {
-  return h(LINE, DIV, { classList: ['r-line-test'] }, children);
+const getLineNode = (children: VirtualNodeChildren): SyntaxNode => {
+  return s(LINE, DIV, { classList: [RTE_LINE] }, children);
 };
 
-export const parser = (tokens: Array<Token>): VirtualNode => {
+export const parser = (tokens: Array<Token>): SyntaxNode => {
   const children = tokens.reduce((children, token) => {
     const { type, content } = token;
-    const stuff = {
-      type: type === 'bold' ? BOLD : PLAIN_TEXT,
-      tagName: type === 'bold' ? STRONG : SPAN,
-      props: { classList: type === 'bold' ? ['r-bold'] : ['r-plain-text'] },
+    let stuff: VirtualNode = {} as VirtualNode;
+    if (type === 'bold') {
+      stuff = {
+        type: BOLD,
+        tagName: STRONG,
+        props: { classList: ['r-bold'] },
+        events: [],
+        meta: {},
 
-      events: [],
+        children: [
+          t(
+            PLAIN_TEXT,
+            SPAN,
+            { classList: ['r-plain-text'] },
+            content,
+            'bold 20px arial'
+          ),
+        ],
+        el: null,
+        isActive: false,
+      };
+    } else if (type === 'plain-text') {
+      stuff = {
+        type: PLAIN_TEXT,
+        tagName: SPAN,
+        props: { classList: ['r-plain-text'] },
+        meta: {},
 
-      children: content,
-      el: null,
-    };
+        text: content,
+        font: 'bold 20px arial',
+        el: null,
+      };
+    }
 
     if (type === 'bold') {
       children.push(...getInlineNode(stuff, '**'));

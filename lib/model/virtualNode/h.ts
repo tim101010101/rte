@@ -1,48 +1,88 @@
 import { NodeType, TagName } from 'lib/static';
 import {
-  VirtualNode,
+  TextNode,
+  SyntaxNode,
   VirtualNodeChildren,
   VirtualNodeEvents,
   VirtualNodeMetaData,
   VirtualNodeProps,
 } from 'lib/types';
 
-export function h(type: NodeType, tagName: TagName): VirtualNode;
-export function h(
+export function t(type: NodeType, tagName: TagName): TextNode;
+export function t(
   type: NodeType,
   tagName: TagName,
   props: VirtualNodeProps
-): VirtualNode;
-export function h(
+): TextNode;
+export function t(
   type: NodeType,
   tagName: TagName,
   props: VirtualNodeProps,
-  children: VirtualNodeChildren | string
-): VirtualNode;
-export function h(
+  text: string
+): TextNode;
+export function t(
   type: NodeType,
   tagName: TagName,
   props: VirtualNodeProps,
-  children: VirtualNodeChildren | string,
-  events: VirtualNodeEvents
-): VirtualNode;
-export function h(
+  text: string,
+  font: string
+): TextNode;
+export function t(
   type: NodeType,
   tagName: TagName,
   props: VirtualNodeProps = {},
-  children: VirtualNodeChildren | string = [],
+  text: string = '',
+  font: string = '',
+  meta: VirtualNodeMetaData = {}
+): TextNode {
+  return {
+    type,
+    tagName,
+    props,
+    text,
+    meta,
+    font,
+
+    el: null,
+  };
+}
+
+export function s(type: NodeType, tagName: TagName): SyntaxNode;
+export function s(
+  type: NodeType,
+  tagName: TagName,
+  props: VirtualNodeProps
+): SyntaxNode;
+export function s(
+  type: NodeType,
+  tagName: TagName,
+  props: VirtualNodeProps,
+  children: VirtualNodeChildren
+): SyntaxNode;
+export function s(
+  type: NodeType,
+  tagName: TagName,
+  props: VirtualNodeProps,
+  children: VirtualNodeChildren,
+  events: VirtualNodeEvents
+): SyntaxNode;
+export function s(
+  type: NodeType,
+  tagName: TagName,
+  props: VirtualNodeProps = {},
+  children: VirtualNodeChildren = [],
   events: VirtualNodeEvents = [],
   meta: VirtualNodeMetaData = {}
-): VirtualNode {
+): SyntaxNode {
   return {
     type,
     tagName,
     props,
     children,
-
     events,
-    el: null,
-
     meta,
+
+    el: null,
+    isActive: false,
   };
 }
