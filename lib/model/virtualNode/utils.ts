@@ -2,8 +2,26 @@ import { SyntaxNode, TextNode, VirtualNode } from 'lib/types';
 import { NodeType } from 'lib/static';
 import { set } from 'lib/utils';
 
+const { PLAIN_TEXT, PREFIX, SUFFIX } = NodeType;
+
+export const isTheseTypes = (
+  vNode: VirtualNode,
+  ...types: NodeType[]
+): boolean => {
+  return !!types.reduce((res, cur) => res && !!(vNode.type & cur), true);
+};
+
 export const isTextNode = (vNode: VirtualNode): vNode is TextNode =>
-  !!(vNode.type & NodeType.PLAIN_TEXT);
+  !!(vNode.type & PLAIN_TEXT);
+
+export const isPureTextNode = (vNode: VirtualNode): vNode is TextNode =>
+  vNode.type === PLAIN_TEXT;
+
+export const isMarkerTextNode = (vNode: VirtualNode): vNode is TextNode =>
+  isTheseTypes(vNode, PLAIN_TEXT, PREFIX) ||
+  isTheseTypes(vNode, PLAIN_TEXT, SUFFIX);
+
+export const isActive = (vNode: VirtualNode) => vNode.isActive;
 
 export const deepCloneWithTrackNode = (
   vNode: VirtualNode,
@@ -72,7 +90,7 @@ export const walkTextNode = (
   }
 };
 
-export const flatTreeToText = (vNode: SyntaxNode) => {
+export const getTextList = (vNode: SyntaxNode) => {
   const res: Array<string> = [];
   walkTextNode(vNode, textNode => {
     res.push(textNode.text);
@@ -80,7 +98,7 @@ export const flatTreeToText = (vNode: SyntaxNode) => {
   return res;
 };
 
-export const getVisiableTextRectList = (vNode: SyntaxNode) => {
+export const getTextRectList = (vNode: SyntaxNode) => {
   const rectList: Array<DOMRect> = [];
   walkTextNode(vNode, textNode => {
     const rect = posNode(textNode);
@@ -88,4 +106,14 @@ export const getVisiableTextRectList = (vNode: SyntaxNode) => {
   });
 
   return rectList;
+};
+
+export const getParent = (root: VirtualNode, path: Array<number>) => {
+  let cur = root;
+  while (path.length !== 1) {
+    if (!isTextNode(cur)) {
+      cur = cur.children[path.pop()!] as SyntaxNode;
+    }
+  }
+  return cur;
 };

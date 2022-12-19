@@ -48,6 +48,12 @@ export class Page extends LinkedList<Block> {
         case 'ArrowDown':
           this.selection.down();
           break;
+
+        // TODO
+        case 'Tab':
+          window.focus();
+          this.setFocus(this.head!, 0);
+          break;
       }
     });
   }

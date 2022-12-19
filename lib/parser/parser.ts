@@ -29,7 +29,8 @@ const getInlineNode = (
     ),
   ]);
 
-  return [prefix, content, suffix];
+  // return [prefix, content, suffix];
+  return [content];
 };
 
 const getLineNode = (children: VirtualNodeChildren): SyntaxNode => {
@@ -50,7 +51,7 @@ export const parser = (tokens: Array<Token>): SyntaxNode => {
 
         children: [
           t(
-            PLAIN_TEXT,
+            PLAIN_TEXT | BOLD,
             SPAN,
             { classList: ['r-plain-text'] },
             content,

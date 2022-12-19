@@ -1,16 +1,11 @@
 import { SyntaxNode, VirtualNode } from 'lib/types';
 import { measureCharWidth, panicAt } from 'lib/utils';
-import {
-  flatTreeToText,
-  getVisiableTextRectList,
-  posNode,
-  walkTextNode,
-} from 'lib/model';
+import { getTextList, getTextRectList, posNode, walkTextNode } from 'lib/model';
 
 interface FenceItem {
   cursorOffset: number;
-  vNode?: VirtualNode;
-  textOffset?: number;
+  vNode: VirtualNode;
+  textOffset: number;
 }
 export interface Fence {
   lineHeight: number;
@@ -20,11 +15,8 @@ export interface Fence {
 }
 
 export const calcFence = (blockVNode: SyntaxNode): Fence => {
-  const textList = flatTreeToText(blockVNode);
-  const rectList = getVisiableTextRectList(blockVNode);
-
-  console.log(textList);
-  console.log(rectList);
+  const textList = getTextList(blockVNode);
+  const rectList = getTextRectList(blockVNode);
 
   if (!textList.length || !rectList.length) {
     // TODO
@@ -35,8 +27,6 @@ export const calcFence = (blockVNode: SyntaxNode): Fence => {
   const fenceList: Array<FenceItem> = [];
   let prevOffset = left;
 
-  // **hello world**
-  // 11
   walkTextNode(blockVNode, textNode => {
     const { text, font } = textNode;
     Array.from(text).forEach((char, i) => {
@@ -49,7 +39,12 @@ export const calcFence = (blockVNode: SyntaxNode): Fence => {
     });
   });
 
-  console.log(fenceList);
+  const { vNode, textOffset } = fenceList[fenceList.length - 1];
+  fenceList.push({
+    cursorOffset: prevOffset,
+    vNode: vNode,
+    textOffset: textOffset + 1,
+  });
 
   return {
     lineHeight: height,

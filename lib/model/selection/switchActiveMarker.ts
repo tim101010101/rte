@@ -1,23 +1,25 @@
-import { SyntaxNode, TextNode, VirtualNode } from 'lib/types';
+import { SetterFunction, SyntaxNode, TextNode, VirtualNode } from 'lib/types';
 import { NodeType, TagName } from 'lib/static';
-import { deepCloneWithTrackNode, isTextNode } from 'lib/model';
+import {
+  Block,
+  deepCloneWithTrackNode,
+  getParent,
+  isActive,
+  isMarkerTextNode,
+  isPureTextNode,
+  isTextNode,
+  textContent,
+} from 'lib/model';
+import { get, has } from 'lib/utils';
 
 const { SPAN } = TagName;
 const { PLAIN_TEXT, PREFIX, SUFFIX, BOLD } = NodeType;
 
-const textNode = (text: string): TextNode => {
-  return {
-    type: PLAIN_TEXT,
-    tagName: SPAN,
-    props: {},
-    el: null,
-    meta: {},
-    font: '',
-    text,
-  };
-};
-
-const marker = (text: string, isPrefix: boolean): SyntaxNode => {
+const marker = (
+  text: string,
+  isPrefix: boolean,
+  path: Array<number>
+): SyntaxNode => {
   return {
     type: isPrefix ? PREFIX : SUFFIX,
     isActive: false,
@@ -27,37 +29,116 @@ const marker = (text: string, isPrefix: boolean): SyntaxNode => {
     meta: {},
     events: [],
 
-    children: [textNode(text)],
+    children: [
+      {
+        type: PLAIN_TEXT | (isPrefix ? PREFIX : SUFFIX),
+        tagName: SPAN,
+        props: {},
+        el: null,
+        meta: { path },
+        font: '',
+        isActive: false,
+        text,
+      },
+    ],
   };
 };
 
-const switchActiveByPath = (root: VirtualNode, path: Array<number>) => {
-  let cur = root;
-  while (path.length !== 1) {
-    if (!isTextNode(cur)) {
-      cur = cur.children[path.pop()!];
-    }
+export const tryActiveNode = (
+  activeBlock: Block,
+  target: VirtualNode,
+  textOffset: number
+): SetterFunction<number> | null => {
+  const textLength = textContent(target).length;
+
+  // active target
+  if (
+    !isActive(target) &&
+    !isPureTextNode(target) &&
+    !isMarkerTextNode(target) &&
+    (textOffset === 0 || textOffset === textLength)
+  ) {
+    const newVNode = switchActiveNode(activeBlock.vNode!, target);
+    activeBlock.patch(newVNode);
+    return v => v + 2;
   }
 
-  if (isTextNode(cur)) return root;
+  // cancel active
+  else if (
+    isMarkerTextNode(target) &&
+    (textOffset === 0 || textOffset === textLength)
+  ) {
+    const newVNode = switchActiveNode(activeBlock.vNode!, target);
+    activeBlock.patch(newVNode);
+    console.log(target);
+
+    if (target.type & NodeType.PREFIX) {
+      console.log('prefix');
+      return v => v;
+    } else if (target.type & NodeType.SUFFIX) {
+      console.log('suffix');
+      return v => v - 4;
+    }
+
+    return v => v;
+  }
+
+  // cancel active
+  else if (
+    isActive(target) &&
+    !isPureTextNode(target) &&
+    !isMarkerTextNode(target) &&
+    (textOffset === 1 || textOffset === textLength - 1)
+  ) {
+    const newVNode = switchActiveNode(activeBlock.vNode!, target);
+    activeBlock.patch(newVNode);
+    return v => v - 2;
+  }
+
+  return null;
+};
+
+const switchActiveNode = (root: VirtualNode, target: VirtualNode) => {
+  // TODO focus on the marker node
+
+  if (isMarkerTextNode(target) && has(target.meta, 'path')) {
+    const [newRoot, _] = deepCloneWithTrackNode(root, target);
+    const path = get(target.meta, 'path');
+
+    return (
+      path.length === 1 ? newRoot : switchActiveByPath(newRoot, path)
+    ) as SyntaxNode;
+  }
+
+  const [newRoot, path] = deepCloneWithTrackNode(root, target);
+  return (
+    path.length === 1 ? newRoot : switchActiveByPath(newRoot, path)
+  ) as SyntaxNode;
+};
+
+const switchActiveByPath = (root: VirtualNode, path: Array<number>) => {
+  if (isTextNode(root)) return root;
+
+  let cur = root;
+  let clonePath = [...path];
+  while (clonePath.length !== 1) {
+    cur = cur.children[clonePath.pop()!] as SyntaxNode;
+  }
 
   const { isActive } = cur;
   if (isActive) {
+    cur.isActive = false;
+    cur.children[clonePath.pop()!].isActive = false;
     cur.children.pop();
     cur.children.shift();
-    cur.isActive = false;
   } else {
-    const prefix = marker(cur.type & BOLD ? '**' : '*', true);
-    const suffix = marker(cur.type & BOLD ? '**' : '*', false);
+    cur.isActive = true;
+    cur.children[clonePath.pop()!].isActive = true;
+    const prefix = marker(cur.type & BOLD ? '**' : '*', true, [...path]);
+    const suffix = marker(cur.type & BOLD ? '**' : '*', false, [...path]);
     cur.children.unshift(prefix);
     cur.children.push(suffix);
-    cur.isActive = true;
   }
 
   return root;
-};
-
-export const switchActiveNode = (root: VirtualNode, target: VirtualNode) => {
-  const [newRoot, path] = deepCloneWithTrackNode(root, target);
-  return switchActiveByPath(newRoot, path);
 };

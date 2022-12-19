@@ -1,7 +1,7 @@
-import { appendChild, createDomNode } from 'lib/utils';
-import { Block, textContent } from 'lib/model';
-import { switchActiveNode } from './switchActiveMarker';
-import { SyntaxNode } from 'lib/types';
+import { appendChild, createDomNode, isNumber } from 'lib/utils';
+import { Block, isPureTextNode } from 'lib/model';
+import { tryActiveNode } from './switchActiveMarker';
+import { SetterFunction, TextNode } from 'lib/types';
 
 export class Selection {
   private el: HTMLElement;
@@ -16,6 +16,14 @@ export class Selection {
     this.activePath = null;
 
     appendChild(container, this.el);
+  }
+
+  private setFenceOffset(offset: number | SetterFunction<number>) {
+    if (isNumber(offset)) {
+      this.fenceOffset = offset;
+    } else {
+      this.fenceOffset = offset(this.fenceOffset!);
+    }
   }
 
   private get fence() {
@@ -38,29 +46,19 @@ export class Selection {
     this.activeBlock = activeBlock;
     this.fenceOffset = fenceOffset;
 
-    // TODO patch when focus on the edge of syntax nodes
-
-    const { vNode: target, textOffset } = this.fence.fenceList[fenceOffset];
-
-    console.log(textOffset);
-
-    // TODO when switch the active of the marker node
-    // if (textOffset === 0 || textOffset === textContent(target!).length - 1) {
-    //   const newVNode = switchActiveNode(activeBlock.vNode!, target!);
-    //   activeBlock.patch(newVNode as SyntaxNode);
-    //   this.fenceOffset += 2;
-    // } else if (this.isActiveMaker) {
-    //   const newVNode = switchActiveNode(activeBlock.vNode!, target!);
-    //   activeBlock.patch(newVNode as SyntaxNode);
-    //   this.fenceOffset -= 2;
-    // }
+    // try to active syntax node, expect of Pure Plain-Text Node
+    const { vNode, textOffset } = this.fence.fenceList[fenceOffset];
+    if (!isPureTextNode(vNode)) {
+      const fenceOffsetSetter = tryActiveNode(activeBlock, vNode, textOffset);
+      fenceOffsetSetter && this.setFenceOffset(fenceOffsetSetter);
+    }
 
     // move cursor
-
     const { fenceList, lineHeight, y } = this.fence;
     const { cursorOffset: curOffset } = fenceList[this.fenceOffset];
     // const { cursorOffset: nextOffset } = fenceList[fenceOffset + 1];
 
+    // re-render the cursor
     this.setShape(2, lineHeight, curOffset, y);
   }
 

@@ -1,4 +1,9 @@
-import { isPureTextNode, isTextNode, isTheseTypes } from '../utils';
+import {
+  isMarkerTextNode,
+  isPureTextNode,
+  isTextNode,
+  isTheseTypes,
+} from '../utils';
 import { NodeType, TagName } from '../../../static';
 
 const { PLAIN_TEXT, BOLD, PREFIX, SUFFIX } = NodeType;
@@ -55,5 +60,13 @@ describe('utils', () => {
     expect(
       isTheseTypes(t(PLAIN_TEXT | BOLD | PREFIX | SUFFIX), BOLD, PREFIX, SUFFIX)
     ).toBeTruthy();
+  });
+
+  test('isMarkerTextNode', () => {
+    expect(isMarkerTextNode(t(PLAIN_TEXT))).toBeFalsy();
+    expect(isMarkerTextNode(t(PLAIN_TEXT | BOLD))).toBeFalsy();
+    expect(isMarkerTextNode(t(PLAIN_TEXT | PREFIX))).toBeTruthy();
+    expect(isMarkerTextNode(t(PLAIN_TEXT | SUFFIX))).toBeTruthy();
+    expect(isMarkerTextNode(t(PLAIN_TEXT | PREFIX | SUFFIX))).toBeTruthy();
   });
 });

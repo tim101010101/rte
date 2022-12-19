@@ -1,3 +1,5 @@
+export const has = (o: object, k: PropertyKey) => Reflect.has(o, k);
+
 export const get = (o: object, k: PropertyKey) => Reflect.get(o, k);
 
 export const set = (o: object, k: PropertyKey, v: any) => Reflect.set(o, k, v);

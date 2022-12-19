@@ -1,4 +1,4 @@
-import { NodeType, TagName } from 'lib/static';
+import { NodeType, NOT_ACTIVE, TagName } from 'lib/static';
 import {
   TextNode,
   SyntaxNode,
@@ -36,7 +36,7 @@ export function t(
   meta: VirtualNodeMetaData = {}
 ): TextNode {
   return {
-    type,
+    type: type,
     tagName,
     props,
     text,
@@ -44,6 +44,7 @@ export function t(
     font,
 
     el: null,
+    isActive: false,
   };
 }
 
