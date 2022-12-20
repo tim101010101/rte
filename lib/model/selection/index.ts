@@ -1,7 +1,12 @@
 import { appendChild, createDomNode, isNumber } from 'lib/utils';
-import { Block, isPureTextNode } from 'lib/model';
-import { tryActiveNode } from './switchActiveMarker';
-import { SetterFunction, TextNode } from 'lib/types';
+import {
+  Block,
+  deepCloneWithTrackNode,
+  getAncestor,
+  isPureTextNode,
+} from 'lib/model';
+import { SetterFunction, SyntaxNode, TextNode, VirtualNode } from 'lib/types';
+import { activeSubTree, cancelActiveSubTree } from './switchActiveMarker';
 
 export class Selection {
   private el: HTMLElement;
@@ -37,6 +42,24 @@ export class Selection {
     this.el.style.top = `${top}px`;
   }
 
+  private trySwitchActiveSyntaxNode(target: VirtualNode) {
+    const [newRoot, path] = deepCloneWithTrackNode(
+      this.activeBlock!.vNode!,
+      target
+    );
+
+    if (this.activePath && this.activePath[0] !== path[0]) {
+      const ancestor = getAncestor(newRoot, this.activePath);
+      cancelActiveSubTree(ancestor);
+      this.activePath = null;
+      this.activeBlock?.patch(newRoot as SyntaxNode);
+    } else if (!isPureTextNode(target)) {
+      activeSubTree(getAncestor(newRoot, path));
+      this.activePath = path;
+      this.activeBlock?.patch(newRoot as SyntaxNode);
+    }
+  }
+
   focusOn(activeBlock = this.activeBlock, fenceOffset = this.fenceOffset) {
     if (activeBlock === null || fenceOffset === null) return;
     if (!this.activeBlock) {
@@ -48,10 +71,7 @@ export class Selection {
 
     // try to active syntax node, expect of Pure Plain-Text Node
     const { vNode, textOffset } = this.fence.fenceList[fenceOffset];
-    if (!isPureTextNode(vNode)) {
-      const fenceOffsetSetter = tryActiveNode(activeBlock, vNode, textOffset);
-      fenceOffsetSetter && this.setFenceOffset(fenceOffsetSetter);
-    }
+    this.trySwitchActiveSyntaxNode(vNode);
 
     // move cursor
     const { fenceList, lineHeight, y } = this.fence;

@@ -21,8 +21,6 @@ export const isMarkerTextNode = (vNode: VirtualNode): vNode is TextNode =>
   isTheseTypes(vNode, PLAIN_TEXT, PREFIX) ||
   isTheseTypes(vNode, PLAIN_TEXT, SUFFIX);
 
-export const isActive = (vNode: VirtualNode) => vNode.isActive;
-
 export const deepCloneWithTrackNode = (
   vNode: VirtualNode,
   target: VirtualNode
@@ -42,9 +40,9 @@ export const deepCloneWithTrackNode = (
       isTextNode(cur)
         ? cur.text
         : cur.children.reduce<Array<VirtualNode>>((res, child, i) => {
-            hasFound || path.unshift(i);
+            hasFound || path.push(i);
             res.push(dfs(child));
-            hasFound || path.shift();
+            hasFound || path.pop();
             return res;
           }, [])
     );
@@ -116,4 +114,9 @@ export const getParent = (root: VirtualNode, path: Array<number>) => {
     }
   }
   return cur;
+};
+
+export const getAncestor = (root: VirtualNode, path: Array<number>) => {
+  if (isTextNode(root)) return root;
+  return root.children[path[0]] as SyntaxNode;
 };

@@ -15,7 +15,6 @@ export interface SyntaxNode extends BasicNode {
   children: VirtualNodeChildren;
 }
 export interface TextNode extends BasicNode {
-  isActive: boolean;
   font: string;
   text: string;
 }

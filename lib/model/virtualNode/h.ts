@@ -1,4 +1,4 @@
-import { NodeType, NOT_ACTIVE, TagName } from 'lib/static';
+import { NodeType, TagName } from 'lib/static';
 import {
   TextNode,
   SyntaxNode,
@@ -44,7 +44,6 @@ export function t(
     font,
 
     el: null,
-    isActive: false,
   };
 }
 
