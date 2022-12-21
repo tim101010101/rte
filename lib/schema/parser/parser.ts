@@ -51,7 +51,7 @@ export const parser = (tokens: Array<Token>): SyntaxNode => {
 
         children: [
           t(
-            PLAIN_TEXT | BOLD,
+            PLAIN_TEXT,
             SPAN,
             { classList: ['r-plain-text'] },
             content,

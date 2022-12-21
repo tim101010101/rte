@@ -1,7 +1,7 @@
 import { patch } from 'lib/render';
 import { SyntaxNode, VirtualNode } from 'lib/types';
 import { posNode } from 'lib/model';
-import { ListNode } from 'lib/model/virtualNode';
+import { isTextNode, ListNode } from 'lib/model/virtualNode';
 
 // TODO bug here
 // TODO Cannot access 'ListNode' before initialization
@@ -10,8 +10,8 @@ import { ListNode } from 'lib/model/virtualNode';
 import { calcFence, Fence } from './fence';
 
 export class Block extends ListNode {
-  private container: HTMLElement;
   vNode: SyntaxNode | null;
+  private container: HTMLElement;
   private _fence: Fence | null;
 
   constructor(container: HTMLElement, font: string) {
@@ -29,7 +29,9 @@ export class Block extends ListNode {
     this._fence = fence;
   }
 
-  patch(newVNode: SyntaxNode) {
+  patch(newVNode: VirtualNode) {
+    if (isTextNode(newVNode)) return;
+
     patch(this.vNode, newVNode, this.container);
 
     this.fence = calcFence(newVNode);

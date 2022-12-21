@@ -21,6 +21,11 @@ export const isMarkerTextNode = (vNode: VirtualNode): vNode is TextNode =>
   isTheseTypes(vNode, PLAIN_TEXT, PREFIX) ||
   isTheseTypes(vNode, PLAIN_TEXT, SUFFIX);
 
+export const isPureTextAncestor = (root: VirtualNode, path: Array<number>) => {
+  if (isTextNode(root)) return true;
+  return !!(root.children[path[0]].type & PLAIN_TEXT);
+};
+
 export const deepCloneWithTrackNode = (
   vNode: VirtualNode,
   target: VirtualNode

@@ -3,10 +3,11 @@ import {
   Block,
   deepCloneWithTrackNode,
   getAncestor,
-  isPureTextNode,
+  isPureTextAncestor,
 } from 'lib/model';
-import { SetterFunction, SyntaxNode, TextNode, VirtualNode } from 'lib/types';
+import { SetterFunction, VirtualNode } from 'lib/types';
 import { activeSubTree, cancelActiveSubTree } from './switchActiveMarker';
+import { ClassName, TagName } from 'lib/static';
 
 export class Selection {
   private el: HTMLElement;
@@ -15,7 +16,7 @@ export class Selection {
   private fenceOffset: number | null;
 
   constructor(container: HTMLElement) {
-    this.el = createDomNode('span', ['r-cursor-test']);
+    this.el = createDomNode(TagName.SPAN, [ClassName.RTE_CURSOR]);
     this.activeBlock = null;
     this.fenceOffset = null;
     this.activePath = null;
@@ -43,21 +44,27 @@ export class Selection {
   }
 
   private trySwitchActiveSyntaxNode(target: VirtualNode) {
+    let needPatch = false;
     const [newRoot, path] = deepCloneWithTrackNode(
       this.activeBlock!.vNode!,
       target
     );
 
     if (this.activePath && this.activePath[0] !== path[0]) {
-      const ancestor = getAncestor(newRoot, this.activePath);
-      cancelActiveSubTree(ancestor);
+      cancelActiveSubTree(getAncestor(newRoot, this.activePath));
       this.activePath = null;
-      this.activeBlock?.patch(newRoot as SyntaxNode);
-    } else if (!isPureTextNode(target)) {
+      needPatch = true;
+
+      // TODO move cursor left
+    }
+
+    if (!this.activePath && !isPureTextAncestor(newRoot, path)) {
       activeSubTree(getAncestor(newRoot, path));
       this.activePath = path;
-      this.activeBlock?.patch(newRoot as SyntaxNode);
+      needPatch = true;
     }
+
+    needPatch && this.activeBlock?.patch(newRoot);
   }
 
   focusOn(activeBlock = this.activeBlock, fenceOffset = this.fenceOffset) {
