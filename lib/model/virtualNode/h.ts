@@ -36,7 +36,7 @@ export function t(
   meta: VirtualNodeMetaData = {}
 ): TextNode {
   return {
-    type: type,
+    type,
     tagName,
     props,
     text,
