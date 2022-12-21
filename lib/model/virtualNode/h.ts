@@ -8,27 +8,20 @@ import {
   VirtualNodeProps,
 } from 'lib/types';
 
-export function t(type: NodeType, tagName: TagName): TextNode;
+export function t(tagName: TagName): TextNode;
+export function t(tagName: TagName, props: VirtualNodeProps): TextNode;
 export function t(
-  type: NodeType,
-  tagName: TagName,
-  props: VirtualNodeProps
-): TextNode;
-export function t(
-  type: NodeType,
   tagName: TagName,
   props: VirtualNodeProps,
   text: string
 ): TextNode;
 export function t(
-  type: NodeType,
   tagName: TagName,
   props: VirtualNodeProps,
   text: string,
   font: string
 ): TextNode;
 export function t(
-  type: NodeType,
   tagName: TagName,
   props: VirtualNodeProps = {},
   text: string = '',
@@ -36,7 +29,7 @@ export function t(
   meta: VirtualNodeMetaData = {}
 ): TextNode {
   return {
-    type,
+    type: NodeType.PLAIN_TEXT,
     tagName,
     props,
     text,

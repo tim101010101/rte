@@ -11,22 +11,10 @@ const getInlineNode = (
   marker: string
 ): Array<VirtualNode> => {
   const prefix = s(PREFIX, SPAN, { classList: [] }, [
-    t(
-      PLAIN_TEXT,
-      SPAN,
-      { classList: [RTE_PLAIN_TEXT] },
-      marker,
-      'bold 20px arial'
-    ),
+    t(SPAN, { classList: [RTE_PLAIN_TEXT] }, marker, 'bold 20px arial'),
   ]);
   const suffix = s(SUFFIX, SPAN, { classList: [] }, [
-    t(
-      PLAIN_TEXT,
-      SPAN,
-      { classList: [RTE_PLAIN_TEXT] },
-      marker,
-      'bold 20px arial'
-    ),
+    t(SPAN, { classList: [RTE_PLAIN_TEXT] }, marker, 'bold 20px arial'),
   ]);
 
   // return [prefix, content, suffix];
@@ -50,13 +38,7 @@ export const parser = (tokens: Array<Token>): SyntaxNode => {
         meta: {},
 
         children: [
-          t(
-            PLAIN_TEXT,
-            SPAN,
-            { classList: ['r-plain-text'] },
-            content,
-            'bold 20px arial'
-          ),
+          t(SPAN, { classList: ['r-plain-text'] }, content, 'bold 20px arial'),
         ],
         el: null,
         isActive: false,
