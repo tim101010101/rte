@@ -1,5 +1,5 @@
 import { Page } from './model';
-import { lexer, parser } from './parser';
+import { lexer, parser } from 'lib/schema/parser';
 import { EditorConfig } from './types';
 
 export class Editor {
