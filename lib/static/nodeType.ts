@@ -5,4 +5,5 @@ export enum NodeType {
   EM = 1 << 3,
   PREFIX = 1 << 4,
   SUFFIX = 1 << 5,
+  HEADING = 1 << 6,
 }

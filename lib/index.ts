@@ -1,6 +1,8 @@
 import { Page } from './model';
-import { lexer, parser } from 'lib/schema/parser';
+import { lexer, parser } from 'lib';
 import { EditorConfig } from './types';
+import { Schema } from 'lib/schema';
+import { demoConfig } from 'lib/schema/data';
 
 export class Editor {
   private options: any;
@@ -16,5 +18,8 @@ export class Editor {
 
   init(text: string) {
     this.page.init(text.split('\n').map(lineText => parser(lexer(lineText))));
+
+    const schema = new Schema(demoConfig);
+    schema.parse(text);
   }
 }
