@@ -8,6 +8,8 @@ export const keys = (o: object) => Reflect.ownKeys(o);
 
 export const entries = (o: object) => Object.entries(o);
 
+export const values = (o: object) => Object.values(o);
+
 export const deepClone = <T extends Object | Function | Array<any>>(
   source: T
 ): T => {
