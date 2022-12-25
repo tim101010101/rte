@@ -14,6 +14,7 @@ const marker = (text: string, isPrefix: boolean): SyntaxNode => {
     el: null,
     meta: {},
     events: [],
+    marker: {},
 
     children: [
       {

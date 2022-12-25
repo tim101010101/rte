@@ -1,4 +1,4 @@
-import { lexer } from 'lib';
+import { lexer } from 'lib/schema';
 
 export const inputHandler = (e: KeyboardEvent) => {
   const text = (e.target as any).innerText;

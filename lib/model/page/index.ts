@@ -1,6 +1,7 @@
 import { EditorConfig, SyntaxNode } from 'lib/types';
 import { getNearestIdx } from 'lib/utils';
-import { Block, EventName, Selection, LinkedList } from 'lib/model';
+import { Block, EventName, Selection } from 'lib/model';
+import { LinkedList } from 'lib/model/virtualNode/base/linkedList';
 
 export class Page extends LinkedList<Block> {
   private container: HTMLElement;

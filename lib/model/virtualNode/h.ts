@@ -6,6 +6,7 @@ import {
   VirtualNodeEvents,
   VirtualNodeMetaData,
   VirtualNodeProps,
+  VirtualNodeMarker,
 } from 'lib/types';
 
 export function t(tagName: TagName): TextNode;
@@ -62,9 +63,18 @@ export function s(
 export function s(
   type: NodeType,
   tagName: TagName,
+  props: VirtualNodeProps,
+  children: VirtualNodeChildren,
+  events: VirtualNodeEvents,
+  marker: VirtualNodeMarker
+): SyntaxNode;
+export function s(
+  type: NodeType,
+  tagName: TagName,
   props: VirtualNodeProps = {},
   children: VirtualNodeChildren = [],
   events: VirtualNodeEvents = [],
+  marker: VirtualNodeMarker = {},
   meta: VirtualNodeMetaData = {}
 ): SyntaxNode {
   return {
@@ -73,6 +83,7 @@ export function s(
     props,
     children,
     events,
+    marker,
     meta,
 
     el: null,
