@@ -11,30 +11,34 @@ export const config: SchemaConfig = {
   block: {},
   inline: {
     bold: {
-      // reg: /^(\*\*|__)(?=\S)([\s\S]+?)(\\*)\1(?!(\*|_))/,
-      reg: /^(?<prefix>\*\*|__)(?=\S)(?<content>[\s\S]+?)(\\*)\k<prefix>(?!(\*|_))/,
-      render(matched, children) {
-        const vNode = s(BOLD, SPAN, children);
-        const { prefix } = matched.groups!;
-        vNode.marker.prefix = prefix;
-        vNode.marker.suffix = prefix;
-        return vNode;
+      reg: /(?<prefix>\*\*|__)(?=\S)(?<content>[\s\S]+?)(\\*)\k<prefix>(?!(\*|_))/,
+      render(groups, children) {
+        const { prefix } = groups;
+        return s(BOLD, SPAN, {}, children, [], {
+          prefix,
+          suffix: prefix,
+        });
       },
     },
     italic: {
-      // reg: /(\*|_)(?=\S)([\s\S]+?)(\\*)\1(?!\1)/,
       reg: /(?<prefix>\*|_)(?=\S)(?<content>[\s\S]+?)(\\*)\k<prefix>(?!\k<prefix>)/,
-      render(matched, children) {
-        const vNode = s(EM, SPAN, children);
-        const { prefix } = matched.groups!;
-        vNode.marker.prefix = prefix;
-        vNode.marker.suffix = prefix;
-        return vNode;
+      render(groups, children) {
+        const { prefix } = groups;
+        return s(EM, SPAN, {}, children, [], {
+          prefix,
+          suffix: prefix,
+        });
       },
     },
-    inlineCode: {
-      reg: /(`{1})([^`]+?|.{2,})\1/,
-      render(matched, children) {},
-    },
+    // inlineCode: {
+    //   reg: /(`{1})([^`]+?|.{2,})\1/,
+    //   render(groups, children) {
+    //     const { prefix } = groups;
+    //     return s(EM, SPAN, {}, children, [], {
+    //       prefix,
+    //       suffix: prefix,
+    //     });
+    //   },
+    // },
   },
 };

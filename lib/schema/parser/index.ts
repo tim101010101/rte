@@ -1,81 +1,62 @@
-const inline = {
-  bold: {
-    reg: /^(\*\*|__)(?=\S)([\s\S]+?)(\\*)\1(?!(\*|_))/,
-    type: 'bold',
-  },
-  italic: {
-    reg: /(\*|_)(?=\S)([\s\S]+?)(\\*)\1(?!\1)/,
-    type: 'italic',
-  },
-  inlineCode: {
-    reg: /(`{1})([^`]+?|.{2,})\1/,
-    type: 'inline-code',
-  },
-};
-const config = {
-  line: {},
-  block: {},
-  inline,
-};
+import { values } from 'lib/utils';
+import {
+  SchemaConfig,
+  SchemaConfigItem,
+  SchemaConfigRenderFunction,
+  TextNode,
+  VirtualNodeChildren,
+} from 'lib/types';
+import { t } from 'lib/model';
+import { TagName, ClassName } from 'lib/static';
 
-const findFirstMatched = (src, regPairs) => {
+const { SPAN } = TagName;
+const { RTE_PLAIN_TEXT } = ClassName;
+
+const findFirstMatched = (
+  src: string,
+  schemaConfigs: Array<SchemaConfigItem>
+) => {
   let firstIndex = src.length;
 
-  const res = regPairs.reduce((res, { reg, type }) => {
+  const res = schemaConfigs.reduce((res, { reg, render }) => {
     const matched = src.match(reg);
-    if (firstIndex && matched && matched.index <= firstIndex) {
-      firstIndex = matched.index;
-      res = [matched, type];
+    if (firstIndex && matched && matched.index! <= firstIndex) {
+      firstIndex = matched.index!;
+      res = { matched, render };
     }
     return res;
-  }, null);
+  }, null as { matched: RegExpMatchArray; render: SchemaConfigRenderFunction } | null);
 
   return res;
 };
 
-const parse = (src, config) => {
-  const recur = src => {
-    if (!src) return [];
+export const parseInline = (
+  src: string,
+  inlineConfig: SchemaConfig['inline'],
+  text: (text: string) => TextNode
+) => {
+  const recur = (cur: string): VirtualNodeChildren => {
+    if (!cur) return [];
 
-    const nereastMatched = findFirstMatched(src, Object.values(config.inline));
-    console.log(nereastMatched);
+    const nereastMatched = findFirstMatched(cur, values(inlineConfig));
     if (!nereastMatched) {
-      return [h('plain-text', src)];
+      return [text(cur)];
     }
 
-    const [matched, type] = nereastMatched;
     const children = [];
+    const { matched, render } = nereastMatched;
     const { index } = matched;
     const content = matched[2];
     if (index) {
-      children.push({ type: 'plain-text', children: src.slice(0, index) });
-      children.push(...recur(src.slice(index)));
+      children.push(text(cur.slice(0, index)));
+      children.push(...recur(cur.slice(index)));
     } else {
-      children.push(h(type, recur(content)));
-      children.push(...recur(src.slice(matched[0].length)));
+      children.push(render(matched.groups!, recur(content)));
+      children.push(...recur(cur.slice(matched[0].length)));
     }
 
     return children;
   };
 
   return recur(src);
-};
-
-const generate = vNode => {
-  let res = '';
-
-  const backTrack = root => {
-    if (!root) return;
-
-    const { children } = root;
-    if (typeof children === 'string') {
-      res += children;
-    } else if (Array.isArray(children)) {
-      children.forEach(child => backTrack(child));
-    }
-  };
-
-  backTrack(vNode);
-
-  return res;
 };

@@ -11,6 +11,7 @@ interface BasicNode {
 }
 export interface SyntaxNode extends BasicNode {
   isActive: boolean;
+  marker: VirtualNodeMarker;
   events: VirtualNodeEvents;
   children: VirtualNodeChildren;
 }
@@ -30,6 +31,11 @@ export type VirtualNodeProps = Partial<
 export type VirtualNodeChildren = Array<VirtualNode>;
 
 export type VirtualNodeMetaData = Record<PropertyKey, any>;
+
+export interface VirtualNodeMarker {
+  prefix?: string;
+  suffix?: string;
+}
 
 type EventHandler<E> = (e: E) => void;
 type EventDetail =
