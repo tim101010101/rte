@@ -1,0 +1,13 @@
+// const src = '## Hello **World**';
+{
+  "type": "heading",
+  "children": [
+    { "type": "plain-text", "children": "Hello ", "marker": {} },
+    {
+      "type": "bold",
+      "children": [{ "type": "plain-text", "children": "World", "marker": {} }],
+      "marker": { "prefix": "**", "suffix": "**" }
+    }
+  ],
+  "marker": { "prefix": "##" }
+}
