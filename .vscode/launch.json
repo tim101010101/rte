@@ -15,6 +15,20 @@
         "webRoot": "${workspaceFolder}",
         "killOnServerStop": true
       }
+    },
+    {
+      "name": "Debug jest test",
+      "type": "node",
+      "request": "launch",
+      "runtimeArgs": [
+        "--inspect-brk",
+        "${workspaceRoot}/node_modules/jest/bin/jest.js",
+        "--runInBand",
+        "--testEnvironment",
+        "jsdom"
+      ],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen"
     }
   ]
 }
