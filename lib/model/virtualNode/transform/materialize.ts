@@ -13,7 +13,8 @@ export const materialize = (vNode: VirtualNode): HTMLElement => {
 
   mountProps(vNode);
   if (isTextNode(vNode)) {
-    const { text } = vNode;
+    const { text, font } = vNode;
+    vNode.el!.style.font = font;
     appendChild(vNode.el!, createTextNode(text));
   } else {
     const { children } = vNode;

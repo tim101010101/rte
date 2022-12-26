@@ -15,33 +15,6 @@
   font-size: 0;
 }
 
-.r-active {
-  border: 1px solid yellow;
-}
-
-/* .r-hide {
-  display: inline-block;
-
-  width: 0;
-  height: 0;
-
-  font: 20px arial;
-
-  overflow: hidden;
-} */
-
-.r-grey {
-  font: 20px arial;
-}
-
-.r-bold {
-  font: bold 20px arial;
-}
-
-.r-plain-text {
-  font: bold 20px arial;
-}
-
 .r-cursor-test {
   display: none;
   position: absolute;

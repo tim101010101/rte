@@ -3,7 +3,7 @@ import { s } from 'lib/model';
 import { NodeType, ClassName, TagName } from 'lib/static';
 
 const { BOLD, ITALIC } = NodeType;
-const { SPAN } = TagName;
+const { STRONG, EM } = TagName;
 const {} = ClassName;
 
 export const inline: SchemaConfig['inline'] = {
@@ -11,7 +11,7 @@ export const inline: SchemaConfig['inline'] = {
     reg: /(?<prefix>\*\*|__)(?=\S)(?<content>[\s\S]+?)(\\*)\k<prefix>(?!(\*|_))/,
     render(groups, children) {
       const { prefix } = groups;
-      return s(BOLD, SPAN, {}, children, [], {
+      return s(BOLD, STRONG, {}, children, [], {
         prefix,
         suffix: prefix,
       });
@@ -21,7 +21,7 @@ export const inline: SchemaConfig['inline'] = {
     reg: /(?<prefix>\*|_)(?=\S)(?<content>[\s\S]+?)(\\*)\k<prefix>(?!\k<prefix>)/,
     render(groups, children) {
       const { prefix } = groups;
-      return s(ITALIC, SPAN, {}, children, [], {
+      return s(ITALIC, EM, {}, children, [], {
         prefix,
         suffix: prefix,
       });

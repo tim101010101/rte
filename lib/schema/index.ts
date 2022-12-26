@@ -1,53 +1,23 @@
-import { s, t } from 'lib/model';
-import { SchemaConfig, SchemaConfigItem, VirtualNode } from 'lib/types';
-import { entries } from 'lib/utils';
-import { NodeType, TagName, ClassName } from 'lib/static';
-
-const { LINE, PLAIN_TEXT } = NodeType;
-const { DIV, SPAN } = TagName;
-const { RTE_LINE } = ClassName;
+import { t } from 'lib/model';
+import { TagName, ClassName } from 'lib/static';
+import { parseInline, parseLine } from 'lib/schema/parser';
+import { SchemaConfig, SyntaxNode, TextNode } from 'lib/types';
 
 export class Schema {
-  private rules: Array<[RegExp, SchemaConfigItem]>;
+  private rules: SchemaConfig;
+  private text: (content: string) => TextNode;
 
-  constructor(schemaConfig: SchemaConfig) {
-    this.rules = Array.from(
-      entries(schemaConfig).map(([k, v]) => [new RegExp(`^${k}`), v])
-    );
+  constructor(schemaConfig: SchemaConfig, font: string) {
+    this.rules = schemaConfig;
+    this.text = (content: string) =>
+      t(TagName.SPAN, { classList: [ClassName.RTE_PLAIN_TEXT] }, content, font);
   }
 
   // TODO
-  parse(text: string): VirtualNode {
-    const defaultInline = [
-      /^(?<content>.*?)/,
-      {
-        type: PLAIN_TEXT,
-        key: PLAIN_TEXT,
-        render(matched: RegExpMatchArray) {
-          return t(SPAN, {}, 'plain-text');
-        },
-      },
-    ];
-    const defaultLine = [
-      /^(?<content>.*?)\n/,
-      {
-        type: LINE,
-        key: LINE,
-        render(matched: RegExpMatchArray) {
-          return s(LINE, DIV, {}, [t(SPAN, {}, 'line')]);
-        },
-      },
-    ];
+  parse(src: string): SyntaxNode {
+    const inlineParser = (content: string) =>
+      parseInline(content, this.rules.inline, this.text);
 
-    // TODO
-    const matchedRules = this.rules.filter(([r]) => r.test(text));
-    console.log(matchedRules);
-    if (!matchedRules.length) {
-    } else {
-    }
-
-    return s(LINE, DIV, { classList: [RTE_LINE] });
+    return parseLine(src, this.rules.line, inlineParser);
   }
 }
-
-export * from './parser1';

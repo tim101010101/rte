@@ -5,7 +5,11 @@ import { isTextNode } from 'lib/model';
 const { SPAN } = TagName;
 const { PLAIN_TEXT, PREFIX, SUFFIX, BOLD } = NodeType;
 
-const marker = (text: string, isPrefix: boolean): SyntaxNode => {
+const syntaxMarker = (
+  text: string,
+  isPrefix: boolean,
+  font: string
+): SyntaxNode => {
   return {
     type: isPrefix ? PREFIX : SUFFIX,
     isActive: true,
@@ -23,7 +27,7 @@ const marker = (text: string, isPrefix: boolean): SyntaxNode => {
         props: {},
         el: null,
         meta: {},
-        font: '',
+        font,
         text,
       },
     ],
@@ -33,10 +37,11 @@ const marker = (text: string, isPrefix: boolean): SyntaxNode => {
 export const activeSubTree = (root: VirtualNode) => {
   if (isTextNode(root)) return;
 
-  const { type, isActive, children } = root;
+  const { isActive, children, marker } = root;
+  const { prefix, suffix } = marker;
   if (!isActive) {
-    root.children.unshift(marker(type & BOLD ? '**' : '*', true));
-    root.children.push(marker(type & BOLD ? '**' : '*', false));
+    prefix && root.children.unshift(syntaxMarker(prefix, true, '20px arial'));
+    suffix && root.children.push(syntaxMarker(suffix, false, '20px arial'));
     root.isActive = true;
   }
 

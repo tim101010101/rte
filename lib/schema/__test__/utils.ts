@@ -6,7 +6,7 @@ import { inline } from './mockConfig';
 
 const { LINE, BOLD, ITALIC } = NodeType;
 const { DIV, SPAN } = TagName;
-const { RTE_LINE } = ClassName;
+const { RTE_LINE, RTE_PLAIN_TEXT } = ClassName;
 
 export const syntax = (
   type: NodeType,
@@ -16,7 +16,8 @@ export const syntax = (
   meta: any = {}
 ) => s(type, tagName, {}, children, [], marker, meta);
 
-export const text = (text: string) => t(SPAN, {}, text);
+export const text = (text: string) =>
+  t(SPAN, { classList: [RTE_PLAIN_TEXT] }, text);
 
 export const line = (children: Array<VirtualNode>) =>
   s(LINE, DIV, { classList: [RTE_LINE] }, children);
