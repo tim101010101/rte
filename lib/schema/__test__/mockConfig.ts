@@ -62,9 +62,15 @@ export const line: SchemaConfig['line'] = {
           break;
       }
 
-      return syntax(HEADING, tagName, children, {
-        prefix,
-      });
+      return syntax(
+        HEADING,
+        tagName,
+        children,
+        {
+          prefix,
+        },
+        { level }
+      );
     },
   },
 };

@@ -1,18 +1,13 @@
 import { NodeType, TagName } from 'lib/static';
 import { parseInline } from '../parser/index';
-import { generator, syntax, text } from './utils';
+import { fooBold, fooEm, generator, line, syntax, text, ws } from './utils';
 import { inline } from './mockConfig';
 
-const { BOLD, ITALIC, LINE } = NodeType;
-const { SPAN, DIV } = TagName;
+const { BOLD, ITALIC } = NodeType;
+const { SPAN } = TagName;
 
 describe('parseInline', () => {
   const parse = (src: string) => parseInline(src, inline, text);
-  const ws = () => text(' ');
-  const fooBold = (marker: string) =>
-    syntax(BOLD, SPAN, [text('foo')], { prefix: marker, suffix: marker });
-  const fooEm = (marker: string) =>
-    syntax(ITALIC, SPAN, [text('foo')], { prefix: marker, suffix: marker });
 
   test('handle marker correctly', () => {
     expect(parse('**foo**')).toStrictEqual([fooBold('**')]);
@@ -61,6 +56,6 @@ describe('parseInline', () => {
 
   test('smoke test', () => {
     const src = '__This__ *is* **Hello _World_** yes **i_t_** _is_';
-    expect(generator(syntax(LINE, DIV, parse(src), {}))).toStrictEqual(src);
+    expect(generator(line(parse(src)))).toStrictEqual(src);
   });
 });
