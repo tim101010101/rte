@@ -71,6 +71,15 @@ export function s(
 export function s(
   type: NodeType,
   tagName: TagName,
+  props: VirtualNodeProps,
+  children: VirtualNodeChildren,
+  events: VirtualNodeEvents,
+  marker: VirtualNodeMarker,
+  meta: VirtualNodeMetaData
+): SyntaxNode;
+export function s(
+  type: NodeType,
+  tagName: TagName,
   props: VirtualNodeProps = {},
   children: VirtualNodeChildren = [],
   events: VirtualNodeEvents = [],
