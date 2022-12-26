@@ -1,47 +1,10 @@
-import { SchemaConfig, VirtualNode } from 'lib/types';
-import { isTextNode, s, t } from 'lib/model';
 import { NodeType, TagName } from 'lib/static';
 import { parseInline } from '../parser/index';
+import { generator, syntax, text } from './utils';
+import { inline } from './mockConfig';
 
-const { LINE, BOLD, EM } = NodeType;
-const { DIV, SPAN } = TagName;
-
-const syntax = (type: NodeType, tagName: TagName, children: any, marker: any) =>
-  s(type, tagName, {}, children, [], marker);
-const text = (text: string) => t(SPAN, {}, text);
-
-const inline: SchemaConfig['inline'] = {
-  bold: {
-    reg: /(?<prefix>\*\*|__)(?=\S)(?<content>[\s\S]+?)(\\*)\k<prefix>(?!(\*|_))/,
-    render(groups, children) {
-      const { prefix } = groups;
-      return syntax(BOLD, SPAN, children, {
-        prefix,
-        suffix: prefix,
-      });
-    },
-  },
-  italic: {
-    reg: /(?<prefix>\*|_)(?=\S)(?<content>[\s\S]+?)(\\*)\k<prefix>(?!\k<prefix>)/,
-    render(groups, children) {
-      const { prefix } = groups;
-      return syntax(EM, SPAN, children, {
-        prefix,
-        suffix: prefix,
-      });
-    },
-  },
-  inlineCode: {
-    reg: /(`{1})([^`]+?|.{2,})\1/,
-    render(groups, children) {
-      const { prefix } = groups;
-      return syntax(EM, SPAN, children, {
-        prefix,
-        suffix: prefix,
-      });
-    },
-  },
-};
+const { BOLD, ITALIC, LINE } = NodeType;
+const { SPAN, DIV } = TagName;
 
 describe('parseInline', () => {
   const parse = (src: string) => parseInline(src, inline, text);
@@ -49,7 +12,7 @@ describe('parseInline', () => {
   const fooBold = (marker: string) =>
     syntax(BOLD, SPAN, [text('foo')], { prefix: marker, suffix: marker });
   const fooEm = (marker: string) =>
-    syntax(EM, SPAN, [text('foo')], { prefix: marker, suffix: marker });
+    syntax(ITALIC, SPAN, [text('foo')], { prefix: marker, suffix: marker });
 
   test('handle marker correctly', () => {
     expect(parse('**foo**')).toStrictEqual([fooBold('**')]);
@@ -73,7 +36,7 @@ describe('parseInline', () => {
       syntax(
         BOLD,
         SPAN,
-        [syntax(EM, SPAN, [text('foo')], { prefix: '_', suffix: '_' })],
+        [syntax(ITALIC, SPAN, [text('foo')], { prefix: '_', suffix: '_' })],
         {
           prefix: '**',
           suffix: '**',
@@ -85,7 +48,7 @@ describe('parseInline', () => {
         BOLD,
         SPAN,
         [
-          syntax(EM, SPAN, [text('foo')], { prefix: '_', suffix: '_' }),
+          syntax(ITALIC, SPAN, [text('foo')], { prefix: '_', suffix: '_' }),
           text(' bar'),
         ],
         {
@@ -97,25 +60,6 @@ describe('parseInline', () => {
   });
 
   test('smoke test', () => {
-    const generator = (root: VirtualNode): string => {
-      if (!root) return '';
-
-      if (isTextNode(root)) {
-        return root.text;
-      } else {
-        let subRes = '';
-        const { marker, children } = root;
-        const { prefix, suffix } = marker;
-        if (prefix) subRes += prefix;
-        subRes += children.reduce((content, cur) => {
-          content += generator(cur);
-          return content;
-        }, '');
-        if (suffix) subRes += suffix;
-
-        return subRes;
-      }
-    };
     const src = '__This__ *is* **Hello _World_** yes **i_t_** _is_';
     expect(generator(syntax(LINE, DIV, parse(src), {}))).toStrictEqual(src);
   });
