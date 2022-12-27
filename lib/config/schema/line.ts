@@ -10,7 +10,7 @@ export const line: SchemaConfig['line'] = {
   hr: {
     reg: /^(?<content>\*{3,}|-{3,}|_{3,})$/,
     render(_, children) {
-      return s(DIVIDE, HR, {}, children);
+      return s(DIVIDE, HR, '', children);
     },
   },
   heading: {
@@ -43,8 +43,9 @@ export const line: SchemaConfig['line'] = {
       return s(
         HEADING,
         tagName,
-        {},
+        '',
         children,
+        {},
         [],
         {
           prefix,

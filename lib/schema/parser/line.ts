@@ -20,6 +20,7 @@ export const parseLine = (
 
     return render(groups!, parseInline(groups ? groups['content'] : src));
   } else {
-    return s(LINE, DIV, { classList: [RTE_LINE] }, parseInline(src));
+    // TODO font
+    return s(LINE, DIV, '', parseInline(src), { classList: [RTE_LINE] });
   }
 };

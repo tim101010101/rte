@@ -10,7 +10,7 @@ export class Schema {
   constructor(schemaConfig: SchemaConfig, font: string) {
     this.rules = schemaConfig;
     this.text = (content: string) =>
-      t(TagName.SPAN, { classList: [ClassName.RTE_PLAIN_TEXT] }, content, font);
+      t(TagName.SPAN, font, content, { classList: [ClassName.RTE_PLAIN_TEXT] });
   }
 
   // TODO

@@ -14,13 +14,13 @@ export const syntax = (
   children: any,
   marker: any = {},
   meta: any = {}
-) => s(type, tagName, {}, children, [], marker, meta);
+) => s(type, tagName, '', children, {}, [], marker, meta);
 
 export const text = (text: string) =>
-  t(SPAN, { classList: [RTE_PLAIN_TEXT] }, text);
+  t(SPAN, '', text, { classList: [RTE_PLAIN_TEXT] });
 
 export const line = (children: Array<VirtualNode>) =>
-  s(LINE, DIV, { classList: [RTE_LINE] }, children);
+  s(LINE, DIV, '', children, { classList: [RTE_LINE] });
 
 export const ws = () => text(' ');
 export const fooBold = (marker: string) =>

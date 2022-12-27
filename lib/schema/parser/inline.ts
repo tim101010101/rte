@@ -4,7 +4,7 @@ import {
   SchemaConfigItem,
   SchemaConfigRenderFunction,
   TextNode,
-  VirtualNodeChildren,
+  VirtualNode,
 } from 'lib/types';
 
 const findFirstMatched = (
@@ -30,7 +30,7 @@ export const parseInline = (
   inlineConfig: SchemaConfig['inline'],
   text: (text: string) => TextNode
 ) => {
-  const recur = (cur: string): VirtualNodeChildren => {
+  const recur = (cur: string): Array<VirtualNode> => {
     if (!cur) return [];
 
     const nereastMatched = findFirstMatched(cur, values(inlineConfig));

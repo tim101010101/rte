@@ -1,22 +1,29 @@
 import { NodeType, TagName } from 'lib/static';
 import { EventName } from 'lib/model';
 
-export interface VirtualNode {
-  type: NodeType;
+interface BasicNode {
   tagName: TagName;
 
   props: VirtualNodeProps;
-  children: VirtualNodeChildren;
   events: VirtualNodeEvents;
 
   meta: VirtualNodeMetaData;
 
-  marker: VirtualNodeMarker;
   font: string;
 
   el: HTMLElement | null;
+}
+export interface SyntaxNode extends BasicNode {
+  type: NodeType;
+  marker: VirtualNodeMarker;
+  children: Array<VirtualNode>;
   isActive: boolean;
 }
+export interface TextNode extends BasicNode {
+  type: typeof NodeType.PLAIN_TEXT;
+  text: string;
+}
+export type VirtualNode = SyntaxNode | TextNode;
 
 export type VirtualNodeProps = Partial<
   {
@@ -24,8 +31,6 @@ export type VirtualNodeProps = Partial<
     id: string;
   } & Record<string, any>
 >;
-
-export type VirtualNodeChildren = Array<VirtualNode> | string;
 
 export type VirtualNodeMetaData = Record<PropertyKey, any>;
 

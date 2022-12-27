@@ -11,7 +11,8 @@ export const inline: SchemaConfig['inline'] = {
     reg: /(?<prefix>\*\*|__)(?=\S)(?<content>[\s\S]+?)(\\*)\k<prefix>(?!(\*|_))/,
     render(groups, children) {
       const { prefix } = groups;
-      return s(BOLD, STRONG, {}, children, [], {
+      // TODO font
+      return s(BOLD, STRONG, 'f', children, {}, [], {
         prefix,
         suffix: prefix,
       });
@@ -21,7 +22,8 @@ export const inline: SchemaConfig['inline'] = {
     reg: /(?<prefix>\*|_)(?=\S)(?<content>[\s\S]+?)(\\*)\k<prefix>(?!\k<prefix>)/,
     render(groups, children) {
       const { prefix } = groups;
-      return s(ITALIC, EM, {}, children, [], {
+      // TODO font
+      return s(ITALIC, EM, '', children, {}, [], {
         prefix,
         suffix: prefix,
       });

@@ -1,8 +1,8 @@
-import { VirtualNode, VirtualNodeChildren } from 'lib/types';
+import { VirtualNode } from 'lib/types';
 
 export type SchemaConfigRenderFunction = (
   groups: Record<string, string>,
-  children: VirtualNodeChildren
+  children: Array<VirtualNode>
 ) => VirtualNode;
 export interface SchemaConfigItem {
   reg: RegExp;

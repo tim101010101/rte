@@ -16,6 +16,7 @@ const syntaxMarker = (
     tagName: SPAN,
     props: {},
     el: null,
+    font,
     meta: {},
     events: [],
     marker: {},
@@ -29,6 +30,7 @@ const syntaxMarker = (
         meta: {},
         font,
         text,
+        events: [],
       },
     ],
   };

@@ -5,25 +5,28 @@ import {
   isTheseTypes,
 } from '../utils';
 import { NodeType, TagName } from '../../../static';
+import { SyntaxNode, TextNode } from 'lib/types';
 
 const { PLAIN_TEXT, BOLD, PREFIX, SUFFIX } = NodeType;
 const { SPAN } = TagName;
 
 describe('utils', () => {
-  const s = (type: number, children = []) => {
+  const s = (type: number, children = []): SyntaxNode => {
     return {
       type,
       tagName: SPAN,
       props: {},
+      font: '',
       meta: {},
 
       el: null,
       isActive: false,
       events: [],
       children,
+      marker: {},
     };
   };
-  const t = (type: number, text = '') => {
+  const t = (type: number, text = ''): TextNode => {
     return {
       type,
       tagName: SPAN,
@@ -33,6 +36,7 @@ describe('utils', () => {
       el: null,
       text,
       font: '',
+      events: [],
     };
   };
 
