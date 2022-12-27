@@ -1,8 +1,8 @@
 - [x] type interface
-- [ ] util functions about VNode
-- [ ] h
-- [ ] fence
-- [ ] parser
-- [ ] schema config
-- [ ] materialize
-- [ ] ut
+- [x] util functions about VNode
+- [x] h
+- [x] fence
+- [x] parser
+- [x] schema config
+- [x] materialize
+- [x] ut
