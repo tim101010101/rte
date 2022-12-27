@@ -2,24 +2,10 @@ import { SyntaxNode, TextNode, VirtualNode } from 'lib/types';
 import { NodeType } from 'lib/static';
 import { set } from 'lib/utils';
 
-const { PLAIN_TEXT, PREFIX, SUFFIX } = NodeType;
-
-export const isTheseTypes = (
-  vNode: VirtualNode,
-  ...types: NodeType[]
-): boolean => {
-  return !!types.reduce((res, cur) => res && !!(vNode.type & cur), true);
-};
+const { PLAIN_TEXT } = NodeType;
 
 export const isTextNode = (vNode: VirtualNode): vNode is TextNode =>
-  !!(vNode.type & PLAIN_TEXT);
-
-export const isPureTextNode = (vNode: VirtualNode): vNode is TextNode =>
   vNode.type === PLAIN_TEXT;
-
-export const isMarkerTextNode = (vNode: VirtualNode): vNode is TextNode =>
-  isTheseTypes(vNode, PLAIN_TEXT, PREFIX) ||
-  isTheseTypes(vNode, PLAIN_TEXT, SUFFIX);
 
 export const isPureTextAncestor = (root: VirtualNode, path: Array<number>) => {
   if (isTextNode(root)) return true;

@@ -8,5 +8,5 @@ e.init(
   // '**hello world**\n**hello world** **hello world**\n**hello world** **hello world** **hello world**\n**hello world** **hello world** **hello world** **hello world**\n**hello world** **hello world** **hello world**\n**hello world** **hello world**\n**hello world**'
   // 'this is a **hello world** and another'
   // '**Hello _World_ Hello World**\nHello World **this is Hello World**'
-  '**Hello _World_**'
+  'This is **Hello _World_**'
 );
