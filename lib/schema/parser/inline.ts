@@ -27,26 +27,25 @@ const findFirstMatched = (
 
 export const parseInline = (
   src: string,
-  inlineConfig: SchemaConfig['inline'],
-  text: (text: string) => TextNode
+  inlineConfig: ReturnType<SchemaConfig['inline']>,
+  defaultText: (text: string) => TextNode
 ) => {
   const recur = (cur: string): Array<VirtualNode> => {
     if (!cur) return [];
 
     const nereastMatched = findFirstMatched(cur, values(inlineConfig));
     if (!nereastMatched) {
-      return [text(cur)];
+      return [defaultText(cur)];
     }
 
     const children = [];
     const { matched, render } = nereastMatched;
     const { index } = matched;
-    const content = matched[2];
     if (index) {
-      children.push(text(cur.slice(0, index)));
+      children.push(defaultText(cur.slice(0, index)));
       children.push(...recur(cur.slice(index)));
     } else {
-      children.push(render(matched.groups!, recur(content)));
+      children.push(render(matched.groups!));
       children.push(...recur(cur.slice(matched[0].length)));
     }
 

@@ -9,7 +9,7 @@ const { RTE_LINE } = ClassName;
 
 export const parseLine = (
   src: string,
-  lineConfig: SchemaConfig['line'],
+  lineConfig: ReturnType<SchemaConfig['line']>,
   parseInline: (content: string) => Array<VirtualNode>
 ) => {
   const target = values(lineConfig).find(({ reg }) => reg.test(src));
@@ -18,9 +18,9 @@ export const parseLine = (
     const matched = src.match(reg);
     const { groups } = matched!;
 
-    return render(groups!, parseInline(groups ? groups['content'] : src));
+    return render(groups!);
   } else {
     // TODO font
-    return s(LINE, DIV, '', parseInline(src), { classList: [RTE_LINE] });
+    return s(LINE, DIV, parseInline(src), { classList: [RTE_LINE] });
   }
 };

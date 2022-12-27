@@ -1,7 +1,10 @@
 import { SchemaConfig } from 'lib/types';
 
 export interface EditorConfig {
-  font: string;
+  font: {
+    size: number;
+    family: string;
+  };
   container: string;
 
   schema: SchemaConfig;

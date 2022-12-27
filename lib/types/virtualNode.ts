@@ -9,8 +9,6 @@ interface BasicNode {
 
   meta: VirtualNodeMetaData;
 
-  font: string;
-
   el: HTMLElement | null;
 }
 export interface SyntaxNode extends BasicNode {
@@ -22,6 +20,7 @@ export interface SyntaxNode extends BasicNode {
 export interface TextNode extends BasicNode {
   type: typeof NodeType.PLAIN_TEXT;
   text: string;
+  font: string;
 }
 export type VirtualNode = SyntaxNode | TextNode;
 
@@ -29,6 +28,7 @@ export type VirtualNodeProps = Partial<
   {
     classList: Array<string>;
     id: string;
+    style: {} & Record<string, any>;
   } & Record<string, any>
 >;
 

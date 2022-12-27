@@ -9,22 +9,19 @@ import {
   VirtualNode,
 } from 'lib/types';
 
-export function t(tagName: TagName, font: string, text: string): TextNode;
+export function t(font: string, text: string): TextNode;
 export function t(
-  tagName: TagName,
   font: string,
   text: string,
   props: VirtualNodeProps
 ): TextNode;
 export function t(
-  tagName: TagName,
   font: string,
   text: string,
   props: VirtualNodeProps,
   events: VirtualNodeEvents
 ): TextNode;
 export function t(
-  tagName: TagName,
   font: string,
   text: string,
   props: VirtualNodeProps,
@@ -32,7 +29,6 @@ export function t(
   meta: VirtualNodeMetaData
 ): TextNode;
 export function t(
-  tagName: TagName,
   font: string,
   text: string = '',
   props: VirtualNodeProps = {},
@@ -41,7 +37,7 @@ export function t(
 ): TextNode {
   return {
     type: NodeType.PLAIN_TEXT,
-    tagName,
+    tagName: TagName.SPAN,
 
     props,
     events,
@@ -59,20 +55,17 @@ export function t(
 export function s(
   type: NodeType,
   tagName: TagName,
-  font: string,
   children: Array<VirtualNode>
 ): SyntaxNode;
 export function s(
   type: NodeType,
   tagName: TagName,
-  font: string,
   children: Array<VirtualNode>,
   props: VirtualNodeProps
 ): SyntaxNode;
 export function s(
   type: NodeType,
   tagName: TagName,
-  font: string,
   children: Array<VirtualNode>,
   props: VirtualNodeProps,
   events: VirtualNodeEvents
@@ -80,7 +73,6 @@ export function s(
 export function s(
   type: NodeType,
   tagName: TagName,
-  font: string,
   children: Array<VirtualNode>,
   props: VirtualNodeProps,
   events: VirtualNodeEvents,
@@ -89,7 +81,6 @@ export function s(
 export function s(
   type: NodeType,
   tagName: TagName,
-  font: string,
   children: Array<VirtualNode>,
   props: VirtualNodeProps,
   events: VirtualNodeEvents,
@@ -99,7 +90,6 @@ export function s(
 export function s(
   type: NodeType,
   tagName: TagName,
-  font: string,
   children: Array<VirtualNode> = [],
   props: VirtualNodeProps = {},
   events: VirtualNodeEvents = [],
@@ -118,7 +108,6 @@ export function s(
     meta,
 
     marker,
-    font,
 
     el: null,
     isActive: false,
