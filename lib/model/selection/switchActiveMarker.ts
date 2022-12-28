@@ -1,14 +1,14 @@
-import { SyntaxNode, VirtualNode } from 'lib/types';
+import { FontInfo, SyntaxNode, VirtualNode } from 'lib/types';
 import { NodeType, TagName } from 'lib/static';
 import { isTextNode } from 'lib/model';
 
 const { SPAN } = TagName;
-const { PLAIN_TEXT, PREFIX, SUFFIX, BOLD } = NodeType;
+const { PLAIN_TEXT, PREFIX, SUFFIX } = NodeType;
 
 const syntaxMarker = (
   text: string,
   isPrefix: boolean,
-  font: string
+  fontInfo: FontInfo
 ): SyntaxNode => {
   return {
     type: isPrefix ? PREFIX : SUFFIX,
@@ -16,7 +16,6 @@ const syntaxMarker = (
     tagName: SPAN,
     props: {},
     el: null,
-    font,
     meta: {},
     events: [],
     marker: {},
@@ -28,7 +27,7 @@ const syntaxMarker = (
         props: {},
         el: null,
         meta: {},
-        font,
+        font: fontInfo,
         text,
         events: [],
       },
@@ -42,8 +41,25 @@ export const activeSubTree = (root: VirtualNode) => {
   const { isActive, children, marker } = root;
   const { prefix, suffix } = marker;
   if (!isActive) {
-    prefix && root.children.unshift(syntaxMarker(prefix, true, '20px arial'));
-    suffix && root.children.push(syntaxMarker(suffix, false, '20px arial'));
+    // TODO font info
+    prefix &&
+      root.children.unshift(
+        syntaxMarker(prefix, true, {
+          size: 20,
+          family: 'Arial, Helvetica, sans-serif',
+          bold: false,
+          italic: false,
+        })
+      );
+    suffix &&
+      root.children.push(
+        syntaxMarker(suffix, false, {
+          size: 20,
+          family: 'Arial, Helvetica, sans-serif',
+          bold: false,
+          italic: false,
+        })
+      );
     root.isActive = true;
   }
 

@@ -20,7 +20,7 @@ export interface SyntaxNode extends BasicNode {
 export interface TextNode extends BasicNode {
   type: typeof NodeType.PLAIN_TEXT;
   text: string;
-  font: string;
+  font: FontInfo;
 }
 export type VirtualNode = SyntaxNode | TextNode;
 
@@ -50,3 +50,10 @@ type EventDetail =
   | [EventName.KEYUP, EventHandler<KeyboardEvent>, boolean]
   | [EventName, EventListenerOrEventListenerObject, boolean];
 export type VirtualNodeEvents = Array<EventDetail>;
+
+export interface FontInfo {
+  size: number;
+  family: string;
+  bold: boolean;
+  italic: boolean;
+}

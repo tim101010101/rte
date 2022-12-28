@@ -7,29 +7,30 @@ import {
   VirtualNodeProps,
   VirtualNodeMarker,
   VirtualNode,
+  FontInfo,
 } from 'lib/types';
 
-export function t(font: string, text: string): TextNode;
+export function t(font: FontInfo, text: string): TextNode;
 export function t(
-  font: string,
+  font: FontInfo,
   text: string,
   props: VirtualNodeProps
 ): TextNode;
 export function t(
-  font: string,
+  font: FontInfo,
   text: string,
   props: VirtualNodeProps,
   events: VirtualNodeEvents
 ): TextNode;
 export function t(
-  font: string,
+  font: FontInfo,
   text: string,
   props: VirtualNodeProps,
   events: VirtualNodeEvents,
   meta: VirtualNodeMetaData
 ): TextNode;
 export function t(
-  font: string,
+  font: FontInfo,
   text: string = '',
   props: VirtualNodeProps = {},
   events: VirtualNodeEvents = [],

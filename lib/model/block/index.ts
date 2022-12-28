@@ -13,7 +13,7 @@ export class Block extends ListNode {
   private container: HTMLElement;
   private _fence: Fence | null;
 
-  constructor(container: HTMLElement, font: string) {
+  constructor(container: HTMLElement) {
     super();
 
     this.container = container;

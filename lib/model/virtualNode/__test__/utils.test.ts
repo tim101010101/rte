@@ -2,7 +2,7 @@ import { isTextNode } from '../utils';
 import { NodeType, TagName } from '../../../static';
 import { SyntaxNode, TextNode } from 'lib/types';
 
-const { PLAIN_TEXT, BOLD, PREFIX, SUFFIX } = NodeType;
+const { PLAIN_TEXT, BOLD } = NodeType;
 const { SPAN } = TagName;
 
 describe('utils', () => {
@@ -11,7 +11,6 @@ describe('utils', () => {
       type,
       tagName: SPAN,
       props: {},
-      font: '',
       meta: {},
 
       el: null,
@@ -30,7 +29,7 @@ describe('utils', () => {
 
       el: null,
       text,
-      font: '',
+      font: { size: 20, family: '', bold: false, italic: false },
       events: [],
     };
   };

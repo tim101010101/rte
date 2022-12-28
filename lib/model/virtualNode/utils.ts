@@ -1,8 +1,15 @@
-import { SyntaxNode, TextNode, VirtualNode } from 'lib/types';
+import { FontInfo, SyntaxNode, TextNode, VirtualNode } from 'lib/types';
 import { NodeType } from 'lib/static';
 import { set } from 'lib/utils';
 
 const { PLAIN_TEXT } = NodeType;
+
+export const getFont = (fontInfo: FontInfo) => {
+  const { size, family, bold, italic } = fontInfo;
+  return `${size}px ${italic ? 'italic' : 'normal'} ${
+    bold ? 'bold' : 'normal'
+  } ${family}`;
+};
 
 export const isTextNode = (vNode: VirtualNode): vNode is TextNode =>
   vNode.type === PLAIN_TEXT;

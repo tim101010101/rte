@@ -17,10 +17,8 @@ export class Page extends LinkedList<Block> {
   }
 
   init(lines: Array<SyntaxNode>) {
-    const { font } = this.config;
-
     lines.forEach(line => {
-      const block = new Block(this.container, font);
+      const block = new Block(this.container);
       this.append(block);
       block.patch({
         ...line,

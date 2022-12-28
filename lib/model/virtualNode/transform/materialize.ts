@@ -1,4 +1,4 @@
-import { isTextNode } from 'lib/model';
+import { getFont, isTextNode } from 'lib/model';
 import { SyntaxNode, VirtualNode } from 'lib/types';
 import {
   appendChild,
@@ -14,7 +14,7 @@ export const materialize = (vNode: VirtualNode): HTMLElement => {
   mountProps(vNode);
   if (isTextNode(vNode)) {
     const { text, font } = vNode;
-    vNode.el!.style.font = font;
+    vNode.el!.style.font = getFont(font);
     appendChild(vNode.el!, createTextNode(text));
   } else {
     const { children } = vNode;
