@@ -4,72 +4,54 @@ import { parseInline, parseLine } from 'lib/schema/parser';
 import {
   EditorConfig,
   ExportedText,
+  FontConfig,
+  FontInfo,
   SchemaConfig,
   SyntaxNode,
   TextNode,
 } from 'lib/types';
-
-type FontConfig = EditorConfig['font'];
+import { mixin } from 'lib/utils';
 
 export class Schema {
   private rules: SchemaConfig;
-  private exportedH: ExportedText;
+  private defaultFontInfo: FontInfo;
+  private exportedText: ExportedText;
   private defaultText: (content: string) => TextNode;
 
-  constructor(schemaConfig: SchemaConfig, fontInfo: FontConfig) {
+  constructor(schemaConfig: SchemaConfig, fontInfo: EditorConfig['font']) {
     this.rules = schemaConfig;
-    this.exportedH = getExportText(fontInfo);
+    this.defaultFontInfo = {
+      size: fontInfo.size,
+      family: fontInfo.family,
+      bold: false,
+      italic: false,
+    };
+
+    this.exportedText = (children, props, meta, fontInfo) => {
+      return t(
+        mixin(this.defaultFontInfo, fontInfo),
+        children,
+        props || { classList: [] },
+        [],
+        meta || {}
+      );
+    };
+
     this.defaultText = content =>
-      t(getFont(fontInfo.size, fontInfo.family, false, false), content, {
+      t(this.defaultFontInfo, content, {
         classList: [ClassName.RTE_PLAIN_TEXT],
       });
   }
 
-  // TODO
   parse(src: string): SyntaxNode {
-    const inlineParser = (content: string) =>
+    const inlineParser = (content: string, fontInfo?: FontConfig) =>
       parseInline(
         content,
-        this.rules.inline(s, this.exportedH),
-        this.defaultText
+        this.rules.inline(s, this.exportedText),
+        this.defaultFontInfo,
+        fontInfo
       );
 
-    return parseLine(
-      src,
-      this.rules.line((content, fontInfo) => {}, s, t),
-      inlineParser
-    );
+    return parseLine(src, this.rules.line(s, this.exportedText), inlineParser);
   }
 }
-
-const getFont = (
-  size: number,
-  family: string,
-  bold: boolean,
-  italic: boolean
-) => {
-  return `${size}px ${italic ? 'italic' : 'normal'} ${
-    bold ? 'bold' : 'normal'
-  } ${family}`;
-};
-
-const getExportText = (defaultFontInfo: FontConfig): ExportedText => {
-  const { family: defaultFamily, size: defaultSize } = defaultFontInfo;
-
-  return (children, props, meta, fontInfo) => {
-    let font = '';
-    if (fontInfo) {
-      const { family, size, bold, italic } = fontInfo;
-      font = getFont(
-        size ? size : defaultSize,
-        family ? family : defaultFamily,
-        !!italic,
-        !!bold
-      );
-    } else {
-      font = getFont(defaultSize, defaultFamily, false, false);
-    }
-
-    return t(font, children, props || { classList: [] }, [], meta || {});
-  };
-};

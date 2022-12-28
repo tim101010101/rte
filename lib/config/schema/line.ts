@@ -5,18 +5,18 @@ const { DIVIDE, HEADING } = NodeType;
 const { H1, H2, H3, H4, H5, H6, HR } = TagName;
 const {} = ClassName;
 
-export const line: SchemaConfig['line'] = (inlineParser, syntax, text) => {
+export const line: SchemaConfig['line'] = (syntax, text) => {
   return {
     hr: {
       reg: /^(?<content>\*{3,}|-{3,}|_{3,})$/,
-      render(groups) {
+      render(groups, parseInline) {
         const { content } = groups;
-        return syntax(DIVIDE, HR, inlineParser(content));
+        return syntax(DIVIDE, HR, parseInline(content));
       },
     },
     heading: {
       reg: /^(?<prefix>#{1,6}) (?<content>[\s\S]+)$/,
-      render(groups) {
+      render(groups, parseInlineWithRewiteFont) {
         const { prefix, content } = groups;
         const level = prefix.length;
         let tagName = H1;
@@ -45,7 +45,7 @@ export const line: SchemaConfig['line'] = (inlineParser, syntax, text) => {
         return syntax(
           HEADING,
           tagName,
-          inlineParser(content, { size: fontSize }),
+          parseInlineWithRewiteFont(content, { size: fontSize }),
           {
             classList: [],
           },

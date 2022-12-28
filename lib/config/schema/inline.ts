@@ -9,44 +9,37 @@ export const inline: SchemaConfig['inline'] = (syntax, text) => {
   return {
     bold: {
       reg: /(?<prefix>\*\*|__)(?=\S)(?<content>[\s\S]+?)(\\*)\k<prefix>(?!(\*|_))/,
-      render(groups) {
+      render(groups, parsingRecursively) {
         const { prefix, content } = groups;
         return syntax(
           BOLD,
           SPAN,
-          [text(content, { classList: [RTE_PLAIN_TEXT] }, {}, { bold: true })],
+          parsingRecursively(content, { bold: true }),
           { classList: [RTE_BOLD] },
           [],
-          {},
           {
             prefix,
             suffix: prefix,
-          }
+          },
+          {}
         );
       },
     },
     italic: {
       reg: /(?<prefix>\*|_)(?=\S)(?<content>[\s\S]+?)(\\*)\k<prefix>(?!\k<prefix>)/,
-      render(groups) {
+      render(groups, parsingRecursively) {
         const { prefix, content } = groups;
         return syntax(
           ITALIC,
           SPAN,
-          [
-            text(
-              content,
-              { classList: [RTE_PLAIN_TEXT] },
-              {},
-              { italic: true }
-            ),
-          ],
+          parsingRecursively(content, { italic: true }),
           { classList: [RTE_ITALIC] },
           [],
-          {},
           {
             prefix,
             suffix: prefix,
-          }
+          },
+          {}
         );
       },
     },

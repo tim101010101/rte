@@ -1,15 +1,18 @@
-import { values } from 'lib/utils';
+import { mixin, values } from 'lib/utils';
 import {
-  SchemaConfig,
-  SchemaConfigItem,
-  SchemaConfigRenderFunction,
+  FontConfig,
+  FontInfo,
+  InlineSchemaConfig,
   TextNode,
+  Values,
   VirtualNode,
 } from 'lib/types';
+import { t } from 'lib/model';
+import { ClassName } from 'lib/static';
 
 const findFirstMatched = (
   src: string,
-  schemaConfigs: Array<SchemaConfigItem>
+  schemaConfigs: Values<InlineSchemaConfig>
 ) => {
   let firstIndex = src.length;
 
@@ -20,32 +23,62 @@ const findFirstMatched = (
       res = { matched, render };
     }
     return res;
-  }, null as { matched: RegExpMatchArray; render: SchemaConfigRenderFunction } | null);
+  }, null as { matched: RegExpMatchArray; render: Function } | null);
 
   return res;
 };
 
+const maybeOverload = (
+  vNode: TextNode,
+  fontOverload?: {
+    size: number;
+    family: string;
+    bold: boolean;
+    italic: boolean;
+  }
+) => {
+  if (fontOverload) {
+    vNode.font = fontOverload;
+  }
+
+  return vNode;
+};
+
+const text = (content: string, fontInfo: FontInfo) =>
+  t(fontInfo, content, {
+    classList: [ClassName.RTE_PLAIN_TEXT],
+  });
+
 export const parseInline = (
   src: string,
-  inlineConfig: ReturnType<SchemaConfig['inline']>,
-  defaultText: (text: string) => TextNode
+  inlineConfig: InlineSchemaConfig,
+  curFontInfo: FontInfo,
+  fontOverload?: FontConfig
 ) => {
+  const localFontInfo = mixin(curFontInfo, fontOverload);
+
   const recur = (cur: string): Array<VirtualNode> => {
     if (!cur) return [];
 
     const nereastMatched = findFirstMatched(cur, values(inlineConfig));
     if (!nereastMatched) {
-      return [defaultText(cur)];
+      return [maybeOverload(text(cur, curFontInfo), localFontInfo)];
     }
 
     const children = [];
     const { matched, render } = nereastMatched;
     const { index } = matched;
     if (index) {
-      children.push(defaultText(cur.slice(0, index)));
+      children.push(
+        maybeOverload(text(cur.slice(0, index), curFontInfo), localFontInfo)
+      );
       children.push(...recur(cur.slice(index)));
     } else {
-      children.push(render(matched.groups!));
+      children.push(
+        render(matched.groups!, (src: string, fontConfig?: FontConfig) =>
+          parseInline(src, inlineConfig, localFontInfo, fontConfig)
+        )
+      );
       children.push(...recur(cur.slice(matched[0].length)));
     }
 

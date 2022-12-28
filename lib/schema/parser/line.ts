@@ -1,7 +1,7 @@
 import { values } from 'lib/utils';
 import { s } from 'lib/model';
 import { NodeType, TagName, ClassName } from 'lib/static';
-import { SchemaConfig, VirtualNode } from 'lib/types';
+import { FontConfig, LineSchemaConfig, VirtualNode } from 'lib/types';
 
 const { LINE } = NodeType;
 const { DIV } = TagName;
@@ -9,8 +9,11 @@ const { RTE_LINE } = ClassName;
 
 export const parseLine = (
   src: string,
-  lineConfig: ReturnType<SchemaConfig['line']>,
-  parseInline: (content: string) => Array<VirtualNode>
+  lineConfig: LineSchemaConfig,
+  parseInlineWithOverloadFont: (
+    content: string,
+    fontConfig?: FontConfig
+  ) => Array<VirtualNode>
 ) => {
   const target = values(lineConfig).find(({ reg }) => reg.test(src));
   if (target) {
@@ -18,9 +21,10 @@ export const parseLine = (
     const matched = src.match(reg);
     const { groups } = matched!;
 
-    return render(groups!);
+    return render(groups!, parseInlineWithOverloadFont);
   } else {
-    // TODO font
-    return s(LINE, DIV, parseInline(src), { classList: [RTE_LINE] });
+    return s(LINE, DIV, parseInlineWithOverloadFont(src), {
+      classList: [RTE_LINE],
+    });
   }
 };
