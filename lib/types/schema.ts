@@ -1,5 +1,7 @@
 import { NodeType, TagName } from 'lib/static';
 import {
+  FontInfo,
+  SyntaxNode,
   TextNode,
   VirtualNode,
   VirtualNodeEvents,
@@ -9,21 +11,7 @@ import {
 } from 'lib/types';
 import { s } from 'lib/model';
 
-export type SchemaConfigRenderFunction = (
-  groups: Record<string, string>
-) => VirtualNode;
-
-export interface SchemaConfigItem {
-  reg: RegExp;
-  render: SchemaConfigRenderFunction;
-}
-
-type FontInfo = Partial<{
-  size: number;
-  family: string;
-  bold: boolean;
-  italic: boolean;
-}>;
+export type FontConfig = Partial<FontInfo>;
 
 export type ExportedText = (
   text: string,
@@ -31,21 +19,53 @@ export type ExportedText = (
   props?: VirtualNodeProps,
   meta?: VirtualNodeMetaData,
 
-  font?: FontInfo
+  font?: FontConfig
 ) => TextNode;
 
+export type InlineSchemaConfig = Record<
+  string,
+  {
+    reg: RegExp;
+    render: (
+      groups: Record<string, string>,
+      parsingRecursively: (
+        src: string,
+        fontConfig?: FontConfig
+      ) => Array<VirtualNode>
+    ) => SyntaxNode;
+  }
+>;
+
+export type LineSchemaConfig = Record<
+  string,
+  {
+    reg: RegExp;
+    render: (
+      groups: Record<string, string>,
+      parseInlineWithOverloadFont: (
+        content: string,
+        fontConfig?: FontConfig
+      ) => Array<VirtualNode>
+    ) => SyntaxNode;
+  }
+>;
+
+export type BlockSchemaConfig = Record<
+  string,
+  {
+    reg: RegExp;
+    render: (
+      groups: Record<string, string>,
+      parseInlineWithOverloadFont: (
+        content: string,
+        fontConfig?: FontConfig
+      ) => Array<SyntaxNode>
+    ) => SyntaxNode;
+  }
+>;
+
 export interface SchemaConfig {
-  inline: (
-    syntax: typeof s,
-    text: ExportedText
-  ) => Record<string, SchemaConfigItem>;
-  line: (
-    inlineParser: (content: string, fontInfo?: FontInfo) => Array<VirtualNode>,
-    syntax: typeof s,
-    text: ExportedText
-  ) => Record<string, SchemaConfigItem>;
-  block: (
-    syntax: typeof s,
-    text: ExportedText
-  ) => Record<string, SchemaConfigItem>;
+  inline: (syntax: typeof s, text: ExportedText) => InlineSchemaConfig;
+  line: (syntax: typeof s, text: ExportedText) => LineSchemaConfig;
+  block: () => BlockSchemaConfig;
 }
