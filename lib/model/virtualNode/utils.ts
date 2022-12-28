@@ -6,9 +6,9 @@ const { PLAIN_TEXT } = NodeType;
 
 export const getFont = (fontInfo: FontInfo) => {
   const { size, family, bold, italic } = fontInfo;
-  return `${size}px ${italic ? 'italic' : 'normal'} ${
+  return `${italic ? 'italic' : 'normal'} ${
     bold ? 'bold' : 'normal'
-  } ${family}`;
+  } ${size}px ${family}`;
 };
 
 export const isTextNode = (vNode: VirtualNode): vNode is TextNode =>
