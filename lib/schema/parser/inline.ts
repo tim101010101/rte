@@ -2,7 +2,7 @@ import { mixin, values } from 'lib/utils';
 import {
   FontConfig,
   FontInfo,
-  InlineSchemaConfig,
+  SchemaConfigItem,
   TextNode,
   Values,
   VirtualNode,
@@ -12,7 +12,7 @@ import { ClassName } from 'lib/static';
 
 const findFirstMatched = (
   src: string,
-  schemaConfigs: Values<InlineSchemaConfig>
+  schemaConfigs: Values<SchemaConfigItem>
 ) => {
   let firstIndex = src.length;
 
@@ -37,10 +37,7 @@ const maybeOverload = (
     italic: boolean;
   }
 ) => {
-  if (fontOverload) {
-    vNode.font = fontOverload;
-  }
-
+  if (fontOverload) vNode.font = fontOverload;
   return vNode;
 };
 
@@ -51,18 +48,18 @@ const text = (content: string, fontInfo: FontInfo) =>
 
 export const parseInline = (
   src: string,
-  inlineConfig: InlineSchemaConfig,
+  inlineConfig: SchemaConfigItem,
   curFontInfo: FontInfo,
   fontOverload?: FontConfig
 ) => {
-  const localFontInfo = mixin(curFontInfo, fontOverload);
+  const scopeFontInfo = mixin(curFontInfo, fontOverload);
 
   const recur = (cur: string): Array<VirtualNode> => {
     if (!cur) return [];
 
     const nereastMatched = findFirstMatched(cur, values(inlineConfig));
     if (!nereastMatched) {
-      return [maybeOverload(text(cur, curFontInfo), localFontInfo)];
+      return [maybeOverload(text(cur, curFontInfo), scopeFontInfo)];
     }
 
     const children = [];
@@ -70,13 +67,13 @@ export const parseInline = (
     const { index } = matched;
     if (index) {
       children.push(
-        maybeOverload(text(cur.slice(0, index), curFontInfo), localFontInfo)
+        maybeOverload(text(cur.slice(0, index), curFontInfo), scopeFontInfo)
       );
       children.push(...recur(cur.slice(index)));
     } else {
       children.push(
-        render(matched.groups!, (src: string, fontConfig?: FontConfig) =>
-          parseInline(src, inlineConfig, localFontInfo, fontConfig)
+        render(matched.groups!, (subSource: string, fontConfig?: FontConfig) =>
+          parseInline(subSource, inlineConfig, scopeFontInfo, fontConfig)
         )
       );
       children.push(...recur(cur.slice(matched[0].length)));

@@ -2,7 +2,7 @@ import { mixin } from 'lib/utils';
 import { s, t } from 'lib/model';
 import { NodeType, TagName, ClassName } from 'lib/static';
 import {
-  ExportedText,
+  ExportedTextFunction,
   FontInfo,
   TextNode,
   VirtualNode,
@@ -40,7 +40,7 @@ export const mockText = (font: FontInfo, content: string) => {
 export const mockDefaultText = (content: string) =>
   mockText(mockFontInfo, content);
 
-export const mockExportedText: ExportedText = (
+export const mockExportedText: ExportedTextFunction = (
   content: string,
   props,
   meta,

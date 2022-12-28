@@ -1,7 +1,7 @@
 import { values } from 'lib/utils';
 import { s } from 'lib/model';
 import { NodeType, TagName, ClassName } from 'lib/static';
-import { FontConfig, LineSchemaConfig, VirtualNode } from 'lib/types';
+import { FontConfig, SchemaConfigItem, VirtualNode } from 'lib/types';
 
 const { LINE } = NodeType;
 const { DIV } = TagName;
@@ -9,7 +9,7 @@ const { RTE_LINE } = ClassName;
 
 export const parseLine = (
   src: string,
-  lineConfig: LineSchemaConfig,
+  lineConfig: SchemaConfigItem,
   parseInlineWithOverloadFont: (
     content: string,
     fontConfig?: FontConfig
