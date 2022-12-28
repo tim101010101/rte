@@ -1,3 +1,5 @@
+import { getFont } from 'lib/model';
+import { FontInfo } from 'lib/types';
 import { entries } from './obj';
 
 export const appendChild = <T extends Node>(
@@ -79,8 +81,8 @@ export const createRangeFromPoint = (x: number, y: number): Range | null => {
 };
 
 const ctx = document.createElement('canvas').getContext('2d')!;
-export const measureCharWidth = (char: string, font: string) => {
-  ctx.font = font;
+export const measureCharWidth = (char: string, fontInfo: FontInfo) => {
+  ctx.font = getFont(fontInfo);
   const metrics = ctx.measureText(char);
   return metrics.width;
 };
