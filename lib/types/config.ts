@@ -5,6 +5,7 @@ export interface EditorConfig {
     size: number;
     family: string;
   };
+
   container: string;
 
   schema: SchemaConfig;

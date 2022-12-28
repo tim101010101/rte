@@ -1,5 +1,6 @@
 import { NodeType, TagName } from 'lib/static';
-import { EventName } from 'lib/model';
+import { EventName, s, t } from 'lib/model';
+import { DeepExpandable, DeepPartial, Noop } from 'lib/types';
 
 interface BasicNode {
   tagName: TagName;
@@ -24,15 +25,11 @@ export interface TextNode extends BasicNode {
 }
 export type VirtualNode = SyntaxNode | TextNode;
 
-export type VirtualNodeProps = Partial<
-  {
-    classList: Array<string>;
-    id: string;
-    style: {} & Record<string, any>;
-  } & Record<string, any>
+export type VirtualNodeProps = DeepExpandable<
+  DeepPartial<{ classList: Array<string>; id: string; style: {} }>
 >;
 
-export type VirtualNodeMetaData = Record<PropertyKey, any>;
+export type VirtualNodeMetaData = Noop;
 
 export interface VirtualNodeMarker {
   prefix?: string;
@@ -57,3 +54,6 @@ export interface FontInfo {
   bold: boolean;
   italic: boolean;
 }
+
+export type TextFunction = typeof t;
+export type SyntaxFunction = typeof s;

@@ -1,19 +1,30 @@
-import { NodeType, TagName } from 'lib/static';
 import {
   FontInfo,
+  SyntaxFunction,
   SyntaxNode,
   TextNode,
   VirtualNode,
-  VirtualNodeEvents,
-  VirtualNodeMarker,
   VirtualNodeMetaData,
   VirtualNodeProps,
 } from 'lib/types';
-import { s } from 'lib/model';
 
 export type FontConfig = Partial<FontInfo>;
 
-export type ExportedText = (
+export type SchemaConfigItem = Record<
+  string,
+  {
+    reg: RegExp;
+    render: (
+      groups: Record<string, string>,
+      parseInlineWithOverloadFont: (
+        src: string,
+        fontConfig?: FontConfig
+      ) => Array<VirtualNode>
+    ) => SyntaxNode;
+  }
+>;
+
+export type ExportedTextFunction = (
   text: string,
 
   props?: VirtualNodeProps,
@@ -22,50 +33,13 @@ export type ExportedText = (
   font?: FontConfig
 ) => TextNode;
 
-export type InlineSchemaConfig = Record<
-  string,
-  {
-    reg: RegExp;
-    render: (
-      groups: Record<string, string>,
-      parsingRecursively: (
-        src: string,
-        fontConfig?: FontConfig
-      ) => Array<VirtualNode>
-    ) => SyntaxNode;
-  }
->;
-
-export type LineSchemaConfig = Record<
-  string,
-  {
-    reg: RegExp;
-    render: (
-      groups: Record<string, string>,
-      parseInlineWithOverloadFont: (
-        content: string,
-        fontConfig?: FontConfig
-      ) => Array<VirtualNode>
-    ) => SyntaxNode;
-  }
->;
-
-export type BlockSchemaConfig = Record<
-  string,
-  {
-    reg: RegExp;
-    render: (
-      groups: Record<string, string>,
-      parseInlineWithOverloadFont: (
-        content: string,
-        fontConfig?: FontConfig
-      ) => Array<SyntaxNode>
-    ) => SyntaxNode;
-  }
->;
+type SchemaConfigFunction = (
+  syntax: SyntaxFunction,
+  text: ExportedTextFunction
+) => SchemaConfigItem;
 
 export interface SchemaConfig {
-  inline: (syntax: typeof s, text: ExportedText) => InlineSchemaConfig;
-  line: (syntax: typeof s, text: ExportedText) => LineSchemaConfig;
-  block: () => BlockSchemaConfig;
+  inline: SchemaConfigFunction;
+  line: SchemaConfigFunction;
+  block: SchemaConfigFunction;
 }
