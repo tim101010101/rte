@@ -3,7 +3,7 @@ import { NodeType, ClassName, TagName } from 'lib/static';
 
 const { BOLD, ITALIC } = NodeType;
 const { SPAN } = TagName;
-const { RTE_PLAIN_TEXT, RTE_BOLD, RTE_ITALIC } = ClassName;
+const { RTE_BOLD, RTE_ITALIC } = ClassName;
 
 export const inline: SchemaConfig['inline'] = (syntax, text) => {
   return {
