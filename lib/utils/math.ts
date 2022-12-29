@@ -3,6 +3,10 @@ export const decimal = (num: number, digits: number = 3): number => {
   return Math.round(num * temp) / temp;
 };
 
+export const max = (x: number, y: number) => (x > y ? x : y);
+
+export const min = (x: number, y: number) => (x > y ? y : x);
+
 export const getNearestIdx = (arr: Array<number>, target: number) => {
   const len = arr.length;
 
