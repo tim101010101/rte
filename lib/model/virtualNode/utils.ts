@@ -16,25 +16,25 @@ export const isTextNode = (vNode: VirtualNode): vNode is TextNode =>
 
 export const isPureTextAncestor = (root: VirtualNode, path: Array<number>) => {
   if (isTextNode(root)) return true;
-  return !!(root.children[path[0]].type & PLAIN_TEXT);
+  return !!(root.children[path[0]].type === PLAIN_TEXT);
 };
 
 export const deepCloneWithTrackNode = (
   vNode: VirtualNode,
-  target: VirtualNode
+  target?: VirtualNode
 ): [VirtualNode, Array<number>] => {
   const path: Array<number> = [];
   let hasFound = false;
 
   const dfs = (cur: VirtualNode) => {
     if (!cur) return cur;
-    if (cur === target) hasFound = true;
+    if (target && cur === target) hasFound = true;
 
     const newVNode = { ...cur };
 
     set(
       newVNode,
-      'children',
+      isTextNode(cur) ? 'children' : 'text',
       isTextNode(cur)
         ? cur.text
         : cur.children.reduce<Array<VirtualNode>>((res, child, i) => {
@@ -51,12 +51,48 @@ export const deepCloneWithTrackNode = (
   return [dfs(vNode), path];
 };
 
+export const textContentWithMarker = (vNode: VirtualNode): string => {
+  if (!vNode) return '';
+
+  if (isTextNode(vNode)) {
+    return vNode.text;
+  } else {
+    let subRes = '';
+    const { marker, children } = vNode;
+    const { prefix, suffix } = marker;
+    if (prefix) subRes += prefix;
+    subRes += children.reduce((content, cur) => {
+      content += textContentWithMarker(cur);
+      return content;
+    }, '');
+    if (suffix) subRes += suffix;
+
+    return subRes;
+  }
+};
+
 export const textContent = (vNode: VirtualNode): string => {
   if (isTextNode(vNode)) {
     return vNode.text;
   } else {
     return vNode.children.reduce((res, cur) => res + textContent(cur), '');
   }
+};
+
+export const setTextContent = (
+  root: VirtualNode,
+  path: Array<number>,
+  newTextContent: string
+) => {
+  const target = getNode(root, path);
+  const parent = getParent(root, path);
+
+  if (isTextNode(parent) || !isTextNode(target)) return;
+
+  parent.children[path[path.length - 1]] = {
+    ...target,
+    text: newTextContent,
+  };
 };
 
 export const posNode = (vNode: VirtualNode) => {
@@ -73,17 +109,24 @@ export const posNode = (vNode: VirtualNode) => {
 
 export const walkTextNode = (
   vNode: SyntaxNode,
-  callback: (textNode: TextNode) => void
+  callback: (textNode: TextNode, path: Array<number>) => void
 ) => {
-  const nodeList = [...vNode.children];
-  while (nodeList.length) {
-    const node = nodeList.shift()!;
-    if (isTextNode(node)) {
-      callback(node);
+  const path: Array<number> = [];
+  const dfs = (cur: VirtualNode) => {
+    if (!cur) return;
+
+    if (isTextNode(cur)) {
+      callback(cur, [...path]);
     } else {
-      nodeList.unshift(...node.children);
+      cur.children.forEach((child, i) => {
+        path.push(i);
+        dfs(child);
+        path.pop();
+      });
     }
-  }
+  };
+
+  dfs(vNode);
 };
 
 export const getTextList = (vNode: SyntaxNode) => {
@@ -104,11 +147,23 @@ export const getTextRectList = (vNode: SyntaxNode) => {
   return rectList;
 };
 
+export const getNode = (root: VirtualNode, path: Array<number>) => {
+  let cur = root;
+  let idx = path.length - 1;
+  while (idx >= 0) {
+    if (!isTextNode(cur)) {
+      cur = cur.children[path[idx--]] as SyntaxNode;
+    }
+  }
+  return cur;
+};
+
 export const getParent = (root: VirtualNode, path: Array<number>) => {
   let cur = root;
-  while (path.length !== 1) {
+  let idx = path.length - 1;
+  while (idx > 0) {
     if (!isTextNode(cur)) {
-      cur = cur.children[path.pop()!] as SyntaxNode;
+      cur = cur.children[path[idx--]] as SyntaxNode;
     }
   }
   return cur;

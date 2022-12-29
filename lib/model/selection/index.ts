@@ -1,9 +1,10 @@
-import { appendChild, createDomNode, isNumber } from 'lib/utils';
+import { appendChild, createDomNode, insertAt, isNumber, min } from 'lib/utils';
 import {
   Block,
   deepCloneWithTrackNode,
   getAncestor,
   isPureTextAncestor,
+  textContentWithMarker,
 } from 'lib/model';
 import { SetterFunction, VirtualNode } from 'lib/types';
 import { activeSubTree, cancelActiveSubTree } from './switchActiveMarker';
@@ -11,29 +12,13 @@ import { ClassName, TagName } from 'lib/static';
 
 export class Selection {
   private el: HTMLElement;
-  private activeBlock: Block | null;
-  private activePath: Array<number> | null;
-  private fenceOffset: number | null;
+  private pos?: { block: Block; fenceOffset: number } | null;
+  private active?: { block: Block; path: Array<number> } | null;
 
   constructor(container: HTMLElement) {
     this.el = createDomNode(TagName.SPAN, [ClassName.RTE_CURSOR]);
-    this.activeBlock = null;
-    this.fenceOffset = null;
-    this.activePath = null;
 
     appendChild(container, this.el);
-  }
-
-  private setFenceOffset(offset: number | SetterFunction<number>) {
-    if (isNumber(offset)) {
-      this.fenceOffset = offset;
-    } else {
-      this.fenceOffset = offset(this.fenceOffset!);
-    }
-  }
-
-  private get fence() {
-    return this.activeBlock!.fence;
   }
 
   private setShape(width: number, height: number, left: number, top: number) {
@@ -43,108 +28,109 @@ export class Selection {
     this.el.style.top = `${top}px`;
   }
 
-  private trySwitchActiveSyntaxNode(target: VirtualNode) {
-    let needPatch = false;
-    const [newRoot, path] = deepCloneWithTrackNode(
-      this.activeBlock!.vNode!,
-      target
-    );
+  private trySwitchActiveSyntaxNode(block: Block, posPath: Array<number>) {
+    let needPath = false;
+    const [newRoot] = deepCloneWithTrackNode(block.vNode!);
 
-    if (this.activePath && this.activePath[0] !== path[0]) {
-      cancelActiveSubTree(getAncestor(newRoot, this.activePath));
-      this.activePath = null;
-      needPatch = true;
+    if (this.active && this.active.block !== this.pos?.block) {
+      const [prevActive] = deepCloneWithTrackNode(this.active.block.vNode!);
 
-      // TODO move cursor left
+      cancelActiveSubTree(getAncestor(prevActive, this.active.path));
+
+      this.active.block.patch(prevActive);
+
+      this.active = null;
+      needPath = true;
+    } else if (this.active && this.active.path[0] !== posPath[0]) {
+      cancelActiveSubTree(getAncestor(newRoot, this.active.path));
+
+      this.active = null;
+      needPath = true;
     }
 
-    if (!this.activePath && !isPureTextAncestor(newRoot, path)) {
-      activeSubTree(getAncestor(newRoot, path));
-      this.activePath = path;
-      needPatch = true;
+    if (!this.active && !isPureTextAncestor(newRoot, posPath)) {
+      activeSubTree(getAncestor(newRoot, posPath));
+      this.active = { block, path: posPath };
+      needPath = true;
     }
 
-    needPatch && this.activeBlock?.patch(newRoot);
+    needPath && this.pos!.block.patch(newRoot);
   }
 
-  focusOn(activeBlock = this.activeBlock, fenceOffset = this.fenceOffset) {
-    if (activeBlock === null || fenceOffset === null) return;
-    if (!this.activeBlock) {
+  focusOn(targetBlock: Block, fenceOffset: number) {
+    if (!this.pos) {
       this.el.style.display = 'inline-block';
     }
 
-    this.activeBlock = activeBlock;
-    this.fenceOffset = fenceOffset;
+    this.pos = {
+      block: targetBlock,
+      fenceOffset,
+    };
 
-    // try to active syntax node, expect of Pure Plain-Text Node
-    const { vNode, textOffset } = this.fence.fenceList[fenceOffset];
-    this.trySwitchActiveSyntaxNode(vNode);
+    const fence = this.pos.block.fence;
+    const { path } = fence.fenceList[fenceOffset];
 
-    // move cursor
-    const { fenceList, lineHeight, y } = this.fence;
-    const { cursorOffset: curOffset } = fenceList[this.fenceOffset];
-    // const { cursorOffset: nextOffset } = fenceList[fenceOffset + 1];
+    this.trySwitchActiveSyntaxNode(targetBlock, path);
+
+    const { fenceList, lineHeight, y } = fence;
+    const { cursorOffset: curOffset } = fenceList[fenceOffset];
 
     // re-render the cursor
     this.setShape(2, lineHeight, curOffset, y);
   }
 
   unFocus() {
-    if (this.activeBlock) {
+    if (this.pos) {
       this.el.style.display = 'none';
 
-      this.fenceOffset = null;
-      this.activeBlock = null;
+      this.pos = null;
     }
   }
 
   left() {
-    if (this.fenceOffset !== null && this.fenceOffset !== 0) {
-      this.fenceOffset--;
-      this.focusOn();
+    if (!this.pos) return;
+    const { block, fenceOffset } = this.pos;
+
+    if (fenceOffset !== 0) {
+      this.focusOn(block, fenceOffset - 1);
     }
   }
 
   right() {
+    if (!this.pos) return;
+    const { block, fenceOffset } = this.pos;
+
     if (
-      this.fenceOffset !== null &&
       // this.fenceOffset !== this.fence.fenceList.length - 2
-      this.fenceOffset !== this.fence.fenceList.length - 1
+      fenceOffset !==
+      block.fence.fenceList.length - 1
     ) {
-      this.fenceOffset++;
-      this.focusOn();
+      this.focusOn(block, fenceOffset + 1);
     }
   }
 
   up() {
-    if (
-      this.fenceOffset !== null &&
-      this.activeBlock &&
-      this.activeBlock.prev
-    ) {
-      const prevOffset = this.fenceOffset;
-      this.activeBlock = this.activeBlock.prev;
-      const curLength = this.fence.fenceList.length;
-      this.fenceOffset =
-        prevOffset >= curLength - 2 ? curLength - 2 : this.fenceOffset;
+    if (!this.pos) return;
+    const { block, fenceOffset } = this.pos;
 
-      this.focusOn();
+    if (block.prev) {
+      const curLength = block.fence.fenceList.length;
+      this.focusOn(block.prev, min(fenceOffset, curLength - 2));
     }
   }
 
   down() {
-    if (
-      this.fenceOffset !== null &&
-      this.activeBlock &&
-      this.activeBlock.next
-    ) {
-      const prevOffset = this.fenceOffset;
-      this.activeBlock = this.activeBlock.next;
-      const curLength = this.fence.fenceList.length;
-      this.fenceOffset =
-        prevOffset >= curLength - 2 ? curLength - 2 : this.fenceOffset;
+    if (!this.pos) return;
+    const { block, fenceOffset } = this.pos;
 
-      this.focusOn();
+    if (block.next) {
+      const curLength = block.fence.fenceList.length;
+      this.focusOn(block.next, min(fenceOffset, curLength - 2));
     }
   }
+
+  updateActiveBlockContent(
+    char: string,
+    parser: (src: string) => VirtualNode
+  ) {}
 }

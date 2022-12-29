@@ -6,6 +6,7 @@ interface FenceItem {
   cursorOffset: number;
   vNode: VirtualNode;
   textOffset: number;
+  path: Array<number>;
 }
 export interface Fence {
   lineHeight: number;
@@ -27,13 +28,14 @@ export const calcFence = (blockVNode: SyntaxNode): Fence => {
   const fenceList: Array<FenceItem> = [];
   let prevOffset = left;
 
-  walkTextNode(blockVNode, textNode => {
+  walkTextNode(blockVNode, (textNode, path) => {
     const { text, font } = textNode;
     Array.from(text).forEach((char, i) => {
       fenceList.push({
         cursorOffset: prevOffset,
         vNode: textNode,
         textOffset: i,
+        path,
       });
       prevOffset += measureCharWidth(char, font);
     });
@@ -44,6 +46,8 @@ export const calcFence = (blockVNode: SyntaxNode): Fence => {
     cursorOffset: prevOffset,
     vNode: vNode,
     textOffset: textOffset + 1,
+    // TODO the last
+    path: [],
   });
 
   // DEV
