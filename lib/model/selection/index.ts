@@ -1,19 +1,23 @@
-import { appendChild, createDomNode, insertAt, isNumber, min } from 'lib/utils';
-import {
-  Block,
-  deepCloneWithTrackNode,
-  getAncestor,
-  isPureTextAncestor,
-  textContentWithMarker,
-} from 'lib/model';
-import { SetterFunction, VirtualNode } from 'lib/types';
-import { activeSubTree, cancelActiveSubTree } from './switchActiveMarker';
+import { appendChild, createDomNode, min } from 'lib/utils';
+import { Block } from 'lib/model';
+import { VirtualNode } from 'lib/types';
+import { trySwitchActiveSyntaxNode } from './switchActiveMarker';
 import { ClassName, TagName } from 'lib/static';
+
+export interface Pos {
+  block: Block;
+  fenceOffset: number;
+}
+
+export interface ActivePos {
+  block: Block;
+  offset: number;
+}
 
 export class Selection {
   private el: HTMLElement;
-  private pos?: { block: Block; fenceOffset: number } | null;
-  private active?: { block: Block; path: Array<number> } | null;
+  private pos?: Pos | null;
+  private active?: ActivePos | null;
 
   constructor(container: HTMLElement) {
     this.el = createDomNode(TagName.SPAN, [ClassName.RTE_CURSOR]);
@@ -28,55 +32,33 @@ export class Selection {
     this.el.style.top = `${top}px`;
   }
 
-  private trySwitchActiveSyntaxNode(block: Block, posPath: Array<number>) {
-    let needPath = false;
-    const [newRoot] = deepCloneWithTrackNode(block.vNode!);
+  private setPos({ block, fenceOffset }: Pos) {
+    const { fence } = block;
+    const { fenceList, lineHeight, y } = fence;
+    const offset = fenceList[fenceOffset].cursorOffset;
 
-    if (this.active && this.active.block !== this.pos?.block) {
-      const [prevActive] = deepCloneWithTrackNode(this.active.block.vNode!);
-
-      cancelActiveSubTree(getAncestor(prevActive, this.active.path));
-
-      this.active.block.patch(prevActive);
-
-      this.active = null;
-      needPath = true;
-    } else if (this.active && this.active.path[0] !== posPath[0]) {
-      cancelActiveSubTree(getAncestor(newRoot, this.active.path));
-
-      this.active = null;
-      needPath = true;
-    }
-
-    if (!this.active && !isPureTextAncestor(newRoot, posPath)) {
-      activeSubTree(getAncestor(newRoot, posPath));
-      this.active = { block, path: posPath };
-      needPath = true;
-    }
-
-    needPath && this.pos!.block.patch(newRoot);
+    this.setShape(2, lineHeight, offset, y);
   }
 
-  focusOn(targetBlock: Block, fenceOffset: number) {
+  focusOn(block: Block, fenceOffset: number, isCrossLine: boolean) {
     if (!this.pos) {
       this.el.style.display = 'inline-block';
     }
 
-    this.pos = {
-      block: targetBlock,
-      fenceOffset,
-    };
+    const { pos, active } = trySwitchActiveSyntaxNode(
+      {
+        block,
+        fenceOffset,
+      },
+      isCrossLine,
+      this.active
+    );
 
-    const fence = this.pos.block.fence;
-    const { path } = fence.fenceList[fenceOffset];
-
-    this.trySwitchActiveSyntaxNode(targetBlock, path);
-
-    const { fenceList, lineHeight, y } = fence;
-    const { cursorOffset: curOffset } = fenceList[fenceOffset];
+    this.pos = pos;
+    this.active = active;
 
     // re-render the cursor
-    this.setShape(2, lineHeight, curOffset, y);
+    this.setPos(pos);
   }
 
   unFocus() {
@@ -92,7 +74,7 @@ export class Selection {
     const { block, fenceOffset } = this.pos;
 
     if (fenceOffset !== 0) {
-      this.focusOn(block, fenceOffset - 1);
+      this.focusOn(block, fenceOffset - 1, false);
     }
   }
 
@@ -105,7 +87,7 @@ export class Selection {
       fenceOffset !==
       block.fence.fenceList.length - 1
     ) {
-      this.focusOn(block, fenceOffset + 1);
+      this.focusOn(block, fenceOffset + 1, false);
     }
   }
 
@@ -114,8 +96,8 @@ export class Selection {
     const { block, fenceOffset } = this.pos;
 
     if (block.prev) {
-      const curLength = block.fence.fenceList.length;
-      this.focusOn(block.prev, min(fenceOffset, curLength - 2));
+      const nextFenceLength = block.prev.fence.fenceList.length;
+      this.focusOn(block.prev, min(fenceOffset, nextFenceLength - 1), true);
     }
   }
 
@@ -124,8 +106,8 @@ export class Selection {
     const { block, fenceOffset } = this.pos;
 
     if (block.next) {
-      const curLength = block.fence.fenceList.length;
-      this.focusOn(block.next, min(fenceOffset, curLength - 2));
+      const nextFenceLength = block.next.fence.fenceList.length;
+      this.focusOn(block.next, min(fenceOffset, nextFenceLength - 1), true);
     }
   }
 

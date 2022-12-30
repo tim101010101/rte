@@ -27,6 +27,7 @@ export const calcFence = (blockVNode: SyntaxNode): Fence => {
   const { height, left, top } = posNode(blockVNode)!;
   const fenceList: Array<FenceItem> = [];
   let prevOffset = left;
+  let curPath: Array<number> = [];
 
   walkTextNode(blockVNode, (textNode, path) => {
     const { text, font } = textNode;
@@ -39,6 +40,7 @@ export const calcFence = (blockVNode: SyntaxNode): Fence => {
       });
       prevOffset += measureCharWidth(char, font);
     });
+    curPath = path;
   });
 
   const { vNode, textOffset } = fenceList[fenceList.length - 1];
@@ -46,8 +48,7 @@ export const calcFence = (blockVNode: SyntaxNode): Fence => {
     cursorOffset: prevOffset,
     vNode: vNode,
     textOffset: textOffset + 1,
-    // TODO the last
-    path: [],
+    path: curPath,
   });
 
   // DEV
