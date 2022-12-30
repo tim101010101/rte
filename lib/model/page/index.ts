@@ -65,7 +65,7 @@ export class Page extends LinkedList<Block> {
             e.key.length === 1 &&
             (/[a-zA-Z0-9]/.test(e.key) || e.key === '*')
           ) {
-            this.selection.updateActiveBlockContent(
+            this.selection.updateBlockContent(
               e.key,
               this.schema.parse.bind(this.schema)
             );
@@ -76,7 +76,7 @@ export class Page extends LinkedList<Block> {
   }
 
   setFocus(block: Block, fenseOffset: number) {
-    this.selection.focusOn(block, fenseOffset);
+    this.selection.focusOn(block, fenseOffset, false);
   }
 }
 

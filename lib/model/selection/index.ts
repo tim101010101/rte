@@ -1,6 +1,13 @@
-import { appendChild, createDomNode, min } from 'lib/utils';
-import { Block } from 'lib/model';
-import { VirtualNode } from 'lib/types';
+import { appendChild, createDomNode, insertAt, min } from 'lib/utils';
+import {
+  Block,
+  getNode,
+  getPrevSibling,
+  isTextNode,
+  setTextContent,
+  textContentWithMarker,
+} from 'lib/model';
+import { SyntaxNode, VirtualNode } from 'lib/types';
 import { trySwitchActiveSyntaxNode } from './switchActiveMarker';
 import { ClassName, TagName } from 'lib/static';
 
@@ -111,8 +118,55 @@ export class Selection {
     }
   }
 
-  updateActiveBlockContent(
-    char: string,
-    parser: (src: string) => VirtualNode
-  ) {}
+  updateBlockContent(char: string, parser: (src: string) => VirtualNode) {
+    if (!this.pos) return;
+
+    const { block, fenceOffset } = this.pos;
+    const root = block.vNode!;
+    const { textOffset } = block.fence.fenceList[fenceOffset];
+    const lineContent = textContentWithMarker(root);
+    const newLineContent = insertAt(lineContent, fenceOffset, char);
+
+    const newVTree = parser(newLineContent);
+
+    const prevLength = root.children.length;
+    const curLength = (newVTree as SyntaxNode).children.length;
+
+    block.patch(newVTree);
+
+    const path = this.pos.block.fence.fenceList[this.pos.fenceOffset].path;
+    const curSyntax = getPrevSibling(block.vNode!, path);
+
+    if (curSyntax && !isTextNode(curSyntax)) {
+      console.log('a');
+      const { marker } = curSyntax;
+      const { prefix, suffix } = marker;
+      if (prefix?.length! === 1) {
+        this.focusOn(block, fenceOffset - 1, false);
+      } else if (prefix?.length! === 2) {
+        this.focusOn(block, fenceOffset - 3, false);
+      }
+    } else {
+      if (prevLength === curLength) {
+        console.log('b');
+        this.focusOn(block, fenceOffset + 1, false);
+      } else {
+        console.log('c');
+        this.focusOn(block, fenceOffset - 1, false);
+      }
+    }
+
+    // if (curSyntax && !isTextNode(curSyntax)) {
+    //   console.log('b');
+    //   this.focusOn(block, fenceOffset - 1, false);
+    // } else if (prevLength === curLength) {
+    //   //! ERROR this branch includes two possibilities
+    //   //! ERROR    1. normal input
+    //   //! ERROR    2. syntax1 -> syntax2
+    //   //! ERROR       e.g **a* -> **a**
+
+    //   console.log('a');
+    //   this.focusOn(block, fenceOffset + 1, false);
+    // }
+  }
 }

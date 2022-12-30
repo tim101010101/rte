@@ -61,14 +61,14 @@ export const textContentWithMarker = (vNode: VirtualNode): string => {
     return vNode.text;
   } else {
     let subRes = '';
-    const { marker, children } = vNode;
+    const { marker, children, isActive } = vNode;
     const { prefix, suffix } = marker;
-    if (prefix) subRes += prefix;
+    if (!isActive && prefix) subRes += prefix;
     subRes += children.reduce((content, cur) => {
       content += textContentWithMarker(cur);
       return content;
     }, '');
-    if (suffix) subRes += suffix;
+    if (!isActive && suffix) subRes += suffix;
 
     return subRes;
   }
@@ -155,10 +155,21 @@ export const getNode = (root: VirtualNode, path: Array<number>) => {
   let idx = path.length - 1;
   while (idx >= 0) {
     if (!isTextNode(cur)) {
-      cur = cur.children[path[idx--]] as SyntaxNode;
+      cur = cur.children[path[idx--]];
     }
   }
   return cur;
+};
+
+export const getPrevSibling = (root: VirtualNode, path: Array<number>) => {
+  let cur = root;
+  let idx = path.length - 1;
+  while (idx > 0) {
+    if (!isTextNode(cur)) {
+      cur = cur.children[path[idx--]];
+    }
+  }
+  return (cur as SyntaxNode).children[path[idx] - 1] as SyntaxNode;
 };
 
 export const getParent = (root: VirtualNode, path: Array<number>) => {
@@ -166,7 +177,7 @@ export const getParent = (root: VirtualNode, path: Array<number>) => {
   let idx = path.length - 1;
   while (idx > 0) {
     if (!isTextNode(cur)) {
-      cur = cur.children[path[idx--]] as SyntaxNode;
+      cur = cur.children[path[idx--]];
     }
   }
   return cur;

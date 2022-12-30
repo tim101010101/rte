@@ -111,6 +111,7 @@ export const trySwitchActiveSyntaxNode = (
 
       posBlock.patch(newRoot);
     } else if (isFollowingSyntaxNode(pos)) {
+      //! ERROR
       const [newRoot] = deepCloneWithTrackNode(posBlock.vNode!);
       const prevSyntaxNode = getAncestorPrevSibling(pos);
       const { prefix, suffix } = activeSubTree(prevSyntaxNode);
