@@ -2,7 +2,7 @@ import { FontInfo, SyntaxNode, TextNode, VirtualNode } from 'lib/types';
 import { NodeType } from 'lib/static';
 import { set } from 'lib/utils';
 
-const { PLAIN_TEXT } = NodeType;
+const { PLAIN_TEXT, PREFIX, SUFFIX } = NodeType;
 
 export const getFont = (fontInfo: FontInfo) => {
   const { size, family, bold, italic } = fontInfo;
@@ -10,6 +10,9 @@ export const getFont = (fontInfo: FontInfo) => {
     bold ? 'bold' : 'normal'
   } ${size}px ${family}`;
 };
+
+export const isMarkerNode = (vNode: VirtualNode): vNode is SyntaxNode =>
+  vNode.type === PREFIX || vNode.type === SUFFIX;
 
 export const isTextNode = (vNode: VirtualNode): vNode is TextNode =>
   vNode.type === PLAIN_TEXT;
@@ -172,4 +175,28 @@ export const getParent = (root: VirtualNode, path: Array<number>) => {
 export const getAncestor = (root: VirtualNode, path: Array<number>) => {
   if (isTextNode(root)) return root;
   return root.children[path[0]] as SyntaxNode;
+};
+
+export const getMarkerLength = (root: VirtualNode) => {
+  let prefixLength = 0;
+  let suffixLength = 0;
+
+  const recur = (cur: VirtualNode) => {
+    if (isTextNode(cur)) return;
+
+    const { marker, children } = cur;
+    const { prefix, suffix } = marker;
+
+    if (prefix) prefixLength += prefix.length;
+    if (suffix) suffixLength += suffix.length;
+
+    children.forEach(child => recur(child));
+  };
+
+  recur(root);
+
+  return {
+    prefix: prefixLength,
+    suffix: suffixLength,
+  };
 };
