@@ -138,22 +138,33 @@ export class Selection {
     const curSyntax = getPrevSibling(block.vNode!, path);
 
     if (curSyntax && !isTextNode(curSyntax)) {
-      console.log('a');
       const { marker } = curSyntax;
       const { prefix, suffix } = marker;
-      if (prefix?.length! === 1) {
+      console.log(prefix);
+
+      // abc
+      // a*bc 2
+      // a**bc 3
+
+      // a**b*c 4
+      //  |
+      // a*bc 3
+      //  |
+      // a**b*c 5
+
+      // a**b**c 5
+      //  |
+      // abc 5
+      //  |
+      // a**b**c 2
+
+      if (prefix === '**') {
+        this.focusOn(block, 2, false);
+      } else {
         this.focusOn(block, fenceOffset - 1, false);
-      } else if (prefix?.length! === 2) {
-        this.focusOn(block, fenceOffset - 3, false);
       }
     } else {
-      if (prevLength === curLength) {
-        console.log('b');
-        this.focusOn(block, fenceOffset + 1, false);
-      } else {
-        console.log('c');
-        this.focusOn(block, fenceOffset - 1, false);
-      }
+      this.focusOn(block, fenceOffset + 1, false);
     }
 
     // if (curSyntax && !isTextNode(curSyntax)) {
