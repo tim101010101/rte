@@ -29,3 +29,9 @@ export const getNearestIdx = (arr: Array<number>, target: number) => {
 
   return offset1 <= offset2 ? left : right;
 };
+
+export const sum = (arr: Array<number>) => arr.reduce((res, cur) => res + cur);
+
+export const round = (x: number, precision: number = 2) => {
+  return Number(Math.round(Number(`${+x}e${precision}`)) + 'e-' + precision);
+};
