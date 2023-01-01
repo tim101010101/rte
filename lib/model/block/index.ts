@@ -1,12 +1,12 @@
 import { patch } from 'lib/render';
-import { SyntaxNode, VirtualNode } from 'lib/types';
+import { Fence, SyntaxNode, VirtualNode } from 'lib/types';
 import { isTextNode, ListNode } from 'lib/model/virtualNode';
 
 // TODO bug here
 // TODO Cannot access 'ListNode' before initialization
 // import { posNode, ListNode } from 'lib/model';
 
-import { calcFence, Fence } from './fence';
+import { calcFence } from './fence';
 
 export class Block extends ListNode {
   vNode: SyntaxNode | null;

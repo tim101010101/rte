@@ -111,7 +111,7 @@ export const posNode = (vNode: VirtualNode) => {
 };
 
 export const walkTextNode = (
-  vNode: SyntaxNode,
+  vNode: VirtualNode,
   callback: (textNode: TextNode, path: Array<number>) => void
 ) => {
   const path: Array<number> = [];
@@ -140,10 +140,10 @@ export const getTextList = (vNode: SyntaxNode) => {
   return res;
 };
 
-export const getTextRectList = (vNode: SyntaxNode) => {
+export const getAncestorRectList = (vNode: SyntaxNode) => {
   const rectList: Array<DOMRect> = [];
-  walkTextNode(vNode, textNode => {
-    const rect = posNode(textNode);
+  vNode.children.forEach(child => {
+    const rect = posNode(child);
     rect && rectList.push(rect);
   });
 

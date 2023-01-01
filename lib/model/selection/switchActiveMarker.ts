@@ -1,11 +1,10 @@
-import { FontInfo, SetterFunction, SyntaxNode, VirtualNode } from 'lib/types';
+import { FontInfo, Rect, SyntaxNode, VirtualNode } from 'lib/types';
 import { NodeType, TagName } from 'lib/static';
 import {
   ActivePos,
+  Block,
   deepCloneWithTrackNode,
   getAncestor,
-  isMarkerNode,
-  isPureTextAncestor,
   isTextNode,
   Pos,
 } from 'lib/model';
@@ -43,92 +42,153 @@ const syntaxMarker = (
   };
 };
 
-export const trySwitchActiveSyntaxNode = (
-  pos: Pos,
-  isCrossLine: boolean,
-  active?: ActivePos | null
-) => {
-  const { block: posBlock, fenceOffset: posFenceOffset } = pos;
-  const posFenceList = posBlock.fence.fenceList;
-  const posPath = posFenceList[posFenceOffset].path;
-
-  let resActive = active;
-  let resPos = pos;
-
-  // move cursor across line
-  if (active) {
-    const { block: activeBlock, offset: activeRootOffset } = active;
-
-    if (activeBlock !== posBlock) {
-      const [prevActive] = deepCloneWithTrackNode(active.block.vNode!);
-      cancelActiveSubTree(getAncestor(prevActive, [activeRootOffset]));
-
-      active.block.patch(prevActive);
-
-      resActive = null;
-    }
-
-    // move cursor in the same line from left
-    else if (activeRootOffset > posPath[0]) {
-      const [newRoot] = deepCloneWithTrackNode(posBlock.vNode!);
-      cancelActiveSubTree(getAncestor(newRoot, [activeRootOffset]));
-
-      posBlock.patch(newRoot);
-
-      resActive = null;
-    }
-
-    // move cursor in the same line from right
-    else if (!isFollowingSyntaxNode(pos) && activeRootOffset < posPath[0]) {
-      const [newRoot] = deepCloneWithTrackNode(posBlock.vNode!);
-      const { prefix, suffix } = cancelActiveSubTree(
-        getAncestor(newRoot, [activeRootOffset])
-      );
-
-      resPos = {
-        block: posBlock,
-        fenceOffset: posFenceOffset - prefix - suffix,
-      };
-
-      posBlock.patch(newRoot);
-
-      resActive = null;
+// TODO
+const getHitPos = ({ block, fenceOffset }: Pos) => {
+  const { fence } = block;
+  for (let i = 0; i < fence.length; i++) {
+    const { fenceList } = fence[i];
+    const len = fenceList.length;
+    if (fenceOffset >= len) {
+      fenceOffset -= len;
+    } else {
+      return fenceOffset === 0 ? -1 : fenceOffset === len - 1 ? 1 : 0;
     }
   }
+};
 
-  if (!resActive) {
-    if (!isPureTextAncestor(posBlock.vNode!, posPath)) {
-      const [newRoot] = deepCloneWithTrackNode(posBlock.vNode!);
-      const { prefix, suffix } = activeSubTree(getAncestor(newRoot, posPath));
+const tryCancelActiveSyntaxNode = (
+  prevPos: Pos | null,
+  curPos: Pos,
+  active: ActivePos | null,
+  isCrossLine: boolean
+) => {
+  let resPos = curPos;
+  let resActive = active;
 
-      resActive = { block: posBlock, offset: posPath[0] };
-      if (isCrossLine) {
+  const { block: posBlock, fenceOffset: posFenceOffset } = curPos;
+  const { ancestorOffset } = getCorrectPos(posBlock, posFenceOffset)!;
+
+  if (isCrossLine && active) {
+    console.log('cancel active');
+    const [newRoot] = deepCloneWithTrackNode(active.block.vNode!);
+    cancelActiveSubTree(getAncestor(newRoot, [active.offset]));
+
+    console.log('patch prev line');
+    active.block.patch(newRoot);
+
+    resActive = null;
+  } else if (active && ancestorOffset !== active.offset) {
+    console.log('cancel active');
+
+    const [newRoot] = deepCloneWithTrackNode(active.block.vNode!);
+    const { prefix, suffix } = cancelActiveSubTree(
+      getAncestor(newRoot, [active.offset])
+    );
+
+    if (prevPos) {
+      const prevHit = getHitPos(prevPos);
+      if (prevHit === 1) {
+        console.log('offset - prefix - suffix');
         resPos = {
           block: posBlock,
-          fenceOffset: posFenceOffset + prefix + suffix,
+          fenceOffset: posFenceOffset - prefix - suffix,
         };
       }
-
-      posBlock.patch(newRoot);
-    } else if (isFollowingSyntaxNode(pos)) {
-      const [newRoot] = deepCloneWithTrackNode(posBlock.vNode!);
-      const prevSyntaxNode = getAncestorPrevSibling(pos);
-      const { prefix, suffix } = activeSubTree(prevSyntaxNode);
-
-      resPos = {
-        block: posBlock,
-        fenceOffset: posFenceOffset + prefix + suffix,
-      };
-      resActive = { block: posBlock, offset: posPath[0] - 1 };
-
-      posBlock.patch(newRoot);
     }
+
+    active.block.patch(newRoot);
+    resActive = null;
   }
 
   return {
     pos: resPos,
     active: resActive,
   };
+};
+
+const tryActiveSyntaxNode = (curPos: Pos, active: ActivePos | null) => {
+  const { block: posBlock, fenceOffset: posFenceOffset } = curPos;
+  const { vNode, ancestorOffset } = getCorrectPos(posBlock, posFenceOffset)!;
+
+  let resPos = curPos;
+  let resActive = active;
+
+  if (!isTextNode(vNode) && !resActive) {
+    console.log('active');
+
+    const [newRoot] = deepCloneWithTrackNode(curPos.block.vNode!);
+    const { prefix, suffix } = activeSubTree(
+      getAncestor(newRoot, [ancestorOffset])
+    );
+
+    resActive = {
+      block: posBlock,
+      offset: ancestorOffset,
+    };
+
+    const hitPos = getHitPos(curPos);
+    if (hitPos === 0) {
+      console.log('offset + prefix');
+      resPos = {
+        block: curPos.block,
+        fenceOffset: posFenceOffset + prefix,
+      };
+    } else if (hitPos === 1) {
+      console.log('offset + prefix + suffix');
+      resPos = {
+        block: curPos.block,
+        fenceOffset: posFenceOffset + prefix + suffix,
+      };
+    } else {
+      resPos = {
+        block: curPos.block,
+        fenceOffset: posFenceOffset,
+      };
+    }
+
+    console.log('patch cur line');
+    posBlock.patch(newRoot);
+  }
+
+  return {
+    pos: resPos,
+    active: resActive,
+  };
+};
+
+export const trySwitchActiveSyntaxNode = (
+  prevPos: Pos | null,
+  curPos: Pos,
+  active: ActivePos | null,
+  isCrossLine: boolean
+) => {
+  const { pos, active: curActive } = tryCancelActiveSyntaxNode(
+    prevPos,
+    curPos,
+    active,
+    isCrossLine
+  );
+
+  return tryActiveSyntaxNode(pos, curActive);
+};
+
+const getCorrectPos = (block: Block, fenceOffset: number) => {
+  const fence = block.fence;
+  for (let i = 0; i < fence.length; i++) {
+    const { fenceList, vNode, rect } = fence[i];
+    const len = fenceList.length;
+    if (fenceOffset >= len) {
+      fenceOffset -= len;
+    } else {
+      return {
+        vNode,
+        rect,
+        ancestorOffset: i,
+        cursorInfo: fenceList[fenceOffset],
+        fenceList,
+      };
+    }
+  }
 };
 
 const activeSubTree = (root: VirtualNode) => {
@@ -169,7 +229,7 @@ const activeSubTree = (root: VirtualNode) => {
       cur.isActive = true;
     }
 
-    children.forEach(child => activeSubTree(child));
+    children.forEach(child => recur(child));
   };
 
   recur(root);
@@ -211,31 +271,4 @@ const cancelActiveSubTree = (root: VirtualNode) => {
     prefix: prefixLength,
     suffix: suffixLength,
   };
-};
-
-const isFollowingSyntaxNode = ({ block, fenceOffset }: Pos) => {
-  const root = block.vNode!;
-  const {
-    vNode: target,
-    textOffset,
-    path,
-  } = block.fence.fenceList[fenceOffset];
-
-  if (textOffset) return false;
-  if (isMarkerNode(target)) return false;
-
-  const ancestorSiblings = root.children;
-  const prevSibling = ancestorSiblings[path[0] - 1];
-
-  return !!prevSibling && !isTextNode(prevSibling);
-};
-
-const getAncestorPrevSibling = ({ block, fenceOffset }: Pos) => {
-  const root = block.vNode!;
-  const { path } = block.fence.fenceList[fenceOffset];
-
-  const ancestorSiblings = root.children;
-  const prevSibling = ancestorSiblings[path[0] - 1];
-
-  return prevSibling;
 };

@@ -1,13 +1,6 @@
-import { appendChild, createDomNode, insertAt, min } from 'lib/utils';
-import {
-  Block,
-  getNode,
-  getPrevSibling,
-  isTextNode,
-  setTextContent,
-  textContentWithMarker,
-} from 'lib/model';
-import { SyntaxNode, VirtualNode } from 'lib/types';
+import { appendChild, createDomNode, insertAt, min, sum } from 'lib/utils';
+import { Block } from 'lib/model';
+import { VirtualNode } from 'lib/types';
 import { trySwitchActiveSyntaxNode } from './switchActiveMarker';
 import { ClassName, TagName } from 'lib/static';
 
@@ -23,11 +16,13 @@ export interface ActivePos {
 
 export class Selection {
   private el: HTMLElement;
-  private pos?: Pos | null;
-  private active?: ActivePos | null;
+  private pos: Pos | null;
+  private active: ActivePos | null;
 
   constructor(container: HTMLElement) {
     this.el = createDomNode(TagName.SPAN, [ClassName.RTE_CURSOR]);
+    this.pos = null;
+    this.active = null;
 
     appendChild(container, this.el);
   }
@@ -40,11 +35,29 @@ export class Selection {
   }
 
   private setPos({ block, fenceOffset }: Pos) {
-    const { fence } = block;
-    const { fenceList, lineHeight, y } = fence;
-    const offset = fenceList[fenceOffset].cursorOffset;
+    // const { fence } = block;
+    // const { fenceList, lineHeight, y } = fence;
+    // const offset = fenceList[fenceOffset].cursorOffset;
+    // this.setShape(2, lineHeight, offset, y);
+  }
 
-    this.setShape(2, lineHeight, offset, y);
+  // TODO to be optimized
+  private getCorrectPos(block: Block, fenceOffset: number) {
+    const fence = block.fence;
+    for (let i = 0; i < fence.length; i++) {
+      const { fenceList, vNode, rect } = fence[i];
+      const len = fenceList.length;
+      if (fenceOffset >= len) {
+        fenceOffset -= len;
+      } else {
+        return {
+          vNode,
+          rect,
+          ancestorOffset: i,
+          cursorInfo: fenceList[fenceOffset],
+        };
+      }
+    }
   }
 
   focusOn(block: Block, fenceOffset: number, isCrossLine: boolean) {
@@ -53,19 +66,23 @@ export class Selection {
     }
 
     const { pos, active } = trySwitchActiveSyntaxNode(
-      {
-        block,
-        fenceOffset,
-      },
-      isCrossLine,
-      this.active
+      this.pos,
+      { block, fenceOffset },
+      this.active,
+      isCrossLine
     );
 
     this.pos = pos;
     this.active = active;
 
-    // re-render the cursor
-    this.setPos(pos);
+    const { cursorInfo, rect, vNode, ancestorOffset } = this.getCorrectPos(
+      pos.block,
+      pos.fenceOffset
+    )!;
+
+    const { height, y } = rect;
+    const { cursorOffset } = cursorInfo;
+    this.setShape(2, height, cursorOffset, y);
   }
 
   unFocus() {
@@ -92,7 +109,7 @@ export class Selection {
     if (
       // this.fenceOffset !== this.fence.fenceList.length - 2
       fenceOffset !==
-      block.fence.fenceList.length - 1
+      sum(block.fence.map(({ fenceList }) => fenceList.length)) - 1
     ) {
       this.focusOn(block, fenceOffset + 1, false);
     }
@@ -103,7 +120,9 @@ export class Selection {
     const { block, fenceOffset } = this.pos;
 
     if (block.prev) {
-      const nextFenceLength = block.prev.fence.fenceList.length;
+      const nextFenceLength = sum(
+        block.prev.fence.map(({ fenceList }) => fenceList.length)
+      );
       this.focusOn(block.prev, min(fenceOffset, nextFenceLength - 1), true);
     }
   }
@@ -113,71 +132,14 @@ export class Selection {
     const { block, fenceOffset } = this.pos;
 
     if (block.next) {
-      const nextFenceLength = block.next.fence.fenceList.length;
+      const nextFenceLength = sum(
+        block.next.fence.map(({ fenceList }) => fenceList.length)
+      );
       this.focusOn(block.next, min(fenceOffset, nextFenceLength - 1), true);
     }
   }
 
   updateBlockContent(char: string, parser: (src: string) => VirtualNode) {
-    if (!this.pos) return;
-
-    const { block, fenceOffset } = this.pos;
-    const root = block.vNode!;
-    const { textOffset } = block.fence.fenceList[fenceOffset];
-    const lineContent = textContentWithMarker(root);
-    const newLineContent = insertAt(lineContent, fenceOffset, char);
-
-    const newVTree = parser(newLineContent);
-
-    const prevLength = root.children.length;
-    const curLength = (newVTree as SyntaxNode).children.length;
-
-    block.patch(newVTree);
-
-    const path = this.pos.block.fence.fenceList[this.pos.fenceOffset].path;
-    const curSyntax = getPrevSibling(block.vNode!, path);
-
-    if (curSyntax && !isTextNode(curSyntax)) {
-      const { marker } = curSyntax;
-      const { prefix, suffix } = marker;
-      console.log(prefix);
-
-      // abc
-      // a*bc 2
-      // a**bc 3
-
-      // a**b*c 4
-      //  |
-      // a*bc 3
-      //  |
-      // a**b*c 5
-
-      // a**b**c 5
-      //  |
-      // abc 5
-      //  |
-      // a**b**c 2
-
-      if (prefix === '**') {
-        this.focusOn(block, 2, false);
-      } else {
-        this.focusOn(block, fenceOffset - 1, false);
-      }
-    } else {
-      this.focusOn(block, fenceOffset + 1, false);
-    }
-
-    // if (curSyntax && !isTextNode(curSyntax)) {
-    //   console.log('b');
-    //   this.focusOn(block, fenceOffset - 1, false);
-    // } else if (prevLength === curLength) {
-    //   //! ERROR this branch includes two possibilities
-    //   //! ERROR    1. normal input
-    //   //! ERROR    2. syntax1 -> syntax2
-    //   //! ERROR       e.g **a* -> **a**
-
-    //   console.log('a');
-    //   this.focusOn(block, fenceOffset + 1, false);
-    // }
+    // TODO
   }
 }

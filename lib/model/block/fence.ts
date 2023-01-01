@@ -1,76 +1,90 @@
-import { SyntaxNode, VirtualNode } from 'lib/types';
-import { measureCharWidth, panicAt } from 'lib/utils';
-import { getTextList, getTextRectList, posNode, walkTextNode } from 'lib/model';
-
-interface FenceItem {
-  cursorOffset: number;
-  vNode: VirtualNode;
-  textOffset: number;
-  path: Array<number>;
-}
-export interface Fence {
-  lineHeight: number;
-  fenceList: Array<FenceItem>;
-  x: number;
-  y: number;
-}
+import { CursorInfo, Fence, SyntaxNode } from 'lib/types';
+import { measureCharWidth } from 'lib/utils';
+import { isTextNode, posNode, textContent, walkTextNode } from 'lib/model';
 
 export const calcFence = (blockVNode: SyntaxNode): Fence => {
-  const textList = getTextList(blockVNode);
-  const rectList = getTextRectList(blockVNode);
+  const fence: Fence = [];
+  let curLength = 0;
+  let prevLength = 0;
+  let { height, y, width: lineWidth } = posNode(blockVNode)!;
 
-  if (!textList.length || !rectList.length) {
-    // TODO
-    panicAt('error');
+  const { children } = blockVNode;
+  const len = children.length;
+
+  for (let i = 0; i < len; i++) {
+    const cur = children[i];
+
+    const fenceList: Array<CursorInfo> = [];
+    const { left, width, x } = posNode(cur)!;
+    let prevXOffset = left;
+    let curTextLength = 0;
+
+    walkTextNode(cur, textNode => {
+      const { text, font } = textNode;
+      curLength += text.length;
+      Array.from(text).forEach((char, j) => {
+        fenceList.push({
+          cursorOffset: prevXOffset,
+          textOffset: j,
+        });
+        prevXOffset += measureCharWidth(char, font);
+        curTextLength = j;
+      });
+    });
+
+    if (i < len - 1) {
+      const next = children[i + 1];
+      if (isTextNode(next) && !isTextNode(cur)) {
+        fenceList.push({
+          cursorOffset: prevXOffset,
+          textOffset: curTextLength + 1,
+        });
+      }
+    }
+
+    if (i > 0) {
+      const prev = children[i - 1];
+      if (isTextNode(cur) && !isTextNode(prev)) {
+        fenceList.shift();
+      }
+    }
+
+    if (i === blockVNode.children.length - 1) {
+      fenceList.push({
+        cursorOffset: prevXOffset,
+        textOffset: i,
+      });
+    }
+
+    fence.push({
+      vNode: cur,
+      prevLength,
+      rect:
+        i === blockVNode.children.length - 1
+          ? { width: lineWidth - x, height, x, y }
+          : { width, height, x, y },
+      fenceList,
+    });
+
+    prevLength += curLength;
+    curLength = 0;
   }
 
-  const { height, left, top } = posNode(blockVNode)!;
-  const fenceList: Array<FenceItem> = [];
-  let prevOffset = left;
-  let curPath: Array<number> = [];
-
-  walkTextNode(blockVNode, (textNode, path) => {
-    const { text, font } = textNode;
-    Array.from(text).forEach((char, i) => {
-      fenceList.push({
-        cursorOffset: prevOffset,
-        vNode: textNode,
-        textOffset: i,
-        path,
-      });
-      prevOffset += measureCharWidth(char, font);
-    });
-    curPath = path;
-  });
-
-  const { vNode, textOffset } = fenceList[fenceList.length - 1];
-  fenceList.push({
-    cursorOffset: prevOffset,
-    vNode: vNode,
-    textOffset: textOffset + 1,
-    path: curPath,
-  });
-
   // DEV
-  // renderRect(rectList);
-  // renderCursor(fenceList);
+  // renderRect(fence);
+  // renderCursor(fence);
 
-  return {
-    lineHeight: height,
-    fenceList,
-    x: left,
-    y: top,
-  };
+  return fence;
 };
 
-const renderRect = (rectList: Array<DOMRect>) => {
+const renderRect = (fence: Fence) => {
   let t = 0;
   const render = (x: number, y: number, width: number, height: number) => {
     const dom = document.createElement('span');
     dom.style.width = `${width}px`;
     dom.style.height = `${height}px`;
     dom.style.left = `${x}px`;
-    dom.style.top = `${y + height}px`;
+    dom.style.top = `${y}px`;
     dom.style.display = 'inline-block';
     dom.style.position = 'absolute';
     dom.style.border = '1px solid red';
@@ -80,13 +94,18 @@ const renderRect = (rectList: Array<DOMRect>) => {
     t += height;
   };
 
-  rectList.forEach(rect => {
-    const { left, top, width, height } = rect;
-    render(left, top, width, height);
+  const btn = document.createElement('button');
+  btn.innerText = 'render rect';
+  btn.addEventListener('click', () => {
+    fence.forEach(({ rect }, i) => {
+      const { x, y, width, height } = rect;
+      render(x, y, width, height);
+    });
   });
+  document.body.appendChild(btn);
 };
 
-const renderCursor = (fence: Array<any>) => {
+const renderCursor = (fence: Fence) => {
   const render = (left: number, height: number, top: number) => {
     const dom = document.createElement('span');
     dom.style.position = 'absolute';
@@ -99,6 +118,15 @@ const renderCursor = (fence: Array<any>) => {
     document.body.appendChild(dom);
   };
 
-  const { height, top } = posNode(Array.from(fence)[1].vNode)!;
-  fence.forEach(({ cursorOffset }) => render(cursorOffset, height, top));
+  const btn = document.createElement('button');
+  btn.innerText = 'render cursor';
+  btn.addEventListener('click', () => {
+    fence.forEach(({ rect, fenceList }, i) => {
+      const { height, y } = rect;
+      fenceList.forEach(({ cursorOffset }, j) => {
+        render(cursorOffset, height, y);
+      });
+    });
+  });
+  document.body.appendChild(btn);
 };
