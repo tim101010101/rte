@@ -1,3 +1,4 @@
+import { Block } from 'lib/model';
 import { VirtualNode } from 'lib/types';
 
 export interface Rect {
@@ -15,8 +16,18 @@ export interface CursorInfo {
 export interface FenceItem {
   vNode: VirtualNode;
   rect: Rect;
-  prevLength: number;
+  prefixLength: number;
   fenceList: Array<CursorInfo>;
 }
 
 export type Fence = Array<FenceItem>;
+
+export interface Pos {
+  block: Block;
+  offset: number;
+}
+
+export interface ActivePos {
+  block: Block;
+  ancestorIdx: number;
+}
