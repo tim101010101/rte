@@ -75,8 +75,8 @@ export class Page extends LinkedList<Block> {
     });
   }
 
-  setFocus(block: Block, fenseOffset: number) {
-    this.selection.focusOn(block, fenseOffset, false);
+  setFocus(block: Block, offset: number) {
+    this.selection.focusOn(block, offset, false);
   }
 }
 
