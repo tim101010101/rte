@@ -1,18 +1,9 @@
-import { appendChild, createDomNode, insertAt, min, sum } from 'lib/utils';
+import { appendChild, createDomNode, min } from 'lib/utils';
 import { Block } from 'lib/model';
-import { VirtualNode } from 'lib/types';
-import { trySwitchActiveSyntaxNode } from './switchActiveMarker';
+import { ActivePos, Pos, SyntaxNode } from 'lib/types';
 import { ClassName, TagName } from 'lib/static';
-
-export interface Pos {
-  block: Block;
-  fenceOffset: number;
-}
-
-export interface ActivePos {
-  block: Block;
-  offset: number;
-}
+import { trySwitchActiveSyntaxNode } from './switchActive';
+import { tryActiveWhenInput } from './updateBlockContent';
 
 export class Selection {
   private el: HTMLElement;
@@ -34,55 +25,34 @@ export class Selection {
     this.el.style.top = `${top}px`;
   }
 
-  private setPos({ block, fenceOffset }: Pos) {
-    // const { fence } = block;
-    // const { fenceList, lineHeight, y } = fence;
-    // const offset = fenceList[fenceOffset].cursorOffset;
-    // this.setShape(2, lineHeight, offset, y);
+  private setPos({ block, offset }: Pos) {
+    const { rect, cursorOffset } = block.getFenceInfo(offset);
+    const { height, y } = rect;
+
+    this.setShape(2, height, cursorOffset, y);
   }
 
-  // TODO to be optimized
-  private getCorrectPos(block: Block, fenceOffset: number) {
-    const fence = block.fence;
-    for (let i = 0; i < fence.length; i++) {
-      const { fenceList, vNode, rect } = fence[i];
-      const len = fenceList.length;
-      if (fenceOffset >= len) {
-        fenceOffset -= len;
-      } else {
-        return {
-          vNode,
-          rect,
-          ancestorOffset: i,
-          cursorInfo: fenceList[fenceOffset],
-        };
-      }
-    }
-  }
-
-  focusOn(block: Block, fenceOffset: number, isCrossLine: boolean) {
+  focusOn(block: Block, offset: number, isCrossLine: boolean) {
+    // show the cursor when the page focused for the first time
     if (!this.pos) {
       this.el.style.display = 'inline-block';
     }
 
+    // attempt to activate and deactivate syntax node
+    // return new position of cursor and the activated node
     const { pos, active } = trySwitchActiveSyntaxNode(
       this.pos,
-      { block, fenceOffset },
+      { block, offset },
       this.active,
       isCrossLine
     );
 
+    // update position of cursor
+    this.setPos(pos);
+
+    // update the pos and active
     this.pos = pos;
     this.active = active;
-
-    const { cursorInfo, rect, vNode, ancestorOffset } = this.getCorrectPos(
-      pos.block,
-      pos.fenceOffset
-    )!;
-
-    const { height, y } = rect;
-    const { cursorOffset } = cursorInfo;
-    this.setShape(2, height, cursorOffset, y);
   }
 
   unFocus() {
@@ -95,51 +65,52 @@ export class Selection {
 
   left() {
     if (!this.pos) return;
-    const { block, fenceOffset } = this.pos;
+    const { block, offset } = this.pos;
 
-    if (fenceOffset !== 0) {
-      this.focusOn(block, fenceOffset - 1, false);
+    if (offset !== 0) {
+      this.focusOn(block, offset - 1, false);
     }
   }
 
   right() {
     if (!this.pos) return;
-    const { block, fenceOffset } = this.pos;
+    const { block, offset } = this.pos;
 
     if (
       // this.fenceOffset !== this.fence.fenceList.length - 2
-      fenceOffset !==
-      sum(block.fence.map(({ fenceList }) => fenceList.length)) - 1
+      offset !==
+      block.fenceLength - 1
     ) {
-      this.focusOn(block, fenceOffset + 1, false);
+      this.focusOn(block, offset + 1, false);
     }
   }
 
   up() {
     if (!this.pos) return;
-    const { block, fenceOffset } = this.pos;
+    const { block, offset } = this.pos;
 
     if (block.prev) {
-      const nextFenceLength = sum(
-        block.prev.fence.map(({ fenceList }) => fenceList.length)
-      );
-      this.focusOn(block.prev, min(fenceOffset, nextFenceLength - 1), true);
+      this.focusOn(block.prev, min(offset, block.prev.fenceLength - 1), true);
     }
   }
 
   down() {
     if (!this.pos) return;
-    const { block, fenceOffset } = this.pos;
+    const { block, offset } = this.pos;
 
     if (block.next) {
-      const nextFenceLength = sum(
-        block.next.fence.map(({ fenceList }) => fenceList.length)
-      );
-      this.focusOn(block.next, min(fenceOffset, nextFenceLength - 1), true);
+      this.focusOn(block.next, min(offset, block.next.fenceLength - 1), true);
     }
   }
 
-  updateBlockContent(char: string, parser: (src: string) => VirtualNode) {
-    // TODO
+  updateBlockContent(char: string, parser: (src: string) => SyntaxNode) {
+    if (!this.pos) return;
+
+    // try to activate the node which being updated
+    this.active = tryActiveWhenInput(this.pos, char, parser);
+
+    // move cursor right
+    const { block, offset } = this.pos;
+    this.focusOn(block, offset + 1, false);
   }
 }
