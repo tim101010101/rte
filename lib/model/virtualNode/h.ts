@@ -114,3 +114,22 @@ export function s(
     isActive: false,
   };
 }
+
+export const syntaxMarker = (
+  text: string,
+  isPrefix: boolean,
+  fontInfo: FontInfo
+): SyntaxNode => {
+  return {
+    type: isPrefix ? NodeType.PREFIX : NodeType.SUFFIX,
+    isActive: true,
+    tagName: TagName.SPAN,
+    props: {},
+    el: null,
+    meta: {},
+    events: [],
+    marker: {},
+
+    children: [t(fontInfo, text)],
+  };
+};

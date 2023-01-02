@@ -1,6 +1,7 @@
 import { FontInfo, SyntaxNode, TextNode, VirtualNode } from 'lib/types';
 import { NodeType } from 'lib/static';
 import { set } from 'lib/utils';
+import { syntaxMarker } from 'lib/model';
 
 const { PLAIN_TEXT, PREFIX, SUFFIX } = NodeType;
 
@@ -20,6 +21,25 @@ export const isTextNode = (vNode: VirtualNode): vNode is TextNode =>
 export const isPureTextAncestor = (root: VirtualNode, path: Array<number>) => {
   if (isTextNode(root)) return true;
   return !!(root.children[path[0]].type === PLAIN_TEXT);
+};
+
+export const deepCloneVNode = <T extends VirtualNode>(vNode: T): T => {
+  if (!vNode) return vNode;
+
+  const newVNode = { ...vNode };
+
+  set(
+    newVNode,
+    isTextNode(vNode) ? 'children' : 'text',
+    isTextNode(vNode)
+      ? vNode.text
+      : vNode.children.reduce<Array<T>>((res, child) => {
+          res.push(deepCloneVNode(child as T));
+          return res;
+        }, [])
+  );
+
+  return newVNode;
 };
 
 export const deepCloneWithTrackNode = (
@@ -161,17 +181,6 @@ export const getNode = (root: VirtualNode, path: Array<number>) => {
   return cur;
 };
 
-export const getPrevSibling = (root: VirtualNode, path: Array<number>) => {
-  let cur = root;
-  let idx = path.length - 1;
-  while (idx > 0) {
-    if (!isTextNode(cur)) {
-      cur = cur.children[path[idx--]];
-    }
-  }
-  return (cur as SyntaxNode).children[path[idx] - 1] as SyntaxNode;
-};
-
 export const getParent = (root: VirtualNode, path: Array<number>) => {
   let cur = root;
   let idx = path.length - 1;
@@ -207,6 +216,86 @@ export const getMarkerLength = (root: VirtualNode) => {
   recur(root);
 
   return {
+    prefix: prefixLength,
+    suffix: suffixLength,
+  };
+};
+
+export const getFirstLeafNode = (root: VirtualNode): TextNode => {
+  let cur = root;
+  while (!isTextNode(cur)) {
+    cur = cur.children[0];
+  }
+  return cur;
+};
+
+export const activeSubTree = (root: SyntaxNode, offset: number) => {
+  let prefixLength = 0;
+  let suffixLnegth = 0;
+
+  const recur = (cur: VirtualNode) => {
+    if (isTextNode(cur)) return;
+
+    const { isActive, children, marker } = cur;
+    const { prefix, suffix } = marker;
+    if (!isActive) {
+      const { font } = getFirstLeafNode(cur);
+      if (prefix) {
+        cur.children.unshift(syntaxMarker(prefix, true, font));
+        prefixLength += prefix.length;
+      }
+
+      if (suffix) {
+        cur.children.push(syntaxMarker(suffix, false, font));
+        suffixLnegth += suffix.length;
+      }
+
+      cur.isActive = true;
+    }
+
+    children.forEach(child => recur(child));
+  };
+
+  const newRoot = deepCloneVNode(root);
+  recur(newRoot.children[offset]);
+
+  return {
+    root: newRoot,
+    prefix: prefixLength,
+    suffix: suffixLnegth,
+  };
+};
+
+export const cancelActiveSubTree = (root: SyntaxNode, offset: number) => {
+  let prefixLength = 0;
+  let suffixLength = 0;
+
+  const recur = (cur: VirtualNode) => {
+    if (isTextNode(cur)) return;
+
+    const { isActive, children, marker } = cur;
+    const { prefix, suffix } = marker;
+    if (isActive) {
+      if (prefix) {
+        cur.children.shift();
+        prefixLength += prefix.length;
+      }
+      if (suffix) {
+        cur.children.pop();
+        suffixLength += suffix.length;
+      }
+
+      cur.isActive = false;
+    }
+
+    children.forEach(child => recur(child));
+  };
+
+  const newRoot = deepCloneVNode(root);
+  recur(newRoot.children[offset]);
+
+  return {
+    root: newRoot,
     prefix: prefixLength,
     suffix: suffixLength,
   };
