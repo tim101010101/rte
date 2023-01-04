@@ -1,13 +1,13 @@
 import {
   DOMEventDetachHandler,
   DOMEventHandler,
-  InnerEventHandler,
+  InnerEventDetachHandler,
 } from 'lib/types';
 import { DOMEventName, InnerEventName } from 'lib/static';
 import { isArray, panicAt } from 'lib/utils';
 
 export class EventBus {
-  private _events: Map<InnerEventName, Array<InnerEventHandler>>;
+  private _events: Map<InnerEventName, Array<Function>>;
 
   constructor() {
     this._events = new Map();
@@ -19,10 +19,7 @@ export class EventBus {
   private get(eventName: InnerEventName) {
     return this._events.get(eventName);
   }
-  private set(
-    eventName: InnerEventName,
-    listener: InnerEventHandler | Array<InnerEventHandler>
-  ) {
+  private set(eventName: InnerEventName, listener: Function | Array<Function>) {
     if (isArray(listener)) {
       this._events.set(eventName, listener);
     } else {
@@ -35,7 +32,10 @@ export class EventBus {
     }
   }
 
-  attach(eventName: InnerEventName, listener: InnerEventHandler) {
+  attach(
+    eventName: InnerEventName,
+    listener: Function
+  ): InnerEventDetachHandler {
     this.set(eventName, listener);
 
     return () => {
@@ -51,13 +51,32 @@ export class EventBus {
     };
   }
 
-  emit<T extends Array<any>>(eventName: InnerEventName, ...rest: T) {
+  emit(eventName: InnerEventName, ...rest: Array<any>) {
     if (this._events.has(eventName)) {
       const listeners = this._events.get(eventName)!;
-      listeners.forEach(l => l(...rest));
+      listeners.forEach(l => l.apply(this, rest));
     } else {
       panicAt('try to emit a event that does not be attached');
     }
+  }
+
+  once(eventName: InnerEventName, listener: Function) {
+    const detacher = () => {
+      if (this.has(eventName)) {
+        const listeners = this.get(eventName)!;
+        this.set(
+          eventName,
+          listeners.filter(l => l !== listener)
+        );
+      } else {
+        panicAt('try to detach a event that does not exist');
+      }
+    };
+
+    this.set(eventName, (...rest: Array<any>) => {
+      listener(...rest);
+      detacher();
+    });
   }
 
   attachDOMEvent(

@@ -1,13 +1,19 @@
-import { EditorConfig } from 'lib/types';
-import { Block, EventBus, getKeydownHandler, Selection } from 'lib/model';
-import { LinkedList } from 'lib/model/virtualNode/base/linkedList';
+import { EditorConfig, Operable } from 'lib/types';
+import {
+  EventBus,
+  Selection,
+  Line,
+  getKeydownHandler,
+  LinkedList,
+} from 'lib/model';
 import { Schema } from 'lib/schema';
 import { DOMEventName, InnerEventName } from 'lib/static';
-import { getNearestIdx, getTargetInterval } from 'lib/utils';
+import { getTargetInterval, getNearestIdx } from 'lib/utils';
 
+const { CLICK, KEYDOWN } = DOMEventName;
 const { FOCUS_ON, UNFOCUS, UPDATE_BLOCK_CONTENT, CURSOR_MOVE } = InnerEventName;
 
-export class Page extends LinkedList<Block> {
+export class Page extends LinkedList<Operable> {
   private container: HTMLElement;
   private config: EditorConfig;
   private eventBus: EventBus;
@@ -22,7 +28,7 @@ export class Page extends LinkedList<Block> {
     this.config = config;
     this.eventBus = new EventBus();
 
-    this.selection = new Selection(container);
+    this.selection = new Selection(container, this.eventBus);
     this.schema = schema;
   }
 
@@ -31,17 +37,9 @@ export class Page extends LinkedList<Block> {
       .split('\n')
       .map(lineText => this.schema.parse(lineText))
       .forEach(line => {
-        const block = new Block(this.container);
+        const block = new Line(this.container, this.eventBus);
         this.append(block);
-
-        // TODO
-        block.patch({
-          ...line,
-          // events: [
-          //   ...line.events,
-          //   [DOMEventName.CLICK, getClickHanlder(this, block), false],
-          // ],
-        });
+        block.patch(line);
       });
 
     this.initEvent();
@@ -50,19 +48,12 @@ export class Page extends LinkedList<Block> {
   initEvent() {
     this.eventBus.attachDOMEvent(
       window,
-      DOMEventName.KEYDOWN,
-      getKeydownHandler(this),
-      false
-    );
-    this.eventBus.attachDOMEvent(
-      window,
-      DOMEventName.CLICK,
+      CLICK,
       e => {
         const y = getTargetInterval(
           this.map(block => block.rect.y),
           e.clientY
         );
-
         const targetBlock = this.find(y)!;
 
         const x = getNearestIdx(
@@ -75,14 +66,19 @@ export class Page extends LinkedList<Block> {
           e.clientX
         );
 
-        // TODO
-        this.selection.focusOn(targetBlock, x, true);
+        this.focusOn(targetBlock, x);
       },
+      false
+    );
+    this.eventBus.attachDOMEvent(
+      window,
+      KEYDOWN,
+      getKeydownHandler(this),
       false
     );
   }
 
-  setFocus(block: Block, offset: number) {
-    this.selection.focusOn(block, offset, false);
+  focusOn(block: Operable, offset: number) {
+    this.selection.focusOn(block, offset, true);
   }
 }

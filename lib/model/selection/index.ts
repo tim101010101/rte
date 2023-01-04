@@ -1,19 +1,19 @@
-import { appendChild, createDomNode, min } from 'lib/utils';
-import { Block } from 'lib/model';
-import { ActivePos, Pos, SyntaxNode } from 'lib/types';
+import { appendChild, createDomNode } from 'lib/utils';
+import { Operable, ActivePos, Pos, SyntaxNode } from 'lib/types';
 import { ClassName, TagName } from 'lib/static';
-import { trySwitchActiveSyntaxNode } from './switchActive';
-import { tryActiveWhenInput } from './updateBlockContent';
+import { EventBus } from 'lib/model';
 
 export class Selection {
   private el: HTMLElement;
   private pos: Pos | null;
   private active: ActivePos | null;
+  private eventBus: EventBus;
 
-  constructor(container: HTMLElement) {
+  constructor(container: HTMLElement, eventBus: EventBus) {
     this.el = createDomNode(TagName.SPAN, [ClassName.RTE_CURSOR]);
     this.pos = null;
     this.active = null;
+    this.eventBus = eventBus;
 
     appendChild(container, this.el);
   }
@@ -32,17 +32,15 @@ export class Selection {
     this.setShape(2, height, cursorOffset, y);
   }
 
-  focusOn(block: Block, offset: number, isCrossLine: boolean) {
+  focusOn(block: Operable, offset: number, isCrossLine: boolean) {
     // show the cursor when the page focused for the first time
     if (!this.pos) {
       this.el.style.display = 'inline-block';
     }
 
-    // attempt to activate and deactivate syntax node
-    // return new position of cursor and the activated node
-    const { pos, active } = trySwitchActiveSyntaxNode(
+    const { pos, active } = block.focusOn(
       this.pos,
-      { block, offset },
+      offset,
       this.active,
       isCrossLine
     );
@@ -54,63 +52,74 @@ export class Selection {
     this.pos = pos;
     this.active = active;
   }
-
   unFocus() {
     if (this.pos) {
       this.el.style.display = 'none';
 
-      this.pos = null;
+      const { pos, active } = this.pos.block.unFocus();
+      this.pos = pos;
+      this.active = active;
     }
   }
 
-  left() {
+  left(offset: number = 1) {
     if (!this.pos) return;
-    const { block, offset } = this.pos;
+    const nextPos = this.pos.block.left(this.pos, this.active, offset);
+    if (nextPos) {
+      const { pos, active } = nextPos;
+      this.setPos(pos);
 
-    if (offset !== 0) {
-      this.focusOn(block, offset - 1, false);
+      this.pos = pos;
+      this.active = active;
     }
   }
-
-  right() {
+  right(offset: number = 1) {
     if (!this.pos) return;
-    const { block, offset } = this.pos;
+    const nextPos = this.pos.block.right(this.pos, this.active, offset);
+    if (nextPos) {
+      const { pos, active } = nextPos;
+      this.setPos(pos);
 
-    if (
-      // this.fenceOffset !== this.fence.fenceList.length - 2
-      offset !==
-      block.fenceLength - 1
-    ) {
-      this.focusOn(block, offset + 1, false);
+      this.pos = pos;
+      this.active = active;
     }
   }
-
-  up() {
+  up(offset: number = 1) {
     if (!this.pos) return;
-    const { block, offset } = this.pos;
+    const nextPos = this.pos.block.up(this.pos, this.active, offset);
+    if (nextPos) {
+      const { pos, active } = nextPos;
+      this.setPos(pos);
 
-    if (block.prev) {
-      this.focusOn(block.prev, min(offset, block.prev.fenceLength - 1), true);
+      this.pos = pos;
+      this.active = active;
     }
   }
-
-  down() {
+  down(offset: number = 1) {
     if (!this.pos) return;
-    const { block, offset } = this.pos;
+    const nextPos = this.pos.block.down(this.pos, this.active, offset);
+    if (nextPos) {
+      const { pos, active } = nextPos;
+      this.setPos(pos);
 
-    if (block.next) {
-      this.focusOn(block.next, min(offset, block.next.fenceLength - 1), true);
+      this.pos = pos;
+      this.active = active;
     }
   }
 
   updateBlockContent(char: string, parser: (src: string) => SyntaxNode) {
     if (!this.pos) return;
 
-    // try to activate the node which being updated
-    this.active = tryActiveWhenInput(this.pos, char, parser);
+    const { pos, active } = this.pos.block.update(
+      char,
+      this.pos.offset,
+      parser
+    );
+    this.active = active;
+    this.pos = pos;
 
     // move cursor right
-    const { block, offset } = this.pos;
-    this.focusOn(block, offset + 1, false);
+    const { block, offset } = pos;
+    this.focusOn(block, offset, false);
   }
 }
