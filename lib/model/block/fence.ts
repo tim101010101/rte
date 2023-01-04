@@ -4,7 +4,6 @@ import { isTextNode, posNode, walkTextNode } from 'lib/model';
 
 export const calcFence = (blockVNode: SyntaxNode): Fence => {
   const fence: Fence = [];
-  let curLength = 0;
   let prefixLength = 0;
   let { height, y, width: lineWidth } = posNode(blockVNode)!;
 
@@ -21,7 +20,6 @@ export const calcFence = (blockVNode: SyntaxNode): Fence => {
 
     walkTextNode(cur, textNode => {
       const { text, font } = textNode;
-      curLength += text.length;
       Array.from(text).forEach((char, j) => {
         fenceList.push({
           cursorOffset: prevXOffset,
@@ -66,8 +64,7 @@ export const calcFence = (blockVNode: SyntaxNode): Fence => {
       fenceList,
     });
 
-    prefixLength += curLength;
-    curLength = 0;
+    prefixLength += fenceList.length;
   }
 
   // DEV
