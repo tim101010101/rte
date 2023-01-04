@@ -84,3 +84,24 @@ export const mixin = <T extends object, U extends object>(
     return newObj;
   }, deepClone(target));
 };
+
+export function enumToMap<K = string, V = any>(e: object): Map<K, V>;
+export function enumToMap<K = string, V = any>(
+  e: object,
+  reverseKeyAndValue: false
+): Map<K, V>;
+export function enumToMap<K = string, V = any>(
+  e: object,
+  reverseKeyAndValue: true
+): Map<V, K>;
+export function enumToMap(
+  e: object,
+  reverseKeyAndValue: boolean = false
+): Map<any, any> {
+  return reverseKeyAndValue
+    ? entries(e).reduce<Map<any, any>>((m, [k, v]) => {
+        m.set(v, k);
+        return m;
+      }, new Map())
+    : new Map(entries(e));
+}
