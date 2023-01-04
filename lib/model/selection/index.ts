@@ -1,33 +1,21 @@
-import { appendChild, createDomNode, isNumber } from 'lib/utils';
-import { Block, isPureTextNode } from 'lib/model';
-import { tryActiveNode } from './switchActiveMarker';
-import { SetterFunction, TextNode } from 'lib/types';
+import { appendChild, createDomNode } from 'lib/utils';
+import { Operable, ActivePos, Pos, SyntaxNode } from 'lib/types';
+import { ClassName, TagName } from 'lib/static';
+import { EventBus } from 'lib/model';
 
 export class Selection {
   private el: HTMLElement;
-  private activeBlock: Block | null;
-  private activePath: Array<number> | null;
-  private fenceOffset: number | null;
+  private pos: Pos | null;
+  private active: ActivePos | null;
+  private eventBus: EventBus;
 
-  constructor(container: HTMLElement) {
-    this.el = createDomNode('span', ['r-cursor-test']);
-    this.activeBlock = null;
-    this.fenceOffset = null;
-    this.activePath = null;
+  constructor(container: HTMLElement, eventBus: EventBus) {
+    this.el = createDomNode(TagName.SPAN, [ClassName.RTE_CURSOR]);
+    this.pos = null;
+    this.active = null;
+    this.eventBus = eventBus;
 
     appendChild(container, this.el);
-  }
-
-  private setFenceOffset(offset: number | SetterFunction<number>) {
-    if (isNumber(offset)) {
-      this.fenceOffset = offset;
-    } else {
-      this.fenceOffset = offset(this.fenceOffset!);
-    }
-  }
-
-  private get fence() {
-    return this.activeBlock!.fence;
   }
 
   private setShape(width: number, height: number, left: number, top: number) {
@@ -37,87 +25,101 @@ export class Selection {
     this.el.style.top = `${top}px`;
   }
 
-  focusOn(activeBlock = this.activeBlock, fenceOffset = this.fenceOffset) {
-    if (activeBlock === null || fenceOffset === null) return;
-    if (!this.activeBlock) {
+  private setPos({ block, offset }: Pos) {
+    const { rect, cursorOffset } = block.getFenceInfo(offset);
+    const { height, y } = rect;
+
+    this.setShape(2, height, cursorOffset, y);
+  }
+
+  focusOn(block: Operable, offset: number, isCrossLine: boolean) {
+    // show the cursor when the page focused for the first time
+    if (!this.pos) {
       this.el.style.display = 'inline-block';
     }
 
-    this.activeBlock = activeBlock;
-    this.fenceOffset = fenceOffset;
+    const { pos, active } = block.focusOn(
+      this.pos,
+      offset,
+      this.active,
+      isCrossLine
+    );
 
-    // try to active syntax node, expect of Pure Plain-Text Node
-    const { vNode, textOffset } = this.fence.fenceList[fenceOffset];
-    if (!isPureTextNode(vNode)) {
-      const fenceOffsetSetter = tryActiveNode(activeBlock, vNode, textOffset);
-      fenceOffsetSetter && this.setFenceOffset(fenceOffsetSetter);
-    }
+    // update position of cursor
+    this.setPos(pos);
 
-    // move cursor
-    const { fenceList, lineHeight, y } = this.fence;
-    const { cursorOffset: curOffset } = fenceList[this.fenceOffset];
-    // const { cursorOffset: nextOffset } = fenceList[fenceOffset + 1];
-
-    // re-render the cursor
-    this.setShape(2, lineHeight, curOffset, y);
+    // update the pos and active
+    this.pos = pos;
+    this.active = active;
   }
-
   unFocus() {
-    if (this.activeBlock) {
+    if (this.pos) {
       this.el.style.display = 'none';
 
-      this.fenceOffset = null;
-      this.activeBlock = null;
+      const { pos, active } = this.pos.block.unFocus();
+      this.pos = pos;
+      this.active = active;
     }
   }
 
-  left() {
-    if (this.fenceOffset !== null && this.fenceOffset !== 0) {
-      this.fenceOffset--;
-      this.focusOn();
+  left(offset: number = 1) {
+    if (!this.pos) return;
+    const nextPos = this.pos.block.left(this.pos, this.active, offset);
+    if (nextPos) {
+      const { pos, active } = nextPos;
+      this.setPos(pos);
+
+      this.pos = pos;
+      this.active = active;
+    }
+  }
+  right(offset: number = 1) {
+    if (!this.pos) return;
+    const nextPos = this.pos.block.right(this.pos, this.active, offset);
+    if (nextPos) {
+      const { pos, active } = nextPos;
+      this.setPos(pos);
+
+      this.pos = pos;
+      this.active = active;
+    }
+  }
+  up(offset: number = 1) {
+    if (!this.pos) return;
+    const nextPos = this.pos.block.up(this.pos, this.active, offset);
+    if (nextPos) {
+      const { pos, active } = nextPos;
+      this.setPos(pos);
+
+      this.pos = pos;
+      this.active = active;
+    }
+  }
+  down(offset: number = 1) {
+    if (!this.pos) return;
+    const nextPos = this.pos.block.down(this.pos, this.active, offset);
+    if (nextPos) {
+      const { pos, active } = nextPos;
+      this.setPos(pos);
+
+      this.pos = pos;
+      this.active = active;
     }
   }
 
-  right() {
-    if (
-      this.fenceOffset !== null &&
-      // this.fenceOffset !== this.fence.fenceList.length - 2
-      this.fenceOffset !== this.fence.fenceList.length - 1
-    ) {
-      this.fenceOffset++;
-      this.focusOn();
-    }
-  }
+  updateBlockContent(char: string, parser: (src: string) => SyntaxNode) {
+    if (!this.pos) return;
 
-  up() {
-    if (
-      this.fenceOffset !== null &&
-      this.activeBlock &&
-      this.activeBlock.prev
-    ) {
-      const prevOffset = this.fenceOffset;
-      this.activeBlock = this.activeBlock.prev;
-      const curLength = this.fence.fenceList.length;
-      this.fenceOffset =
-        prevOffset >= curLength - 2 ? curLength - 2 : this.fenceOffset;
+    const { pos, active } = this.pos.block.update(
+      char,
+      this.pos.offset,
+      parser
+    );
+    this.active = active;
+    this.pos = pos;
 
-      this.focusOn();
-    }
-  }
-
-  down() {
-    if (
-      this.fenceOffset !== null &&
-      this.activeBlock &&
-      this.activeBlock.next
-    ) {
-      const prevOffset = this.fenceOffset;
-      this.activeBlock = this.activeBlock.next;
-      const curLength = this.fence.fenceList.length;
-      this.fenceOffset =
-        prevOffset >= curLength - 2 ? curLength - 2 : this.fenceOffset;
-
-      this.focusOn();
-    }
+    // move cursor right
+    const { block, offset } = pos;
+    this.focusOn(block, offset, false);
   }
 }

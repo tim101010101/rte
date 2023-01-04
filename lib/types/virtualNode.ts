@@ -1,45 +1,58 @@
-import { NodeType, TagName } from 'lib/static';
-import { EventName } from 'lib/model';
+import { NodeType, TagName, DOMEventName } from 'lib/static';
+import { s, t } from 'lib/model';
+import { DeepExpandable, DeepPartial, DOMEventHandler, Noop } from 'lib/types';
 
 interface BasicNode {
-  type: NodeType;
   tagName: TagName;
+
   props: VirtualNodeProps;
+  events: VirtualNodeEvents;
+
   meta: VirtualNodeMetaData;
 
   el: HTMLElement | null;
 }
 export interface SyntaxNode extends BasicNode {
+  type: NodeType;
+  marker: VirtualNodeMarker;
+  children: Array<VirtualNode>;
   isActive: boolean;
-  events: VirtualNodeEvents;
-  children: VirtualNodeChildren;
 }
 export interface TextNode extends BasicNode {
-  isActive: boolean;
-  font: string;
+  type: typeof NodeType.PLAIN_TEXT;
   text: string;
+  font: FontInfo;
 }
 export type VirtualNode = SyntaxNode | TextNode;
 
-export type VirtualNodeProps = Partial<
-  {
-    classList: Array<string>;
-    id: string;
-  } & Record<string, any>
+export type VirtualNodeProps = DeepExpandable<
+  DeepPartial<{ classList: Array<string>; id: string; style: {} }>
 >;
 
-export type VirtualNodeChildren = Array<VirtualNode>;
+export type VirtualNodeMetaData = Noop;
 
-export type VirtualNodeMetaData = Record<PropertyKey, any>;
+export interface VirtualNodeMarker {
+  prefix?: string;
+  suffix?: string;
+}
 
-type EventHandler<E> = (e: E) => void;
 type EventDetail =
-  | [EventName.CLICK, EventHandler<MouseEvent>, boolean]
-  | [EventName.MOUSE_DOWN, EventHandler<MouseEvent>, boolean]
-  | [EventName.MOUSE_MOVE, EventHandler<MouseEvent>, boolean]
-  | [EventName.MOUSE_UP, EventHandler<MouseEvent>, boolean]
-  | [EventName.INPUT, EventHandler<KeyboardEvent>, boolean]
-  | [EventName.KEYDOWN, EventHandler<KeyboardEvent>, boolean]
-  | [EventName.KEYUP, EventHandler<KeyboardEvent>, boolean]
-  | [EventName, EventListenerOrEventListenerObject, boolean];
+  | [DOMEventName.CLICK, DOMEventHandler<MouseEvent>, boolean]
+  | [DOMEventName.MOUSE_DOWN, DOMEventHandler<MouseEvent>, boolean]
+  | [DOMEventName.MOUSE_MOVE, DOMEventHandler<MouseEvent>, boolean]
+  | [DOMEventName.MOUSE_UP, DOMEventHandler<MouseEvent>, boolean]
+  | [DOMEventName.INPUT, DOMEventHandler<KeyboardEvent>, boolean]
+  | [DOMEventName.KEYDOWN, DOMEventHandler<KeyboardEvent>, boolean]
+  | [DOMEventName.KEYUP, DOMEventHandler<KeyboardEvent>, boolean]
+  | [DOMEventName, EventListenerOrEventListenerObject, boolean];
 export type VirtualNodeEvents = Array<EventDetail>;
+
+export interface FontInfo {
+  size: number;
+  family: string;
+  bold: boolean;
+  italic: boolean;
+}
+
+export type TextFunction = typeof t;
+export type SyntaxFunction = typeof s;
