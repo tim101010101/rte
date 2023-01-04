@@ -7,6 +7,12 @@ const { LINE } = NodeType;
 const { DIV } = TagName;
 const { RTE_LINE } = ClassName;
 
+const line = (children: Array<VirtualNode>) => {
+  return s(LINE, DIV, children, {
+    classList: [RTE_LINE],
+  });
+};
+
 export const parseLine = (
   src: string,
   lineConfig: SchemaConfigItem,
@@ -21,10 +27,8 @@ export const parseLine = (
     const matched = src.match(reg);
     const { groups } = matched!;
 
-    return render(groups!, parseInlineWithOverloadFont);
+    return line([render(groups!, parseInlineWithOverloadFont)]);
   } else {
-    return s(LINE, DIV, parseInlineWithOverloadFont(src), {
-      classList: [RTE_LINE],
-    });
+    return line(parseInlineWithOverloadFont(src));
   }
 };

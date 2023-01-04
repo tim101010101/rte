@@ -18,9 +18,9 @@ import {
 } from './utils';
 import { mixin } from 'lib/utils';
 
-const { HEADING } = NodeType;
-const { H1, H2, H6 } = TagName;
-const {} = ClassName;
+const { HEADING, LINE } = NodeType;
+const { DIV, H1, H2, H6 } = TagName;
+const { RTE_LINE } = ClassName;
 
 describe('parseLine', () => {
   const headingWithChildren = (
@@ -29,13 +29,22 @@ describe('parseLine', () => {
     prefix: string,
     level: number
   ) => {
-    return mockSyntax(
-      HEADING,
-      tagName,
-      children,
-      { classList: [] },
-      { prefix },
-      { level }
+    return s(
+      LINE,
+      DIV,
+      [
+        mockSyntax(
+          HEADING,
+          tagName,
+          children,
+          { classList: [] },
+          { prefix },
+          { level }
+        ),
+      ],
+      {
+        classList: [RTE_LINE],
+      }
     );
   };
 

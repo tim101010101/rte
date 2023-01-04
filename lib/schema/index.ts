@@ -6,25 +6,25 @@ import {
   FontConfig,
   FontInfo,
   SchemaConfig,
+  SchemaConfigItem,
   SyntaxNode,
 } from 'lib/types';
 import { mixin } from 'lib/utils';
 
 export class Schema {
-  private rules: SchemaConfig;
   private defaultFontInfo: FontInfo;
+  private inline: SchemaConfigItem;
+  private line: SchemaConfigItem;
 
   constructor(schemaConfig: SchemaConfig, fontInfo: EditorConfig['font']) {
-    this.rules = schemaConfig;
     this.defaultFontInfo = {
       size: fontInfo.size,
       family: fontInfo.family,
       bold: false,
       italic: false,
     };
-  }
 
-  parse(src: string): SyntaxNode {
+    const { inline, line } = schemaConfig;
     const exportedText: ExportedTextFunction = (
       children,
       props,
@@ -40,14 +40,14 @@ export class Schema {
       );
     };
 
-    const inlineParser = (content: string, fontInfo?: FontConfig) =>
-      parseInline(
-        content,
-        this.rules.inline(s, exportedText),
-        this.defaultFontInfo,
-        fontInfo
-      );
+    this.inline = inline(s, exportedText);
+    this.line = line(s, exportedText);
+  }
 
-    return parseLine(src, this.rules.line(s, exportedText), inlineParser);
+  parse(src: string): SyntaxNode {
+    const inlineParser = (content: string, fontInfo?: FontConfig) =>
+      parseInline(content, this.inline, this.defaultFontInfo, fontInfo);
+
+    return parseLine(src, this.line, inlineParser);
   }
 }
