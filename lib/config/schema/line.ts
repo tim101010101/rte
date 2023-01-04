@@ -15,10 +15,10 @@ export const line: SchemaConfig['line'] = (syntax, text) => {
       },
     },
     heading: {
-      reg: /^(?<prefix>#{1,6}) (?<content>[\s\S]+)$/,
+      reg: /^(?<prefix>#{1,6} )(?<content>[\s\S]+)$/,
       render(groups, parseInlineWithRewiteFont) {
         const { prefix, content } = groups;
-        const level = prefix.length;
+        const level = prefix.length - 1;
         let tagName = H1;
         let fontSize = 30;
         switch (level) {
