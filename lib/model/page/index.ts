@@ -1,21 +1,28 @@
-import { EditorConfig, SyntaxNode } from 'lib/types';
-import { getNearestIdx } from 'lib/utils';
-import { Block, EventName, Selection } from 'lib/model';
+import { EditorConfig } from 'lib/types';
+import { Block, EventBus, getKeydownHandler, Selection } from 'lib/model';
 import { LinkedList } from 'lib/model/virtualNode/base/linkedList';
 import { Schema } from 'lib/schema';
+import { DOMEventName, InnerEventName } from 'lib/static';
+import { getNearestIdx, getTargetInterval } from 'lib/utils';
+
+const { FOCUS_ON, UNFOCUS, UPDATE_BLOCK_CONTENT, CURSOR_MOVE } = InnerEventName;
 
 export class Page extends LinkedList<Block> {
   private container: HTMLElement;
-  private selection: Selection;
   private config: EditorConfig;
-  private schema: Schema;
+  private eventBus: EventBus;
+
+  schema: Schema;
+  selection: Selection;
 
   constructor(container: HTMLElement, config: EditorConfig, schema: Schema) {
     super();
 
     this.container = container;
-    this.selection = new Selection(container);
     this.config = config;
+    this.eventBus = new EventBus();
+
+    this.selection = new Selection(container);
     this.schema = schema;
   }
 
@@ -26,70 +33,56 @@ export class Page extends LinkedList<Block> {
       .forEach(line => {
         const block = new Block(this.container);
         this.append(block);
+
+        // TODO
         block.patch({
           ...line,
-          events: [
-            ...line.events,
-            [EventName.CLICK, getClickHanlder(this, block), false],
-          ],
+          // events: [
+          //   ...line.events,
+          //   [DOMEventName.CLICK, getClickHanlder(this, block), false],
+          // ],
         });
       });
 
-    window.addEventListener('keydown', e => {
-      switch (e.key) {
-        case 'Escape':
-          this.selection.unFocus();
-          break;
+    this.initEvent();
+  }
 
-        case 'ArrowLeft':
-          this.selection.left();
-          break;
-        case 'ArrowRight':
-          this.selection.right();
-          break;
-        case 'ArrowUp':
-          this.selection.up();
-          break;
-        case 'ArrowDown':
-          this.selection.down();
-          break;
+  initEvent() {
+    this.eventBus.attachDOMEvent(
+      window,
+      DOMEventName.KEYDOWN,
+      getKeydownHandler(this),
+      false
+    );
+    this.eventBus.attachDOMEvent(
+      window,
+      DOMEventName.CLICK,
+      e => {
+        const y = getTargetInterval(
+          this.map(block => block.rect.y),
+          e.clientY
+        );
+
+        const targetBlock = this.find(y)!;
+
+        const x = getNearestIdx(
+          targetBlock.fence.reduce<Array<number>>((cursorOffsetList, cur) => {
+            cursorOffsetList.push(
+              ...cur.fenceList.map(({ cursorOffset }) => cursorOffset)
+            );
+            return cursorOffsetList;
+          }, []),
+          e.clientX
+        );
 
         // TODO
-        case 'Tab':
-          window.focus();
-          this.setFocus(this.head!, 0);
-          break;
-
-        default:
-          if (
-            e.key.length === 1 &&
-            (/[a-zA-Z0-9]/.test(e.key) || e.key === '*')
-          ) {
-            this.selection.updateBlockContent(
-              e.key,
-              this.schema.parse.bind(this.schema)
-            );
-          }
-          break;
-      }
-    });
+        this.selection.focusOn(targetBlock, x, true);
+      },
+      false
+    );
   }
 
   setFocus(block: Block, offset: number) {
     this.selection.focusOn(block, offset, false);
   }
 }
-
-const getClickHanlder = (page: Page, block: Block) => (e: MouseEvent) => {
-  const target = e.clientX;
-  const idx = getNearestIdx(
-    block.fence.reduce<Array<number>>((cursorOffsetList, cur) => {
-      cursorOffsetList.push(
-        ...cur.fenceList.map(({ cursorOffset }) => cursorOffset)
-      );
-      return cursorOffsetList;
-    }, []),
-    target
-  );
-  page.setFocus(block, idx);
-};
