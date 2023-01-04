@@ -32,7 +32,7 @@ export const getKeydownHandler = (page: Page) => {
           break;
 
         case TAB:
-          page.setFocus(page.head!, 0);
+          page.focusOn(page.head!, 0);
           break;
       }
     } else if (isShowableKey(e)) {

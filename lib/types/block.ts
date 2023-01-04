@@ -1,5 +1,4 @@
-import { Block } from 'lib/model';
-import { VirtualNode } from 'lib/types';
+import { VirtualNode, Operable } from 'lib/types';
 
 export interface Rect {
   width: number;
@@ -22,12 +21,22 @@ export interface FenceItem {
 
 export type Fence = Array<FenceItem>;
 
+export interface FenceInfo {
+  vNode: VirtualNode;
+  rect: Rect;
+  prefixLength: number;
+  ancestorIdx: number;
+  textOffset: number;
+  cursorOffset: number;
+  hitPos: -1 | 0 | 1;
+}
+
 export interface Pos {
-  block: Block;
+  block: Operable;
   offset: number;
 }
 
 export interface ActivePos {
-  block: Block;
+  block: Operable;
   ancestorIdx: number;
 }
