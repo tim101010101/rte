@@ -132,24 +132,28 @@ export const posNode = (vNode: VirtualNode) => {
 
 export const walkTextNode = (
   vNode: VirtualNode,
-  callback: (textNode: TextNode, path: Array<number>) => void
+  callback: (
+    textNode: TextNode,
+    parent: SyntaxNode | null,
+    path: Array<number>
+  ) => void
 ) => {
   const path: Array<number> = [];
-  const dfs = (cur: VirtualNode) => {
+  const dfs = (cur: VirtualNode, parent: SyntaxNode | null) => {
     if (!cur) return;
 
     if (isTextNode(cur)) {
-      callback(cur, [...path]);
+      callback(cur, parent, [...path]);
     } else {
       cur.children.forEach((child, i) => {
         path.push(i);
-        dfs(child);
+        dfs(child, cur);
         path.pop();
       });
     }
   };
 
-  dfs(vNode);
+  dfs(vNode, null);
 };
 
 export const getTextList = (vNode: SyntaxNode) => {
