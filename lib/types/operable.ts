@@ -1,7 +1,6 @@
 import { ListNode } from 'lib/model';
 import {
   ActivePos,
-  Fence,
   FenceInfo,
   Pos,
   Rect,
@@ -17,9 +16,9 @@ export interface FeedbackPos {
 export interface Operable extends ListNode {
   vNode: SyntaxNode;
   rect: Rect;
-  fence: Fence;
 
   getFenceInfo(offset: number): FenceInfo;
+  patch(newVNode: VirtualNode): void;
 
   focusOn(
     prevPos: Pos | null,
@@ -40,6 +39,4 @@ export interface Operable extends ListNode {
     offset: number,
     parser: (src: string) => SyntaxNode
   ): FeedbackPos;
-
-  patch(newVNode: VirtualNode): void;
 }

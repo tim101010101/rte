@@ -1,4 +1,4 @@
-import { ActivePos, Pos } from 'lib/types';
+import { ActivePos, FeedbackPos, Pos } from 'lib/types';
 import { activeSubTree, cancelActiveSubTree, isTextNode } from 'lib/model';
 
 const tryCancelActiveSyntaxNode = (
@@ -178,7 +178,7 @@ export const trySwitchActiveSyntaxNode = (
   active: ActivePos | null,
   isCrossLine: boolean,
   isClick: boolean
-): { pos: Pos; active: ActivePos | null } => {
+): FeedbackPos => {
   const { pos, active: curActive } = tryCancelActiveSyntaxNode(
     prevPos,
     curPos,
