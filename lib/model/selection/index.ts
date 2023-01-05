@@ -32,18 +32,13 @@ export class Selection {
     this.setShape(2, height, cursorOffset, y);
   }
 
-  focusOn(block: Operable, offset: number, isCrossLine: boolean) {
+  focusOn(block: Operable, offset: number) {
     // show the cursor when the page focused for the first time
     if (!this.pos) {
       this.el.style.display = 'inline-block';
     }
 
-    const { pos, active } = block.focusOn(
-      this.pos,
-      offset,
-      this.active,
-      isCrossLine
-    );
+    const { pos, active } = block.focusOn(this.pos, offset, this.active);
 
     // update position of cursor
     this.setPos(pos);
@@ -120,6 +115,6 @@ export class Selection {
 
     // move cursor right
     const { block, offset } = pos;
-    this.focusOn(block, offset, false);
+    this.focusOn(block, offset);
   }
 }

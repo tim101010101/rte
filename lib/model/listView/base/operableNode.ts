@@ -78,15 +78,14 @@ export class OperableNode implements Operable {
   focusOn(
     prevPos: Pos | null,
     curOffset: number,
-    curActive: ActivePos | null,
-    isCrossLine: boolean
+    curActive: ActivePos | null
   ): FeedbackPos {
     // attempt to activate the node that is currently being edited
     const { pos, active } = trySwitchActiveSyntaxNode(
       prevPos,
       { block: this, offset: curOffset },
       curActive,
-      isCrossLine
+      prevPos?.block !== this
     );
 
     // reset the new position of cursor and the activated node
@@ -210,14 +209,14 @@ export class OperableNode implements Operable {
   left(pos: Pos, active: ActivePos | null, offset: number = 1) {
     const { offset: curOffset } = pos;
     if (curOffset !== 0) {
-      return this.focusOn(pos, curOffset - offset, active, false);
+      return this.focusOn(pos, curOffset - offset, active);
     }
     return null;
   }
   right(pos: Pos, active: ActivePos | null, offset: number = 1) {
     const { offset: curOffset } = pos;
     if (curOffset !== this.fenceLength - 1) {
-      return this.focusOn(pos, curOffset + offset, active, false);
+      return this.focusOn(pos, curOffset + offset, active);
     }
     return null;
   }
@@ -232,8 +231,7 @@ export class OperableNode implements Operable {
     return prevBlock.focusOn(
       pos,
       min(curOffset, prevBlock.fenceLength - 1),
-      active,
-      true
+      active
     );
   }
   down(pos: Pos, active: ActivePos | null, offset: number = 1) {
@@ -247,8 +245,7 @@ export class OperableNode implements Operable {
     return nextBlock.focusOn(
       pos,
       min(curOffset, nextBlock.fenceLength - 1),
-      active,
-      true
+      active
     );
   }
 }

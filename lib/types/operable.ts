@@ -24,8 +24,7 @@ export interface Operable extends ListNode {
   focusOn(
     prevPos: Pos | null,
     curOffset: number,
-    active: ActivePos | null,
-    isCrossLine: boolean
+    active: ActivePos | null
   ): FeedbackPos;
   unFocus(): { pos: Pos | null; active: ActivePos | null };
 
