@@ -1,4 +1,10 @@
-import { getNearestIdx, getTargetInterval, max, min } from 'lib/utils';
+import {
+  convergent,
+  getNearestIdx,
+  getTargetInterval,
+  max,
+  min,
+} from 'lib/utils';
 
 describe('math', () => {
   describe('max', () => {
@@ -66,6 +72,24 @@ describe('math', () => {
     });
     test('[1, 3, 5, 7, 9, 10] 999 => 5', () => {
       expect(getTargetInterval(arr, 999)).toBe(5);
+    });
+  });
+
+  describe('convergent', () => {
+    test('[1, 3] 2 => 2', () => {
+      expect(convergent(2, 1, 3)).toBe(2);
+    });
+    test('[1, 3] 1 => 1', () => {
+      expect(convergent(1, 1, 3)).toBe(1);
+    });
+    test('[1, 3] 3 => 3', () => {
+      expect(convergent(3, 1, 3)).toBe(3);
+    });
+    test('[1, 3] 0 => 1', () => {
+      expect(convergent(0, 1, 3)).toBe(1);
+    });
+    test('[1, 3] 4 => 3', () => {
+      expect(convergent(4, 1, 3)).toBe(3);
     });
   });
 });

@@ -17,7 +17,7 @@ import {
   VirtualNode,
 } from 'lib/types';
 import { patch } from 'lib/render';
-import { insertAt, min, panicAt } from 'lib/utils';
+import { abs, insertAt, min, panicAt } from 'lib/utils';
 import {
   calcFence,
   getAncestorIdx,
@@ -85,7 +85,8 @@ export class OperableNode implements Operable {
       prevPos,
       { block: this, offset: curOffset },
       curActive,
-      prevPos?.block !== this
+      prevPos?.block !== this,
+      prevPos ? abs(prevPos.offset - curOffset) !== 1 : true
     );
 
     // reset the new position of cursor and the activated node

@@ -5,7 +5,8 @@ const tryCancelActiveSyntaxNode = (
   prevPos: Pos | null,
   curPos: Pos,
   active: ActivePos | null,
-  isCrossLine: boolean
+  isCrossLine: boolean,
+  isClick: boolean
 ) => {
   let finalPos = curPos;
   let finalActive = active;
@@ -46,16 +47,49 @@ const tryCancelActiveSyntaxNode = (
       const { block: prevBlock, offset: prevOffset } = prevPos;
       const { hitPos } = prevBlock.getFenceInfo(prevOffset);
 
-      // leave the syntax node on the right
-      // final position: offset - prefix - suffix
-      //
-      //* e.g.
-      //*   _foo_| bar  =>  foo |bar
-      if (hitPos === 1) {
-        finalPos = {
-          block: curBlock,
-          offset: curOffset - prefix - suffix,
-        };
+      // trigger by click
+      if (isClick) {
+        // leave the syntax node and jump to right
+        // final position: offset - prefix - suffix
+        //
+        //* e.g.
+        //*    1. from the head of the node
+        //*         |_foo_ bar    =>  foo b|ar
+        //*
+        //*         |__foo__ bar  =>  foo bar|
+        //*
+        //*    2. from the body of the node
+        //*         _fo|o_ bar    =>  foo |bar
+        //*
+        //*         __foo_|_ bar  =>  foo bar|
+        //*
+        //*         _|_foo__ bar  =>  foo bar|
+        //*
+        //*    3. from the tail of the node
+        //*         _foo_| bar    =>  foo b|ar
+        //*
+        //*         __foo__| bar  =>  foo bar|
+        if (curOffset > prevOffset) {
+          finalPos = {
+            block: curBlock,
+            offset: curOffset - prefix - suffix,
+          };
+        }
+      }
+
+      // trigger by arrow key
+      else {
+        // leave the syntax node from the tail
+        // final position: offset - prefix - suffix
+        //
+        //* e.g.
+        //*   _foo_| bar  =>  foo |bar
+        if (hitPos === 1) {
+          finalPos = {
+            block: curBlock,
+            offset: curOffset - prefix - suffix,
+          };
+        }
       }
     }
 
@@ -142,13 +176,15 @@ export const trySwitchActiveSyntaxNode = (
   prevPos: Pos | null,
   curPos: Pos,
   active: ActivePos | null,
-  isCrossLine: boolean
+  isCrossLine: boolean,
+  isClick: boolean
 ): { pos: Pos; active: ActivePos | null } => {
   const { pos, active: curActive } = tryCancelActiveSyntaxNode(
     prevPos,
     curPos,
     active,
-    isCrossLine
+    isCrossLine,
+    isClick
   );
 
   return tryActiveSyntaxNode(pos, curActive);

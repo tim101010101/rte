@@ -79,7 +79,6 @@ export class Page extends LinkedList<Operable> {
   }
 
   focusOn(block: Operable, offset: number) {
-    console.log(offset);
     this.selection.focusOn(block, offset);
   }
 }

@@ -7,6 +7,11 @@ export const max = (x: number, y: number) => (x > y ? x : y);
 
 export const min = (x: number, y: number) => (x > y ? y : x);
 
+export const abs = (x: number) => Math.abs(x);
+
+export const convergent = (x: number, left: number, right: number) =>
+  max(min(x, right), left);
+
 export const getNearestIdx = (arr: Array<number>, target: number) => {
   const len = arr.length;
 
