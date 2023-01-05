@@ -18,7 +18,12 @@ import {
 } from 'lib/types';
 import { patch } from 'lib/render';
 import { insertAt, min, panicAt } from 'lib/utils';
-import { calcFence, getAncestorIdx, trySwitchActiveSyntaxNode } from './helper';
+import {
+  calcFence,
+  getAncestorIdx,
+  getOffsetWithMarker,
+  trySwitchActiveSyntaxNode,
+} from './helper';
 
 export class OperableNode implements Operable {
   prev: this | null;
@@ -149,15 +154,16 @@ export class OperableNode implements Operable {
     offset: number,
     parser: (src: string) => SyntaxNode
   ): FeedbackPos {
+    const offsetWithMarker = getOffsetWithMarker(this, offset);
     const textContent = insertAt(
       textContentWithMarker(this.vNode),
-      offset,
+      offsetWithMarker,
       char
     );
     const line = parser(textContent);
 
     // line.children[ancestorIdx] is the node currently being edited
-    const ancestorIdx = getAncestorIdx(line, offset);
+    const ancestorIdx = getAncestorIdx(line, offsetWithMarker);
 
     // node hit by the cursor needs to be activated while it's a syntax node
     if (!isTextNode(line.children[ancestorIdx])) {
@@ -168,7 +174,7 @@ export class OperableNode implements Operable {
       return {
         pos: {
           block: this,
-          offset: ancestorIdx,
+          offset: offset + 1,
         },
         active: {
           block: this,
