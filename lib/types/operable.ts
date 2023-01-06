@@ -1,6 +1,7 @@
 import { ListNode } from 'lib/model';
 import {
   ActivePos,
+  Fence,
   FenceInfo,
   Pos,
   Rect,
@@ -14,6 +15,7 @@ export interface FeedbackPos {
 }
 
 export interface Operable extends ListNode {
+  fence: Fence;
   vNode: SyntaxNode;
   rect: Rect;
 
@@ -32,11 +34,18 @@ export interface Operable extends ListNode {
   up(pos: Pos, active: ActivePos | null, offset: number): FeedbackPos | null;
   down(pos: Pos, active: ActivePos | null, offset: number): FeedbackPos | null;
 
-  newLine(): void;
+  newLine(offset: number): void;
 
   update(
     char: string,
     offset: number,
+    active: ActivePos | null,
+    parser: (src: string) => SyntaxNode
+  ): FeedbackPos;
+
+  delete(
+    offset: number,
+    active: ActivePos | null,
     parser: (src: string) => SyntaxNode
   ): FeedbackPos;
 }
