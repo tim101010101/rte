@@ -1,11 +1,4 @@
-import {
-  activeSubTree,
-  EventBus,
-  isTextNode,
-  OperableNode,
-  posNode,
-  textContentWithMarker,
-} from 'lib/model';
+import { EventBus, isTextNode, OperableNode, posNode } from 'lib/model';
 import {
   ActivePos,
   FeedbackPos,
@@ -17,12 +10,12 @@ import {
   VirtualNode,
 } from 'lib/types';
 import { patch } from 'lib/render';
-import { abs, insertAt, min, panicAt, removeAt } from 'lib/utils';
+import { abs, min, panicAt } from 'lib/utils';
 import {
   calcFence,
-  getAncestorIdx,
-  getOffsetWithMarker,
   trySwitchActiveSyntaxNode,
+  updateLineContent,
+  deleteLineContent,
 } from './helper';
 
 export class Line extends OperableNode {
@@ -128,19 +121,13 @@ export class Line extends OperableNode {
     curActive: ActivePos | null
   ): FeedbackPos {
     // attempt to activate the node that is currently being edited
-    const { pos, active } = trySwitchActiveSyntaxNode(
+    return trySwitchActiveSyntaxNode(
       prevPos,
       { block: this, offset: curOffset },
       curActive,
       prevPos?.block !== this,
       prevPos ? abs(prevPos.offset - curOffset) !== 1 : true
     );
-
-    // reset the new position of cursor and the activated node
-    return {
-      pos,
-      active,
-    };
   }
 
   unFocus(): { pos: Pos | null; active: ActivePos | null } {
@@ -158,76 +145,7 @@ export class Line extends OperableNode {
     active: ActivePos | null,
     parser: (src: string) => SyntaxNode
   ): FeedbackPos {
-    const offsetWithMarker = getOffsetWithMarker(this, offset);
-    const textContent = removeAt(
-      textContentWithMarker(this.vNode),
-      offsetWithMarker - 1
-    );
-    const line = parser(textContent);
-
-    const ancestorIdx = getAncestorIdx(line, offsetWithMarker - 1, true);
-
-    // node currently being edited needs to be reactivated
-    if (!isTextNode(line.children[ancestorIdx])) {
-      const { root } = activeSubTree(line, ancestorIdx);
-
-      // syntax1 -> syntax2
-      //
-      //* e.g.
-      //*    **a**|  =>  **a*
-      if (active && active.ancestorIdx === ancestorIdx) {
-        const { block, ancestorIdx } = active;
-        const inactiveLength =
-          offset -
-          textContentWithMarker(block.vNode.children[ancestorIdx]).length;
-        const curActiveLength = textContentWithMarker(
-          line.children[ancestorIdx]
-        ).length;
-
-        this.patch(root);
-
-        return {
-          pos: {
-            block: this,
-            offset: inactiveLength + curActiveLength,
-          },
-          active: {
-            block: this,
-            ancestorIdx,
-          },
-        };
-      }
-
-      // common case
-      else {
-        this.patch(root);
-
-        // reset active
-        return {
-          pos: {
-            block: this,
-            offset: offsetWithMarker - 1,
-          },
-          active: {
-            block: this,
-            ancestorIdx,
-          },
-        };
-      }
-    }
-
-    // the node being edited is the text node
-    else {
-      this.patch(line);
-
-      return {
-        pos: {
-          block: this,
-          offset: offset - 1,
-        },
-        active: null,
-      };
-    }
+    return deleteLineContent({ block: this, offset }, active, parser);
   }
 
   update(
@@ -236,62 +154,7 @@ export class Line extends OperableNode {
     active: ActivePos | null,
     parser: (src: string) => SyntaxNode
   ): FeedbackPos {
-    const offsetWithMarker = getOffsetWithMarker(this, offset);
-    const textContent = insertAt(
-      textContentWithMarker(this.vNode),
-      offsetWithMarker,
-      char
-    );
-    const line = parser(textContent);
-
-    // line.children[ancestorIdx] is the node currently being edited
-    const ancestorIdx = getAncestorIdx(line, offsetWithMarker, false);
-
-    // node hit by the cursor needs to be activated while it's a syntax node
-    if (!isTextNode(line.children[ancestorIdx])) {
-      const { root } = activeSubTree(line, ancestorIdx);
-      this.patch(root);
-
-      // reset active
-      return {
-        pos: {
-          block: this,
-          offset: offset + 1,
-        },
-        active: {
-          block: this,
-          ancestorIdx,
-        },
-      };
-    }
-
-    // there is no any node need to activate
-    else {
-      this.patch(line);
-      if (active && active.ancestorIdx !== ancestorIdx) {
-        const { block, ancestorIdx } = active;
-        const { marker } = block.vNode.children[ancestorIdx] as SyntaxNode;
-
-        const prefix = marker.prefix ? marker.prefix.length : 0;
-        const suffix = marker.suffix ? marker.suffix.length : 0;
-
-        return {
-          pos: {
-            block: this,
-            offset: offset - prefix - suffix + 1,
-          },
-          active: null,
-        };
-      } else {
-        return {
-          pos: {
-            block: this,
-            offset: offset + 1,
-          },
-          active: null,
-        };
-      }
-    }
+    return updateLineContent({ block: this, offset }, active, char, parser);
   }
 
   left(pos: Pos, active: ActivePos | null, offset: number = 1) {
