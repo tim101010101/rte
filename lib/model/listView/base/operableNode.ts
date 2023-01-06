@@ -2,6 +2,7 @@ import { EventBus } from 'lib/model';
 import {
   ActivePos,
   FeedbackPos,
+  Fence,
   FenceInfo,
   Operable,
   Pos,
@@ -26,6 +27,9 @@ export abstract class OperableNode implements Operable {
     this.eventBus = eventBus;
   }
 
+  // TODO
+  abstract get fence():Fence
+
   abstract get vNode(): SyntaxNode;
   abstract get rect(): Rect;
 
@@ -36,8 +40,8 @@ export abstract class OperableNode implements Operable {
   abstract unFocus(): { pos: Pos | null; active: ActivePos | null };
 
   abstract newLine(): void;
-
-  abstract update(char: string, offset: number, parser: (src: string) => SyntaxNode): FeedbackPos;
+  abstract update(char: string, offset: number, active: ActivePos | null, parser: (src: string) => SyntaxNode): FeedbackPos;
+  abstract delete(offset: number, active: ActivePos | null, parser: (src: string) => SyntaxNode): FeedbackPos;
 
   abstract left(pos: Pos, active: ActivePos | null, offset: number): FeedbackPos | null;
   abstract right(pos: Pos, active: ActivePos | null, offset: number): FeedbackPos | null;

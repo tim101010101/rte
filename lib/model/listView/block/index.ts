@@ -5,6 +5,6 @@ import { panicAt } from 'lib/utils';
 
 import { calcFence, OperableNode } from '../base';
 
-export class Block extends OperableNode {
+export class Block {
   // TODO
 }

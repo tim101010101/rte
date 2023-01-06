@@ -102,18 +102,38 @@ export class Selection {
     }
   }
 
+  newLine() {
+    // TODO
+  }
+
   updateBlockContent(char: string, parser: (src: string) => SyntaxNode) {
     if (!this.pos) return;
 
     const { pos, active } = this.pos.block.update(
       char,
       this.pos.offset,
+      this.active,
       parser
     );
     this.active = active;
     this.pos = pos;
 
     // move cursor right
+    const { block, offset } = pos;
+    this.focusOn(block, offset);
+  }
+
+  delete(parser: (src: string) => SyntaxNode) {
+    if (!this.pos) return;
+
+    const { pos, active } = this.pos.block.delete(
+      this.pos.offset,
+      this.active,
+      parser
+    );
+    this.active = active;
+    this.pos = pos;
+
     const { block, offset } = pos;
     this.focusOn(block, offset);
   }
