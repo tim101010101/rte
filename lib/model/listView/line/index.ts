@@ -15,8 +15,9 @@ import {
   calcFence,
   trySwitchActiveSyntaxNode,
   updateLineContent,
-  deleteLineContent,
+  deleteChar,
   getLineFenceInfo,
+  deleteWholeLine,
 } from './helper';
 
 export class Line extends OperableNode {
@@ -109,7 +110,19 @@ export class Line extends OperableNode {
     active: ActivePos | null,
     parser: (src: string) => SyntaxNode
   ): FeedbackPos {
-    return deleteLineContent({ block: this, offset }, active, parser);
+    if (offset > 0) {
+      return deleteChar({ block: this, offset }, active, parser);
+    } else if (offset === 0 && this.prev) {
+      return deleteWholeLine(this.prev, this, parser, this.eventBus);
+    }
+
+    return {
+      pos: {
+        block: this,
+        offset,
+      },
+      active,
+    };
   }
 
   update(

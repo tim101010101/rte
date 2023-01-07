@@ -1,10 +1,17 @@
 import { removeAt } from 'lib/utils';
-import { activeSubTree, isTextNode, textContentWithMarker } from 'lib/model';
-import { ActivePos, FeedbackPos, Pos, SyntaxNode } from 'lib/types';
+import {
+  activeSubTree,
+  EventBus,
+  isTextNode,
+  textContent,
+  textContentWithMarker,
+} from 'lib/model';
+import { ActivePos, FeedbackPos, Operable, Pos, SyntaxNode } from 'lib/types';
+import { InnerEventName } from 'lib/static';
 import { getOffsetWithMarker } from './getOffsetWithMarker';
 import { getAncestorIdx } from './getAncestorIdx';
 
-export const deleteLineContent = (
+export const deleteChar = (
   { block, offset }: Pos,
   active: ActivePos | null,
   parser: (source: string) => SyntaxNode
@@ -131,4 +138,41 @@ export const deleteLineContent = (
       active: null,
     };
   }
+};
+
+export const deleteWholeLine = (
+  prevBlock: Operable,
+  curBlock: Operable,
+  parser: (source: string) => SyntaxNode,
+  eventBus: EventBus
+): FeedbackPos => {
+  //! ERROR bug here
+  //! ERROR there will be a problem with the new content while the previous line is a block
+  //! ERROR get the last line of block to fix
+  const newContent = `${textContentWithMarker(
+    prevBlock.vNode
+  )}${textContentWithMarker(curBlock.vNode)}`;
+  const finalOffset = textContent(prevBlock.vNode).length;
+  const newline = parser(newContent);
+
+  // emit UNINSTALL_BLOCK event to trigger uninstalling of the block and its DOM node
+  eventBus.emit(InnerEventName.UNINSTALL_BLOCK, curBlock);
+
+  prevBlock.patch(newline);
+
+  // the final offset is the length of the previous block
+  //
+  //* e.g.
+  //*        a
+  //*        |b  =>  a|b
+  //*
+  //*    **foo
+  //*    |bar**  =>  **foo|bar**
+  return {
+    pos: {
+      block: prevBlock,
+      offset: finalOffset,
+    },
+    active: null,
+  };
 };

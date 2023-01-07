@@ -16,4 +16,6 @@ export enum InnerEventName {
 
   UPDATE_BLOCK_CONTENT = 'update_block_content',
   DELETE_BLOCK_CONTENT = 'delete_block_content',
+
+  UNINSTALL_BLOCK = 'uninstall_block',
 }
