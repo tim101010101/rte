@@ -1,4 +1,4 @@
-import { insertAt, removeAt } from 'lib/utils';
+import { concat, insertAt, removeAt } from 'lib/utils';
 
 describe('string', () => {
   describe('insertAt', () => {
@@ -15,6 +15,13 @@ describe('string', () => {
 
       expect(removeAt('hello world', 0, 6)).toBe('world');
       expect(removeAt('hello world', 5, 6)).toBe('hello');
+    });
+  });
+
+  describe('concat', () => {
+    test('smoke', () => {
+      expect(concat('hello ', 'world')).toBe('hello world');
+      expect(concat('hello', ' ', 'world')).toBe('hello world');
     });
   });
 });
