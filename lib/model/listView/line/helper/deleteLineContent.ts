@@ -1,4 +1,4 @@
-import { removeAt } from 'lib/utils';
+import { concat, removeAt } from 'lib/utils';
 import {
   activeSubTree,
   EventBus,
@@ -149,9 +149,10 @@ export const deleteWholeLine = (
   //! ERROR bug here
   //! ERROR there will be a problem with the new content while the previous line is a block
   //! ERROR get the last line of block to fix
-  const newContent = `${textContentWithMarker(
-    prevBlock.vNode
-  )}${textContentWithMarker(curBlock.vNode)}`;
+  const newContent = concat(
+    textContentWithMarker(prevBlock.vNode),
+    textContentWithMarker(curBlock.vNode)
+  );
   const finalOffset = textContent(prevBlock.vNode).length;
   const newline = parser(newContent);
 

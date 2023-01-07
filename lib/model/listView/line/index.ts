@@ -1,4 +1,4 @@
-import { EventBus, isTextNode, OperableNode, posNode } from 'lib/model';
+import { EventBus, isTextNode, posNode } from 'lib/model';
 import {
   ActivePos,
   FeedbackPos,
@@ -19,6 +19,7 @@ import {
   getLineFenceInfo,
   deleteWholeLine,
 } from './helper';
+import { OperableNode } from '../base/operableNode';
 
 export class Line extends OperableNode {
   private _vNode: SyntaxNode | null;
