@@ -22,6 +22,11 @@ export const updateLineContent = (
   const ancestorIdx = getAncestorIdx(line, offsetWithMarker, false);
 
   // node hit by the cursor needs to be activated while it's a syntax node
+  //
+  //* e.g.
+  //*      a*b|  =>  a*b*|
+  //*
+  //*    a**b*|  =>  a**b**|
   if (!isTextNode(line.children[ancestorIdx])) {
     const { root } = activeSubTree(line, ancestorIdx);
     block.patch(root);
@@ -42,8 +47,16 @@ export const updateLineContent = (
   // there is no any node need to activate
   else {
     block.patch(line);
+
+    // need to switch activation
+    //
+    //* e.g.
+    //*    **a**|c  =>  ab|c
+    //*
+    //*    **a*|*c  =>  **a*b|*c (This grammar is not standard, it's just an example)
     if (active && active.ancestorIdx !== ancestorIdx) {
       const { block, ancestorIdx } = active;
+      // node can be activated must be the syntax node
       const { marker } = block.vNode.children[ancestorIdx] as SyntaxNode;
 
       const prefix = marker.prefix ? marker.prefix.length : 0;
@@ -56,7 +69,13 @@ export const updateLineContent = (
         },
         active: null,
       };
-    } else {
+    }
+
+    // ordinary case
+    //
+    //* e.g.
+    //*    ab|  => abc|
+    else {
       return {
         pos: {
           block,
