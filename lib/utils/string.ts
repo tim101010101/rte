@@ -9,3 +9,7 @@ export const removeAt = (source: string, pos: number, count: number = 1) => {
 export const concat = (...sources: Array<string>): string => {
   return sources.join('');
 };
+
+export const splitAt = (source: string, pos: number): [string, string] => {
+  return [source.slice(0, pos), source.slice(pos)];
+};

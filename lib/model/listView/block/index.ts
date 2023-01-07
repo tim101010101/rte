@@ -1,4 +1,4 @@
-import { patch } from 'lib/render';
+import { patchBlock } from 'lib/render';
 import { Fence, Rect, SyntaxNode, VirtualNode } from 'lib/types';
 import { isTextNode, ListNode, posNode } from 'lib/model';
 import { panicAt } from 'lib/utils';

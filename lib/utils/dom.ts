@@ -14,6 +14,12 @@ export const removeChild = (parent: Node, child: Node) => {
   parent.removeChild(child);
 };
 
+export const removeAllChild = (parent: Node) => {
+  while (parent.firstChild) {
+    parent.removeChild(parent.firstChild);
+  }
+};
+
 export const createFragment = () => {
   return document.createDocumentFragment();
 };
@@ -48,9 +54,19 @@ export const removeClassName = (dom: HTMLElement, className: string) => {
   }
 };
 
-export const insertBefore = (newNode: HTMLElement, oldNode: HTMLElement) => {
-  const parentNode = oldNode.parentNode;
-  parentNode?.insertBefore(newNode, oldNode);
+export const insertBefore = (node: HTMLElement, anchor: HTMLElement) => {
+  const parentNode = anchor.parentNode;
+  parentNode?.insertBefore(node, anchor);
+};
+
+export const insertAfter = (node: HTMLElement, anchor: HTMLElement) => {
+  const parentNode = anchor.parentNode;
+
+  if (anchor.nextSibling) {
+    parentNode?.insertBefore(node, anchor.nextSibling);
+  } else {
+    parentNode?.appendChild(node);
+  }
 };
 
 export const replaceOldNode = (
@@ -58,17 +74,11 @@ export const replaceOldNode = (
   newNode: HTMLElement,
   oldNode: HTMLElement
 ) => {
-  parent.insertBefore(newNode, oldNode);
-  parent.removeChild(oldNode);
-};
-
-export const insertAfter = (newNode: HTMLElement, oldNode: HTMLElement) => {
-  const parentNode = oldNode.parentNode;
-
-  if (oldNode.nextSibling) {
-    parentNode?.insertBefore(newNode, oldNode.nextSibling);
+  if (parent.contains(oldNode)) {
+    parent.insertBefore(newNode, oldNode);
+    parent.removeChild(oldNode);
   } else {
-    parentNode?.appendChild(newNode);
+    parent.appendChild(newNode);
   }
 };
 

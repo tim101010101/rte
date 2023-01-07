@@ -1,4 +1,4 @@
-import { concat, insertAt, removeAt } from 'lib/utils';
+import { concat, insertAt, removeAt, splitAt } from 'lib/utils';
 
 describe('string', () => {
   describe('insertAt', () => {
@@ -22,6 +22,15 @@ describe('string', () => {
     test('smoke', () => {
       expect(concat('hello ', 'world')).toBe('hello world');
       expect(concat('hello', ' ', 'world')).toBe('hello world');
+    });
+  });
+
+  describe('splitAt', () => {
+    test('smoke', () => {
+      expect(splitAt('hello world', 5)).toStrictEqual(['hello', ' world']);
+      expect(splitAt('hello world', 6)).toStrictEqual(['hello ', 'world']);
+      expect(splitAt('hello world', 0)).toStrictEqual(['', 'hello world']);
+      expect(splitAt('hello world', 11)).toStrictEqual(['hello world', '']);
     });
   });
 });

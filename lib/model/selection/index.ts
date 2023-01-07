@@ -15,7 +15,7 @@ export class Selection {
     this.active = null;
     this.eventBus = eventBus;
 
-    appendChild(container, this.el);
+    appendChild(document.body, this.el);
   }
 
   private setShape(width: number, height: number, left: number, top: number) {
@@ -102,8 +102,15 @@ export class Selection {
     }
   }
 
-  newLine() {
-    // TODO
+  newLine(parser: (src: string) => SyntaxNode) {
+    if (!this.pos) return;
+
+    const { pos, active } = this.pos.block.newLine(this.pos.offset, parser);
+    this.active = active;
+    this.pos = pos;
+
+    const { block, offset } = pos;
+    this.focusOn(block, offset);
   }
 
   updateBlockContent(char: string, parser: (src: string) => SyntaxNode) {

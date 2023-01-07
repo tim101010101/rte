@@ -9,6 +9,8 @@ export enum DOMEventName {
 }
 
 export enum InnerEventName {
+  FULL_PATCH = 'full_patch',
+
   FOCUS_ON = 'focus_on',
   UNFOCUS = 'unfocus',
   CURSOR_MOVE = 'cursor_move',
@@ -18,4 +20,5 @@ export enum InnerEventName {
   DELETE_BLOCK_CONTENT = 'delete_block_content',
 
   UNINSTALL_BLOCK = 'uninstall_block',
+  INSTALL_BLOCK = 'install_block',
 }

@@ -39,7 +39,7 @@ export abstract class OperableNode implements Operable {
   abstract focusOn(prevPos: Pos | null, curOffset: number, curActive: ActivePos | null): FeedbackPos;
   abstract unFocus(): { pos: Pos | null; active: ActivePos | null };
 
-  abstract newLine(): void;
+  abstract newLine(offset:number, parser: (src: string) => SyntaxNode): FeedbackPos;
   abstract update(char: string, offset: number, active: ActivePos | null, parser: (src: string) => SyntaxNode): FeedbackPos;
   abstract delete(offset: number, active: ActivePos | null, parser: (src: string) => SyntaxNode): FeedbackPos;
 

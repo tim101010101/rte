@@ -1,4 +1,9 @@
-import { EventBus, isTextNode, posNode } from 'lib/model';
+import {
+  EventBus,
+  isTextNode,
+  posNode,
+  textContentWithMarker,
+} from 'lib/model';
 import {
   ActivePos,
   FeedbackPos,
@@ -9,8 +14,8 @@ import {
   SyntaxNode,
   VirtualNode,
 } from 'lib/types';
-import { patch } from 'lib/render';
-import { abs, min, panicAt } from 'lib/utils';
+import { patchBlock } from 'lib/render';
+import { abs, min, panicAt, splitAt } from 'lib/utils';
 import {
   calcFence,
   trySwitchActiveSyntaxNode,
@@ -18,8 +23,10 @@ import {
   deleteChar,
   getLineFenceInfo,
   deleteWholeLine,
+  insertNewLine,
 } from './helper';
 import { OperableNode } from '../base/operableNode';
+import { InnerEventName } from 'lib/static';
 
 export class Line extends OperableNode {
   private _vNode: SyntaxNode | null;
@@ -73,7 +80,7 @@ export class Line extends OperableNode {
   patch(newVNode: VirtualNode) {
     if (isTextNode(newVNode)) return;
 
-    patch(this._vNode, newVNode, this.container);
+    patchBlock(this._vNode, newVNode, this.container);
 
     this._fence = calcFence(newVNode);
     this._fenceLength = null;
@@ -103,8 +110,14 @@ export class Line extends OperableNode {
     };
   }
 
-  // TODO
-  newLine() {}
+  newLine(offset: number, parser: (src: string) => SyntaxNode): FeedbackPos {
+    return insertNewLine(
+      { block: this, offset },
+      parser,
+      this.container,
+      this.eventBus
+    );
+  }
 
   delete(
     offset: number,

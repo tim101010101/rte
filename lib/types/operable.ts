@@ -34,7 +34,7 @@ export interface Operable extends ListNode {
   up(pos: Pos, active: ActivePos | null, offset: number): FeedbackPos | null;
   down(pos: Pos, active: ActivePos | null, offset: number): FeedbackPos | null;
 
-  newLine(offset: number): void;
+  newLine(offset: number, parser: (src: string) => SyntaxNode): FeedbackPos;
 
   update(
     char: string,
