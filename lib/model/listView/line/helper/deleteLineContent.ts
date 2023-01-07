@@ -153,27 +153,79 @@ export const deleteWholeLine = (
     textContentWithMarker(prevBlock.vNode),
     textContentWithMarker(curBlock.vNode)
   );
-  const finalOffset = textContent(prevBlock.vNode).length;
   const newline = parser(newContent);
+
+  const prevTextLength = textContent(prevBlock.vNode).length;
+  const prevChildren = prevBlock.vNode.children;
+
+  let finalActive = null;
+
+  // deletion may lead to the emergence of syntax nodes
+  // so ancestorIdx is required to determine whether the node needs to be activated or not
+  let ancestorIdx = 0;
+  if (prevChildren.length > 1) {
+    //* e.g.
+    //*    *hello* __a   =>  *hello* __a|b__ world
+    //*    |b__ world    =>
+
+    // text node < __a>
+    const prevBlockLastChildren = prevChildren[prevChildren.length - 1];
+    // length of `*hello*`: 7
+    const inactiveLength =
+      prevTextLength - textContent(prevBlockLastChildren).length;
+
+    // newline.children[ancestorIdx]: syntax node <__ab__>
+    ancestorIdx = getAncestorIdx(newline, inactiveLength, false) + 1;
+  }
+
+  // deletion caused the emergence of syntax node
+  //
+  //* e.g.
+  //*    __a   =>  __a|b__
+  //*    |b__  =>
+  //*
+  //*    _a         =>  _a|b_ world
+  //*    |b_ world  =>
+  //*
+  //*    hello _a   =>  hello _a|b_ world
+  //*    |b_ world  =>
+  if (!isTextNode(newline.children[ancestorIdx])) {
+    const { root } = activeSubTree(newline, ancestorIdx);
+    prevBlock.patch(root);
+    finalActive = {
+      block: prevBlock,
+      ancestorIdx,
+    };
+  }
+
+  // deletion does not result in the emergence of syntax nodes
+  //
+  //* e.g.
+  //*    a   =>  a|b
+  //*    |b  =>
+  //*
+  //*    a   =>  a|b
+  //*    |b  =>
+  else {
+    prevBlock.patch(newline);
+  }
 
   // emit UNINSTALL_BLOCK event to trigger uninstalling of the block and its DOM node
   eventBus.emit(InnerEventName.UNINSTALL_BLOCK, curBlock);
 
-  prevBlock.patch(newline);
-
   // the final offset is the length of the previous block
   //
   //* e.g.
-  //*        a
-  //*        |b  =>  a|b
+  //*        a   =>  a|b
+  //*        |b  =>
   //*
-  //*    **foo
-  //*    |bar**  =>  **foo|bar**
+  //*    __foo   =>  __foo|bar__
+  //*    |bar__  =>
   return {
     pos: {
       block: prevBlock,
-      offset: finalOffset,
+      offset: prevTextLength,
     },
-    active: null,
+    active: finalActive,
   };
 };
