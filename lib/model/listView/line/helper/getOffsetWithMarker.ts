@@ -1,7 +1,6 @@
-import { isTextNode, walkTextNode } from 'lib/model';
+import { walkTextNode } from 'lib/model';
 import { Operable } from 'lib/types';
 
-// abcd
 export const getOffsetWithMarker = (block: Operable, offset: number) => {
   let hasFound = false;
   let curOffset = 0;

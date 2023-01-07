@@ -1,14 +1,30 @@
 import { CursorInfo, Fence, SyntaxNode } from 'lib/types';
 import { measureCharWidth } from 'lib/utils';
-import { isTextNode, posNode, walkTextNode } from 'lib/model';
+import { emptyText, isTextNode, posNode, walkTextNode } from 'lib/model';
 
 export const calcFence = (blockVNode: SyntaxNode): Fence => {
   const fence: Fence = [];
   let prefixLength = 0;
-  let { height, y, width: lineWidth } = posNode(blockVNode)!;
+  let { height, y, width: lineWidth, x: lineXOffset } = posNode(blockVNode)!;
 
   const { children } = blockVNode;
   const len = children.length;
+
+  if (!len) {
+    return [
+      {
+        vNode: emptyText(),
+        prefixLength,
+        rect: { width: lineWidth, height, x: lineXOffset, y },
+        fenceList: [
+          {
+            textOffset: 0,
+            cursorOffset: lineXOffset,
+          },
+        ],
+      },
+    ];
+  }
 
   for (let i = 0; i < len; i++) {
     const cur = children[i];

@@ -10,6 +10,7 @@
 }
 
 .r-line-test {
+  min-height: 24.5px;
   border: 1px solid #ccc;
 
   font-size: 0;

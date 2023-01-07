@@ -7,7 +7,7 @@ const { LINE } = NodeType;
 const { DIV } = TagName;
 const { RTE_LINE } = ClassName;
 
-const line = (children: Array<VirtualNode>) => {
+const line = (children: Array<VirtualNode> = []) => {
   return s(LINE, DIV, children, {
     classList: [RTE_LINE],
   });
@@ -21,6 +21,8 @@ export const parseLine = (
     fontConfig?: FontConfig
   ) => Array<VirtualNode>
 ) => {
+  if (src.length === 0) return line();
+
   const target = values(lineConfig).find(({ reg }) => reg.test(src));
   if (target) {
     const { reg, render } = target;

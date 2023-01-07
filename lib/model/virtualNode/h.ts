@@ -133,3 +133,15 @@ export const syntaxMarker = (
     children: [t(fontInfo, text)],
   };
 };
+
+export const emptyText = () => {
+  return t(
+    {
+      family: '',
+      size: 0,
+      bold: false,
+      italic: false,
+    },
+    ''
+  );
+};

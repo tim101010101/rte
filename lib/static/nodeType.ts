@@ -1,4 +1,6 @@
 export enum NodeType {
+  EMPTY,
+
   LINE,
   PLAIN_TEXT,
   BOLD,

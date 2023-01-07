@@ -1,9 +1,4 @@
-import {
-  EventBus,
-  isTextNode,
-  posNode,
-  textContentWithMarker,
-} from 'lib/model';
+import { EventBus, isTextNode, posNode, s } from 'lib/model';
 import {
   ActivePos,
   FeedbackPos,
@@ -15,7 +10,8 @@ import {
   VirtualNode,
 } from 'lib/types';
 import { patchBlock } from 'lib/render';
-import { abs, min, panicAt, splitAt } from 'lib/utils';
+import { abs, min, panicAt } from 'lib/utils';
+import { NodeType, ClassName, TagName } from 'lib/static';
 import {
   calcFence,
   trySwitchActiveSyntaxNode,
@@ -25,8 +21,10 @@ import {
   deleteWholeLine,
   insertNewLine,
 } from './helper';
+
+//! ERROR from jest
+//! ERROR Class extends value undefined is not a constructor or null
 import { OperableNode } from '../base/operableNode';
-import { InnerEventName } from 'lib/static';
 
 export class Line extends OperableNode {
   private _vNode: SyntaxNode | null;
@@ -37,7 +35,7 @@ export class Line extends OperableNode {
   constructor(container: HTMLElement, eventBus: EventBus) {
     super(container, eventBus);
 
-    this._vNode = null;
+    this._vNode = s(NodeType.LINE, TagName.DIV, []);
     this._rect = null;
     this._fence = null;
     this._fenceLength = null;

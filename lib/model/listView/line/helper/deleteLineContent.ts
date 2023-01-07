@@ -23,6 +23,18 @@ export const deleteChar = (
   );
   const line = parser(textContent);
 
+  // deletion results in empty line
+  if (line.children.length === 0) {
+    block.patch(line);
+    return {
+      pos: {
+        block,
+        offset: 0,
+      },
+      active: null,
+    };
+  }
+
   // line.children[ancestorIdx] is the node currently being edited
   const ancestorIdx = getAncestorIdx(line, offsetWithMarker - 1, true);
 
@@ -146,6 +158,42 @@ export const deleteWholeLine = (
   parser: (source: string) => SyntaxNode,
   eventBus: EventBus
 ): FeedbackPos => {
+  //* e.g.
+  //*    <empty>  => |a
+  //*    |a       =>
+  if (prevBlock.vNode.children.length === 0) {
+    prevBlock.patch(curBlock.vNode);
+
+    // emit UNINSTALL_BLOCK event to trigger uninstalling of the block and its DOM node
+    eventBus.emit(InnerEventName.UNINSTALL_BLOCK, curBlock);
+    eventBus.emit(InnerEventName.FULL_PATCH);
+
+    return {
+      pos: {
+        block: prevBlock,
+        offset: 0,
+      },
+      active: null,
+    };
+  }
+
+  //* e.g.
+  //*    a         =>  a|
+  //*    |<empty>  =>
+  else if (curBlock.vNode.children.length === 0) {
+    // emit UNINSTALL_BLOCK event to trigger uninstalling of the block and its DOM node
+    eventBus.emit(InnerEventName.UNINSTALL_BLOCK, curBlock);
+    eventBus.emit(InnerEventName.FULL_PATCH);
+
+    return {
+      pos: {
+        block: prevBlock,
+        offset: textContent(prevBlock.vNode).length,
+      },
+      active: null,
+    };
+  }
+
   //! ERROR bug here
   //! ERROR there will be a problem with the new content while the previous line is a block
   //! ERROR get the last line of block to fix
