@@ -11,4 +11,8 @@ export enum TagName {
   H5 = 'h5',
   H6 = 'h6',
   HR = 'hr',
+
+  UL = 'ul',
+  OL = 'ol',
+  LI = 'li',
 }
