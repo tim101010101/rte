@@ -1,4 +1,7 @@
 export enum NodeType {
+  EMPTY,
+
+  // line
   LINE,
   PLAIN_TEXT,
   BOLD,
@@ -8,4 +11,8 @@ export enum NodeType {
 
   HEADING,
   DIVIDE,
+
+  // block
+  LIST_BLOCK,
+  LIST_ITEM,
 }

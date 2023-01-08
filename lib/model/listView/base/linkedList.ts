@@ -1,3 +1,5 @@
+import { panicAt } from 'lib/utils';
+
 export class ListNode {
   prev: this | null;
   next: this | null;
@@ -32,18 +34,72 @@ export class LinkedList<T extends ListNode> {
     return Array.from(this.iter()).includes(node);
   }
 
-  append(...nodes: Array<T>) {
-    nodes.forEach(node => this.insertBefore(node));
+  appendTail(...nodes: Array<T>) {
+    const append = (node: T) => {
+      if (this.tail) {
+        node.prev = this.tail;
+        this.tail.next = node;
+        this.tail = node;
+      } else {
+        this.head = node;
+        this.tail = node;
+      }
+
+      this.length++;
+    };
+
+    nodes.forEach(node => append(node));
   }
 
-  insertBefore(node: T) {
-    if (this.tail) {
-      this.tail.next = node;
-      node.prev = this.tail;
-      this.tail = node;
+  appendHead(...nodes: Array<T>) {
+    const append = (node: T) => {
+      if (this.head) {
+        node.next = this.head;
+        this.head.prev = node;
+        this.head = node;
+      } else {
+        this.head = node;
+        this.tail = node;
+      }
+
+      this.length++;
+    };
+
+    nodes.forEach(node => append(node));
+  }
+
+  insertBefore(node: T, anchor: T) {
+    if (!this.contains(anchor)) {
+      return panicAt('anchor does not exist in the linked list');
+    }
+
+    if (anchor.prev) {
+      node.next = anchor;
+      node.prev = anchor.prev;
+      anchor.prev.next = node;
+      anchor.prev = node;
     } else {
-      node.prev = null;
+      node.next = anchor;
+      anchor.prev = node;
       this.head = node;
+    }
+
+    this.length++;
+  }
+
+  insertAfter(node: T, anchor: T) {
+    if (!this.contains(anchor)) {
+      return panicAt('anchor does not exist in the linked list');
+    }
+
+    if (anchor.next) {
+      node.prev = anchor;
+      node.next = anchor.next;
+      anchor.next.prev = node;
+      anchor.next = node;
+    } else {
+      node.prev = anchor;
+      anchor.next = node;
       this.tail = node;
     }
 

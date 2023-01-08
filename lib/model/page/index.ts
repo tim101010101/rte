@@ -5,13 +5,28 @@ import {
   Line,
   getKeydownHandler,
   LinkedList,
+  textContent,
 } from 'lib/model';
 import { Schema } from 'lib/schema';
 import { DOMEventName, InnerEventName } from 'lib/static';
-import { getTargetInterval, getNearestIdx } from 'lib/utils';
+import {
+  getTargetInterval,
+  getNearestIdx,
+  panicAt,
+  removeChild,
+} from 'lib/utils';
+import { patchPage } from 'lib/render';
 
 const { CLICK, KEYDOWN } = DOMEventName;
-const { FOCUS_ON, UNFOCUS, UPDATE_BLOCK_CONTENT, CURSOR_MOVE } = InnerEventName;
+const {
+  FULL_PATCH,
+  FOCUS_ON,
+  UNFOCUS,
+  UPDATE_BLOCK_CONTENT,
+  CURSOR_MOVE,
+  UNINSTALL_BLOCK,
+  INSTALL_BLOCK,
+} = InnerEventName;
 
 export class Page extends LinkedList<Operable> {
   private container: HTMLElement;
@@ -32,20 +47,12 @@ export class Page extends LinkedList<Operable> {
     this.schema = schema;
   }
 
-  init(text: string) {
-    text
-      .split('\n')
-      .map(lineText => this.schema.parse(lineText))
-      .forEach(line => {
-        const block = new Line(this.container, this.eventBus);
-        this.append(block);
-        block.patch(line);
-      });
-
-    this.initEvent();
+  private initEvent() {
+    this.initDOMEvent();
+    this.initInnerEvent();
   }
 
-  initEvent() {
+  private initDOMEvent() {
     this.eventBus.attachDOMEvent(
       window,
       CLICK,
@@ -78,7 +85,37 @@ export class Page extends LinkedList<Operable> {
     );
   }
 
+  private initInnerEvent() {
+    this.eventBus.attach(UNINSTALL_BLOCK, (block: Operable) => {
+      const el = block.vNode.el;
+      if (!el) return panicAt('unable to get dom node');
+
+      removeChild(this.container, el);
+      this.remove(block);
+    });
+    this.eventBus.attach(
+      INSTALL_BLOCK,
+      (block: Operable, anchorBlock: Operable) => {
+        this.insertAfter(block, anchorBlock);
+      }
+    );
+    this.eventBus.attach(FULL_PATCH, () => patchPage(this, this.container));
+  }
+
+  init(text: string) {
+    text
+      .split('\n')
+      .map(lineText => this.schema.parse(lineText))
+      .forEach(line => {
+        const block = new Line(this.container, this.eventBus);
+        this.appendTail(block);
+        block.patch(line);
+      });
+
+    this.initEvent();
+  }
+
   focusOn(block: Operable, offset: number) {
-    this.selection.focusOn(block, offset, true);
+    this.selection.focusOn(block, offset);
   }
 }

@@ -15,7 +15,7 @@ export class Selection {
     this.active = null;
     this.eventBus = eventBus;
 
-    appendChild(container, this.el);
+    appendChild(document.body, this.el);
   }
 
   private setShape(width: number, height: number, left: number, top: number) {
@@ -32,18 +32,13 @@ export class Selection {
     this.setShape(2, height, cursorOffset, y);
   }
 
-  focusOn(block: Operable, offset: number, isCrossLine: boolean) {
+  focusOn(block: Operable, offset: number) {
     // show the cursor when the page focused for the first time
     if (!this.pos) {
       this.el.style.display = 'inline-block';
     }
 
-    const { pos, active } = block.focusOn(
-      this.pos,
-      offset,
-      this.active,
-      isCrossLine
-    );
+    const { pos, active } = block.focusOn(this.pos, offset, this.active);
 
     // update position of cursor
     this.setPos(pos);
@@ -107,12 +102,24 @@ export class Selection {
     }
   }
 
+  newLine(parser: (src: string) => SyntaxNode) {
+    if (!this.pos) return;
+
+    const { pos, active } = this.pos.block.newLine(this.pos.offset, parser);
+    this.active = active;
+    this.pos = pos;
+
+    const { block, offset } = pos;
+    this.focusOn(block, offset);
+  }
+
   updateBlockContent(char: string, parser: (src: string) => SyntaxNode) {
     if (!this.pos) return;
 
     const { pos, active } = this.pos.block.update(
       char,
       this.pos.offset,
+      this.active,
       parser
     );
     this.active = active;
@@ -120,6 +127,21 @@ export class Selection {
 
     // move cursor right
     const { block, offset } = pos;
-    this.focusOn(block, offset, false);
+    this.focusOn(block, offset);
+  }
+
+  delete(parser: (src: string) => SyntaxNode) {
+    if (!this.pos) return;
+
+    const { pos, active } = this.pos.block.delete(
+      this.pos.offset,
+      this.active,
+      parser
+    );
+    this.active = active;
+    this.pos = pos;
+
+    const { block, offset } = pos;
+    this.focusOn(block, offset);
   }
 }

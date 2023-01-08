@@ -15,17 +15,17 @@ export interface FeedbackPos {
 }
 
 export interface Operable extends ListNode {
+  fence: Fence;
   vNode: SyntaxNode;
   rect: Rect;
-  fence: Fence;
 
   getFenceInfo(offset: number): FenceInfo;
+  patch(newVNode: VirtualNode): void;
 
   focusOn(
     prevPos: Pos | null,
     curOffset: number,
-    active: ActivePos | null,
-    isCrossLine: boolean
+    active: ActivePos | null
   ): FeedbackPos;
   unFocus(): { pos: Pos | null; active: ActivePos | null };
 
@@ -34,13 +34,18 @@ export interface Operable extends ListNode {
   up(pos: Pos, active: ActivePos | null, offset: number): FeedbackPos | null;
   down(pos: Pos, active: ActivePos | null, offset: number): FeedbackPos | null;
 
-  newLine(): void;
+  newLine(offset: number, parser: (src: string) => SyntaxNode): FeedbackPos;
 
   update(
     char: string,
     offset: number,
+    active: ActivePos | null,
     parser: (src: string) => SyntaxNode
   ): FeedbackPos;
 
-  patch(newVNode: VirtualNode): void;
+  delete(
+    offset: number,
+    active: ActivePos | null,
+    parser: (src: string) => SyntaxNode
+  ): FeedbackPos;
 }

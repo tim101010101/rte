@@ -2,7 +2,16 @@ import { enumToMap } from 'lib/utils';
 import { Page } from 'lib/model';
 import { ControlKey, ShowableKey } from 'lib/static';
 
-const { ESC, ARROW_UP, ARROW_DOWN, ARROW_LEFT, ARROW_RIGHT, TAB } = ControlKey;
+const {
+  ESC,
+  ARROW_UP,
+  ARROW_DOWN,
+  ARROW_LEFT,
+  ARROW_RIGHT,
+  BACKSPACE,
+  TAB,
+  ENTER,
+} = ControlKey;
 
 export const getKeydownHandler = (page: Page) => {
   const controlKeys = enumToMap<string, string>(ControlKey, true);
@@ -33,6 +42,14 @@ export const getKeydownHandler = (page: Page) => {
 
         case TAB:
           page.focusOn(page.head!, 0);
+          break;
+
+        case BACKSPACE:
+          page.selection.delete(page.schema.parse.bind(page.schema));
+          break;
+
+        case ENTER:
+          page.selection.newLine(page.schema.parse.bind(page.schema));
           break;
       }
     } else if (isShowableKey(e)) {
