@@ -2,6 +2,7 @@ import { splitAt } from 'lib/utils';
 import { EventBus, Line, textContentWithMarker } from 'lib/model';
 import { FeedbackPos, Pos, SyntaxNode } from 'lib/types';
 import { InnerEventName } from 'lib/static';
+import { getOffsetWithMarker } from './getOffsetWithMarker';
 
 const { INSTALL_BLOCK, FULL_PATCH } = InnerEventName;
 
@@ -13,7 +14,7 @@ export const insertNewLine = (
 ): FeedbackPos => {
   const [curBlockContent, nextBlockContent] = splitAt(
     textContentWithMarker(block.vNode),
-    offset
+    getOffsetWithMarker(block, offset)
   );
 
   block.patch(parser(curBlockContent));
