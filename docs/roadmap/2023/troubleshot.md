@@ -30,3 +30,7 @@
 - [x] 在行尾 newLine 会 panic 说拿不到 fenceInfo, 是需要做默认的 empty line
 - [ ] jest 测试时, 报错 LinkedList 不是一个 constructor
 - [x] 跨行删除无法处理空行的情况
+
+# 2023-1-8
+
+- [x] 输入 `*foo* bar` 后直接换行会错误的将 `ar` 换行, 这个应该是没有正确的获取到 split 的 idx, 就是分割的时候没有考虑节点的激活状态
