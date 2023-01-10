@@ -1,5 +1,5 @@
 import { EditorConfig } from '../types/config';
-import { schema } from './schema';
+// import { schema } from './schema';
 
 export const defaultConfig: EditorConfig = {
   font: {
@@ -8,5 +8,5 @@ export const defaultConfig: EditorConfig = {
   },
   container: '#editor',
 
-  schema,
+  schema: {},
 };

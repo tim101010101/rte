@@ -4,3 +4,4 @@ export * from './math';
 export * from './errorCature';
 export * from './typeJudgument';
 export * from './string';
+export * from './canvas';

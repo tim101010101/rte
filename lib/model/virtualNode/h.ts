@@ -1,147 +1,127 @@
-import { NodeType, TagName } from 'lib/static';
+import { NodeType } from 'lib/static';
 import {
   TextNode,
   SyntaxNode,
   VirtualNodeEvents,
   VirtualNodeMetaData,
-  VirtualNodeProps,
   VirtualNodeMarker,
+  VirtualNodeStyle,
+  VirtualNodeBehavior,
   VirtualNode,
   FontInfo,
+  SyntaxNodeWithLayerActivation,
 } from 'lib/types';
+import { isArray } from 'lib/utils';
 
 export function t(font: FontInfo, text: string): TextNode;
 export function t(
   font: FontInfo,
   text: string,
-  props: VirtualNodeProps
+  behavior: VirtualNodeBehavior
 ): TextNode;
 export function t(
   font: FontInfo,
   text: string,
-  props: VirtualNodeProps,
+  behavior: VirtualNodeBehavior,
+  style: VirtualNodeStyle
+): TextNode;
+export function t(
+  font: FontInfo,
+  text: string,
+  behavior: VirtualNodeBehavior,
+  style: VirtualNodeStyle,
   events: VirtualNodeEvents
 ): TextNode;
 export function t(
   font: FontInfo,
   text: string,
-  props: VirtualNodeProps,
+  behavior: VirtualNodeBehavior,
+  style: VirtualNodeStyle,
   events: VirtualNodeEvents,
   meta: VirtualNodeMetaData
 ): TextNode;
 export function t(
   font: FontInfo,
   text: string = '',
-  props: VirtualNodeProps = {},
+  behavior: VirtualNodeBehavior = {},
+  style: VirtualNodeStyle = {},
   events: VirtualNodeEvents = [],
   meta: VirtualNodeMetaData = {}
 ): TextNode {
   return {
     type: NodeType.PLAIN_TEXT,
-    tagName: TagName.SPAN,
-
-    props,
-    events,
-
     text,
-
-    meta,
-
     font,
+    behavior,
 
-    el: null,
-  };
-}
-
-export function s(
-  type: NodeType,
-  tagName: TagName,
-  children: Array<VirtualNode>
-): SyntaxNode;
-export function s(
-  type: NodeType,
-  tagName: TagName,
-  children: Array<VirtualNode>,
-  props: VirtualNodeProps
-): SyntaxNode;
-export function s(
-  type: NodeType,
-  tagName: TagName,
-  children: Array<VirtualNode>,
-  props: VirtualNodeProps,
-  events: VirtualNodeEvents
-): SyntaxNode;
-export function s(
-  type: NodeType,
-  tagName: TagName,
-  children: Array<VirtualNode>,
-  props: VirtualNodeProps,
-  events: VirtualNodeEvents,
-  marker: VirtualNodeMarker
-): SyntaxNode;
-export function s(
-  type: NodeType,
-  tagName: TagName,
-  children: Array<VirtualNode>,
-  props: VirtualNodeProps,
-  events: VirtualNodeEvents,
-  marker: VirtualNodeMarker,
-  meta: VirtualNodeMetaData
-): SyntaxNode;
-export function s(
-  type: NodeType,
-  tagName: TagName,
-  children: Array<VirtualNode> = [],
-  props: VirtualNodeProps = {},
-  events: VirtualNodeEvents = [],
-  marker: VirtualNodeMarker = {},
-  meta: VirtualNodeMetaData = {}
-): SyntaxNode {
-  return {
-    type,
-    tagName,
-
-    props,
+    style,
     events,
-
-    children,
-
     meta,
-
-    marker,
-
-    el: null,
-    isActive: false,
   };
 }
 
-export const syntaxMarker = (
-  text: string,
-  isPrefix: boolean,
-  fontInfo: FontInfo
-): SyntaxNode => {
-  return {
-    type: isPrefix ? NodeType.PREFIX : NodeType.SUFFIX,
-    isActive: true,
-    tagName: TagName.SPAN,
-    props: {},
-    el: null,
-    meta: {},
-    events: [],
-    marker: {},
+export function s(
+  type: NodeType,
+  content: VirtualNode
+): SyntaxNodeWithLayerActivation;
+export function s(type: NodeType, children: Array<VirtualNode>): SyntaxNode;
+export function s(
+  type: NodeType,
+  childrenOrContent: Array<VirtualNode> | VirtualNode
+): SyntaxNode | SyntaxNodeWithLayerActivation;
+export function s(
+  type: NodeType,
+  childrenOrContent: Array<VirtualNode> | VirtualNode,
+  marker: VirtualNodeMarker
+): SyntaxNode | SyntaxNodeWithLayerActivation;
+export function s(
+  type: NodeType,
+  childrenOrContent: Array<VirtualNode> | VirtualNode,
+  marker: VirtualNodeMarker,
+  style: VirtualNodeStyle
+): SyntaxNode | SyntaxNodeWithLayerActivation;
+export function s(
+  type: NodeType,
+  childrenOrContent: Array<VirtualNode> | VirtualNode,
+  marker: VirtualNodeMarker,
+  style: VirtualNodeStyle,
+  events: VirtualNodeEvents
+): SyntaxNode | SyntaxNodeWithLayerActivation;
+export function s(
+  type: NodeType,
+  childrenOrContent: Array<VirtualNode> | VirtualNode,
+  marker: VirtualNodeMarker,
+  style: VirtualNodeStyle,
+  events: VirtualNodeEvents,
+  meta: VirtualNodeMetaData
+): SyntaxNode | SyntaxNodeWithLayerActivation;
+export function s(
+  type: NodeType,
+  childrenOrContent: Array<VirtualNode> | VirtualNode,
+  marker: VirtualNodeMarker = {},
+  style: VirtualNodeStyle = {},
+  events: VirtualNodeEvents = [],
+  meta: VirtualNodeMetaData = {}
+): SyntaxNode | SyntaxNodeWithLayerActivation {
+  return isArray(childrenOrContent)
+    ? {
+        type,
+        isActive: false,
+        children: childrenOrContent,
+        marker,
 
-    children: [t(fontInfo, text)],
-  };
-};
+        style,
+        events,
+        meta,
+      }
+    : {
+        type,
+        isActive: false,
+        content: childrenOrContent,
+        marker,
 
-export const emptyText = () => {
-  return t(
-    {
-      family: '',
-      size: 0,
-      bold: false,
-      italic: false,
-    },
-    ''
-  );
-};
+        style,
+        events,
+        meta,
+      };
+}

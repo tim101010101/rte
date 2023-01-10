@@ -3,25 +3,12 @@
   padding: 0;
 }
 
+body {
+  padding: 20px;
+}
+
 #editor {
   width: 500px;
   height: 500px;
-  border: 1px solid #ccc;
-}
-
-.r-line-test {
-  min-height: 24.5px;
-  border: 1px solid #ccc;
-
-  font-size: 0;
-}
-
-.r-cursor-test {
-  display: none;
-  position: absolute;
-
-  background-color: green;
-  opacity: 0.5;
-
-  transition: all 80ms ease-in;
+  /* border: 1px solid #ccc; */
 }

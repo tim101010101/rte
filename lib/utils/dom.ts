@@ -96,3 +96,26 @@ export const measureCharWidth = (char: string, fontInfo: FontInfo) => {
   const metrics = ctx.measureText(char);
   return metrics.width;
 };
+
+export const overlapNodes = (n1: HTMLElement, n2: HTMLElement) => {
+  const resetStyle = (n: HTMLElement, zIndex: number) => {
+    n.style.boxShadow = '0px 0px 5px #ccc';
+    n.style.borderRadius = '8px';
+    n.style.position = 'absolute';
+    n.style.zIndex = `${zIndex}`;
+  };
+
+  resetStyle(n1, 1);
+  resetStyle(n2, 2);
+};
+
+export const sizeAdapt = (parent: HTMLElement, child: HTMLElement) => {
+  const { width, height } = parent.getBoundingClientRect();
+  child.style.width = `${width}px`;
+  child.style.height = `${height}px`;
+
+  if (child instanceof HTMLCanvasElement) {
+    child.width = width;
+    child.height = height;
+  }
+};
