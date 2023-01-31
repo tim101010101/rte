@@ -1,16 +1,17 @@
 import { NodeType } from 'lib/static';
-import { s, t } from 'lib/model';
+import { sl, t } from 'lib/model';
 import { DeepPartial, EventDetail, Noop } from 'lib/types';
 
 type BehaviorItem = {
   show: boolean;
   color: string;
-  textAlign: 'left' | 'center' | 'right';
+  textAlign: CanvasTextAlign;
+  textBaseline: CanvasTextBaseline;
 };
 
 export type VirtualNodeBehavior = DeepPartial<{
   beforeActived: BehaviorItem;
-  actived: BehaviorItem;
+  actived: Pick<BehaviorItem, 'color' | 'textBaseline'>;
 }>;
 
 export interface FontInfo {
@@ -21,11 +22,6 @@ export interface FontInfo {
 }
 
 export type VirtualNodeMetaData = Noop;
-
-export type VirtualNodeMarker = Partial<{
-  prefix: string;
-  suffix: string;
-}>;
 
 export type VirtualNodeEvents = Array<EventDetail>;
 
@@ -51,16 +47,14 @@ interface BasicSyntaxNode extends BasicNode {
   type: NodeType;
   isActive: boolean;
 
-  marker?: VirtualNodeMarker;
-}
-export interface SyntaxNode extends BasicSyntaxNode {
   children: Array<VirtualNode>;
 }
+export interface SyntaxNode extends BasicSyntaxNode {}
 export interface SyntaxNodeWithLayerActivation extends BasicSyntaxNode {
-  content: VirtualNode;
+  content: Array<VirtualNode>;
 }
 
 export type VirtualNode = SyntaxNode | SyntaxNodeWithLayerActivation | TextNode;
 
 export type TextFunction = typeof t;
-export type SyntaxFunction = typeof s;
+export type SyntaxFunction = typeof sl;
