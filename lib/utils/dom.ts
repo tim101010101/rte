@@ -1,5 +1,5 @@
 import { getFont } from 'lib/model';
-import { FontInfo } from 'lib/types';
+import { FontInfo, Rect } from 'lib/types';
 import { entries } from './obj';
 
 export const appendChild = <T extends Node>(
@@ -95,6 +95,11 @@ export const measureCharWidth = (char: string, fontInfo: FontInfo) => {
   ctx.font = getFont(fontInfo);
   const metrics = ctx.measureText(char);
   return metrics.width;
+};
+
+export const posNode = (el: HTMLElement): Rect => {
+  const { width, height, x, y } = el.getBoundingClientRect();
+  return { width, height, x, y };
 };
 
 export const overlapNodes = (n1: HTMLElement, n2: HTMLElement) => {
