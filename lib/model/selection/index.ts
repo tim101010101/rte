@@ -145,3 +145,5 @@
 //     this.focusOn(block, offset);
 //   }
 // }
+
+export const a = 1;

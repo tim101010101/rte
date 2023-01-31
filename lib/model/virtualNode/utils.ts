@@ -6,7 +6,7 @@ import {
   VirtualNode,
 } from 'lib/types';
 import { NodeType } from 'lib/static';
-import { has, set } from 'lib/utils';
+import { has, panicAt, set } from 'lib/utils';
 // import { syntaxMarker } from 'lib/model';
 
 const { PLAIN_TEXT, PREFIX, SUFFIX } = NodeType;
@@ -24,8 +24,10 @@ export const isMarkerNode = (vNode: VirtualNode): vNode is SyntaxNode =>
 export const isTextNode = (vNode: VirtualNode): vNode is TextNode =>
   vNode.type === PLAIN_TEXT;
 
-export const isSyntaxNode = (vNode: VirtualNode): vNode is SyntaxNode =>
-  vNode.type !== PLAIN_TEXT && has(vNode, 'children');
+export const isSyntaxNodeWithLayerActivation = (
+  vNode: VirtualNode
+): vNode is SyntaxNodeWithLayerActivation =>
+  vNode.type !== PLAIN_TEXT && has(vNode, 'content');
 
 // export const isPureTextAncestor = (root: VirtualNode, path: Array<number>) => {
 //   if (isTextNode(root)) return true;
@@ -143,27 +145,93 @@ export const walkTextNode = (
   vNode: VirtualNode,
   callback: (
     textNode: TextNode,
-    parent: SyntaxNode | SyntaxNodeWithLayerActivation | null
+    parent: SyntaxNode | SyntaxNodeWithLayerActivation,
+    ancestor: VirtualNode
   ) => void
 ) => {
   const dfs = (
     cur: VirtualNode,
-    parent: SyntaxNode | SyntaxNodeWithLayerActivation | null
+    parent: SyntaxNode | SyntaxNodeWithLayerActivation | null,
+    ancestor: VirtualNode | null
   ) => {
     if (!cur) return;
 
     if (isTextNode(cur)) {
-      callback(cur, parent);
-    } else if (isSyntaxNode(cur)) {
-      cur.children.forEach(child => {
-        dfs(child, cur);
-      });
+      if (parent && ancestor) {
+        callback(cur, parent, ancestor);
+      } else {
+        panicAt('try to manipulate a naked text node');
+      }
     } else {
-      dfs(cur.content, cur);
+      const { children } = cur;
+      if (isSyntaxNodeWithLayerActivation(cur)) {
+        const { content } = cur;
+        let i = 0;
+        content.forEach(child => {
+          dfs(child, cur, ancestor || child);
+          i++;
+        });
+        children.forEach((child, j) => {
+          dfs(child, cur, ancestor || child);
+        });
+      } else {
+        children.forEach((child, i) => {
+          dfs(child, cur, ancestor || child);
+        });
+      }
     }
   };
 
-  dfs(vNode, null);
+  dfs(vNode, null, null);
+};
+
+export const walkTextNodeWithMoreInformation = (
+  vNode: VirtualNode,
+  callback: (
+    textNode: TextNode,
+    parent: SyntaxNode | SyntaxNodeWithLayerActivation,
+    ancestor: VirtualNode,
+    idxInAncestor: number,
+    juncFlag: -1 | 0 | 1
+  ) => void
+) => {
+  let idx = 0;
+  let prevAncestor: VirtualNode | null = null;
+
+  const dfs = (
+    cur: VirtualNode,
+    parent: SyntaxNode | SyntaxNodeWithLayerActivation | null,
+    ancestor: VirtualNode | null,
+    juncFlag: -1 | 0 | 1
+  ) => {
+    if (!cur) return;
+
+    if (ancestor !== prevAncestor) {
+      prevAncestor = ancestor;
+      idx = 0;
+    }
+
+    if (isTextNode(cur)) {
+      if (parent && ancestor) {
+        callback(cur, parent, ancestor, idx, juncFlag);
+        idx++;
+      } else {
+        panicAt('try to manipulate a naked text node');
+      }
+    } else {
+      const { children } = cur;
+      if (isSyntaxNodeWithLayerActivation(cur)) {
+        cur.content.forEach(child => dfs(child, cur, ancestor || child, -1));
+        children.forEach((child, j) => {
+          dfs(child, cur, ancestor || child, j === 0 ? 0 : 1);
+        });
+      } else {
+        children.forEach(child => dfs(child, cur, ancestor || child, 1));
+      }
+    }
+  };
+
+  dfs(vNode, null, null, 1);
 };
 
 // export const getTextList = (vNode: SyntaxNode) => {

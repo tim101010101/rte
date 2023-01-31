@@ -2,7 +2,7 @@ import { EditorConfig, Operable } from 'lib/types';
 import { EventBus, LinkedList } from 'lib/model';
 import { DOMEventName, InnerEventName } from 'lib/static';
 import { Renderer } from 'lib/view';
-import { activedLine, line } from 'lib/mock';
+import { activedLine, activedWeirdLine, line, weirdLine } from 'lib/mock';
 
 export class Page extends LinkedList<Operable> {
   private container: HTMLElement;
@@ -20,7 +20,7 @@ export class Page extends LinkedList<Operable> {
     this.container = container;
     this.config = config;
 
-    this.renderer = new Renderer(this.container);
+    this.renderer = new Renderer(this.container, config);
     this.eventBus = new EventBus();
 
     // this.selection = new Selection(container, this.eventBus);
@@ -28,12 +28,11 @@ export class Page extends LinkedList<Operable> {
   }
 
   init(text: string) {
-    // TODO
-    const { rectList, lineRect } = this.renderer.patch(activedLine, null);
-    console.log(rectList);
-
-    setTimeout(() => {
-      this.renderer.patch(line, lineRect);
-    }, 1000);
+    const rectList = this.renderer.fullPatch([
+      line,
+      activedLine,
+      // activedLine,
+      // activedLine,
+    ]);
   }
 }
