@@ -1,4 +1,11 @@
-export enum DOMEventName {
+export enum EventType {
+  MOUSE,
+  KEYBOARD,
+
+  INNER,
+}
+
+export enum VNodeEventName {
   CLICK = 'click',
   INPUT = 'input',
   KEYDOWN = 'keydown',
