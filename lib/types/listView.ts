@@ -11,6 +11,12 @@ export interface Rect {
   x: number;
   y: number;
 }
+export interface ClientRect {
+  width: number;
+  height: number;
+  clientX: number;
+  clientY: number;
+}
 
 export interface FenceLeaf {
   rect: Rect;
@@ -27,3 +33,15 @@ export interface FenceRoot {
 }
 
 export type Fence = Array<FenceRoot>;
+
+export interface FenceInfo {
+  totalLength: number;
+  totalChange: number;
+  fenceList: Array<FenceLeaf>;
+
+  prefixLength: number;
+
+  rect: Rect;
+  prefixChange: number;
+  textOffset: number;
+}

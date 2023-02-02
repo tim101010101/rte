@@ -10,6 +10,7 @@ export interface FontRenderOptions {
 
 export interface RenderOption extends FontRenderOptions {
   rowSpacing: number;
+  padding: number;
 }
 
 export type RenderConfig = Partial<RenderOption>;

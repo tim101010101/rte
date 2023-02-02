@@ -1,13 +1,12 @@
 import { ListNode } from 'lib/model';
-import {
-  ActivePos,
-  Fence,
-  FenceInfo,
-  Pos,
-  Rect,
-  SyntaxNode,
-  VirtualNode,
-} from 'lib/types';
+import { Fence, FenceInfo, Rect, SyntaxNode, VirtualNode } from 'lib/types';
+
+export interface Pos {
+  block: Operable;
+  offset: number;
+}
+
+export interface ActivePos {}
 
 export interface FeedbackPos {
   pos: Pos;
@@ -16,7 +15,7 @@ export interface FeedbackPos {
 
 export interface Operable extends ListNode {
   fence: Fence;
-  vNode: SyntaxNode;
+  vNode: VirtualNode;
   rect: Rect;
 
   getFenceInfo(offset: number): FenceInfo;

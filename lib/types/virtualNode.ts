@@ -1,6 +1,6 @@
 import { NodeType } from 'lib/static';
 import { sl, t } from 'lib/model';
-import { DeepPartial, EventDetail, Noop } from 'lib/types';
+import { DeepPartial, VNodeEventDetail, Noop } from 'lib/types';
 
 type BehaviorItem = {
   show: boolean;
@@ -23,7 +23,7 @@ export interface FontInfo {
 
 export type VirtualNodeMetaData = Noop;
 
-export type VirtualNodeEvents = Array<EventDetail>;
+export type VirtualNodeEvents = Array<VNodeEventDetail>;
 
 export type VirtualNodeStyle = DeepPartial<{
   border: any;
