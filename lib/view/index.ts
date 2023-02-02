@@ -1,110 +1,124 @@
-import { getFont, walkTextNode } from 'lib/model';
-import { FontInfo, Rect, VirtualNode, VirtualNodeBehavior } from 'lib/types';
-import { max, overlapNodes } from 'lib/utils';
+import { walkTextNode } from 'lib/model';
+import {
+  ClientRect,
+  EditorConfig,
+  FontInfo,
+  Rect,
+  RenderConfig,
+  VirtualNode,
+  VirtualNodeBehavior,
+} from 'lib/types';
+import { max, mixin, overlapNodes } from 'lib/utils';
 import { Paint } from './paint';
 
 const getRenderInfo = (
   isActive: boolean,
   font: FontInfo,
   behavior?: VirtualNodeBehavior
-) => {
-  let textAlign = 'left';
+): RenderConfig | null => {
+  const renderConfig = { font };
 
   if (behavior) {
     const { beforeActived, actived } = behavior;
-    if (!isActive && beforeActived) {
-      const { show } = beforeActived;
-      if (show === false) return null;
-    } else if (isActive && actived) {
-      const { show } = actived;
-      if (show === false) return null;
-    }
+    if (!isActive && beforeActived && beforeActived.show === false) return null;
+
+    return !isActive && beforeActived
+      ? mixin(renderConfig, beforeActived)
+      : isActive && actived
+      ? mixin(renderConfig, actived)
+      : renderConfig;
   }
 
-  return {
-    font: getFont(font),
-    textAlign,
-  };
+  return renderConfig;
 };
 
 export class Renderer {
-  private _page: Paint;
-  private _cursor: Paint;
-  private lines: Set<Rect>;
+  private pagePainter: Paint;
+  private cursorPainter: Paint;
+  private lines: Set<ClientRect>;
 
-  constructor(container: HTMLElement) {
-    this._page = new Paint(container);
-    this._cursor = new Paint(container);
+  constructor(container: HTMLElement, config: EditorConfig) {
+    this.pagePainter = new Paint(container, config);
+    this.cursorPainter = new Paint(container, config);
 
     this.lines = new Set();
 
-    overlapNodes(this._page.el, this._cursor.el);
+    overlapNodes(this.pagePainter.el, this.cursorPainter.el);
+    this.pagePainter.init();
+    this.cursorPainter.init();
   }
 
-  // init() {}
-
-  get pageContext() {
-    return this._page.ctx;
+  private getPageContext(options?: RenderConfig) {
+    return this.pagePainter.getDisposableContext(options);
   }
 
-  patch(vNode: VirtualNode, oldRect: Rect | null) {
-    if (oldRect && this.lines.has(oldRect)) {
-      const { x, y, width, height } = oldRect;
-      this.pageContext.clearRect(x - 1, y - 1, width + 2, height + 2);
+  //! ERROR bug dev dairy 2023-1-15
+  private drawLineWithVNode(vNode: VirtualNode) {
+    const rectList: Array<ClientRect> = [];
+    const lineRect = this.pagePainter.drawLine(
+      ({ clientX, clientY, maxWidth }) => {
+        let prevXOffset = clientX;
+        let prevYOffset = clientY;
+        let lineHeight = 0;
+        let totalLength = 0;
+
+        walkTextNode(vNode, (textNode, parent) => {
+          const { text, font, behavior } = textNode;
+          const fontSize = font.size;
+          const renderInfo = getRenderInfo(parent.isActive, font, behavior);
+
+          if (renderInfo) {
+            lineHeight = max(fontSize, lineHeight);
+
+            const { rect, charRectList } = this.pagePainter.drawText(
+              text,
+              { clientX: prevXOffset, clientY: prevYOffset, maxWidth },
+              renderInfo
+            );
+
+            prevXOffset += rect.width;
+            totalLength += rect.width;
+            rectList.push(...charRectList);
+          }
+        });
+
+        rectList.push({
+          clientX: prevXOffset,
+          clientY: prevYOffset,
+          width: maxWidth - totalLength,
+          height: lineHeight,
+        });
+
+        return lineHeight;
+      }
+    );
+
+    return {
+      lineRect,
+      rectList,
+    };
+  }
+
+  fullPatch(lines: Array<VirtualNode>) {
+    const res = lines.map(line => this.patch(line));
+    this.pagePainter.resetLineDrawing();
+
+    return res;
+  }
+
+  patch(
+    newVNode: VirtualNode,
+    oldVNode: VirtualNode | null = null,
+    oldRect: ClientRect | null = null
+  ) {
+    if (oldRect && oldVNode && this.lines.has(oldRect)) {
+      this.pagePainter.clearRect(oldRect);
       this.lines.delete(oldRect);
     }
 
-    const rectList: Array<Rect> = [];
+    const { lineRect, rectList } = this.drawLineWithVNode(newVNode);
 
-    const x = 30;
-    const y = 30;
-
-    let prevXOffset = x;
-    let prevYOffset = y;
-    let lineHeight = 0;
-
-    walkTextNode(vNode, (textNode, parent) => {
-      const { text, font, behavior } = textNode;
-      const ctx = this.pageContext;
-
-      if (parent) {
-        const renderInfo = getRenderInfo(parent.isActive, font, behavior);
-        if (!renderInfo) {
-          return;
-        } else {
-          const { font } = renderInfo;
-
-          lineHeight = max(textNode.font.size, lineHeight);
-
-          ctx.font = font;
-          ctx.textBaseline = 'ideographic';
-
-          Array.from(text).forEach(char => {
-            ctx.fillText(char, prevXOffset, prevYOffset + textNode.font.size);
-            const { width } = ctx.measureText(char);
-
-            rectList.push({
-              x: prevXOffset,
-              y: prevYOffset,
-              width,
-              height: textNode.font.size,
-            });
-            prevXOffset += width;
-          });
-        }
-      }
-    });
-
-    const lineRect = {
-      x,
-      y,
-      width: prevXOffset - x,
-      height: lineHeight,
-    };
-
-    // const c = this.pageContext;
-    // c.strokeStyle = '#f00';
-    // c.strokeRect(x, y, prevXOffset - x, lineHeight);
+    // rectList.forEach(rect => this.renderRect(rect, { strokeStyle: 'red' }));
 
     this.lines.add(lineRect);
 
@@ -112,5 +126,17 @@ export class Renderer {
       lineRect,
       rectList,
     };
+  }
+
+  // dev only
+  renderRect(rect: ClientRect, options?: RenderConfig) {
+    this.pagePainter.drawRect(rect, options);
+  }
+
+  renderCursor(rect: ClientRect, oldRect?: ClientRect | null) {
+    if (oldRect) {
+      this.cursorPainter.clearRect(oldRect);
+    }
+    this.cursorPainter.drawRect(rect, { fillStyle: 'green' }, true);
   }
 }
