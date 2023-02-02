@@ -1,149 +1,143 @@
-// import { appendChild, createDomNode } from 'lib/utils';
-// import { Operable, ActivePos, Pos, SyntaxNode } from 'lib/types';
-// import { ClassName, TagName } from 'lib/static';
-// import { EventBus } from 'lib/model';
+import { Operable, ActivePos, Pos, SyntaxNode } from 'lib/types';
+import { EventBus } from 'lib/model';
+import { Renderer } from 'lib/view';
 
-// export class Selection {
-//   private el: HTMLElement;
-//   private pos: Pos | null;
-//   private active: ActivePos | null;
-//   private eventBus: EventBus;
+export class Selection {
+  private renderer: Renderer;
+  private eventBus: EventBus;
 
-//   constructor(container: HTMLElement, eventBus: EventBus) {
-//     this.el = createDomNode(TagName.SPAN, [ClassName.RTE_CURSOR]);
-//     this.pos = null;
-//     this.active = null;
-//     this.eventBus = eventBus;
+  private pos: Pos | null;
+  private active: ActivePos | null;
 
-//     appendChild(document.body, this.el);
-//   }
+  constructor(renderer: Renderer, eventBus: EventBus) {
+    this.renderer = renderer;
+    this.eventBus = eventBus;
 
-//   private setShape(width: number, height: number, left: number, top: number) {
-//     this.el.style.width = `${width}px`;
-//     this.el.style.height = `${height}px`;
-//     this.el.style.left = `${left}px`;
-//     this.el.style.top = `${top}px`;
-//   }
+    this.pos = null;
+    this.active = null;
+  }
 
-//   private setPos({ block, offset }: Pos) {
-//     const { rect, cursorOffset } = block.getFenceInfo(offset);
-//     const { height, y } = rect;
+  private setShape(width: number, height: number, left: number, top: number) {
+    // TODO
+  }
 
-//     this.setShape(2, height, cursorOffset, y);
-//   }
+  private setPos({ block, offset }: Pos) {
+    const { rect } = block.getFenceInfo(offset);
+    const { height, x, y } = rect;
 
-//   focusOn(block: Operable, offset: number) {
-//     // show the cursor when the page focused for the first time
-//     if (!this.pos) {
-//       this.el.style.display = 'inline-block';
-//     }
+    this.setShape(2, height, x, y);
+  }
 
-//     const { pos, active } = block.focusOn(this.pos, offset, this.active);
+  focusOn(block: Operable, offset: number) {
+    // show the cursor when the page focused for the first time
+    if (!this.pos) {
+      // this.el.style.display = 'inline-block';
+    }
 
-//     // update position of cursor
-//     this.setPos(pos);
+    const { pos, active } = block.focusOn(this.pos, offset, this.active);
 
-//     // update the pos and active
-//     this.pos = pos;
-//     this.active = active;
-//   }
-//   unFocus() {
-//     if (this.pos) {
-//       this.el.style.display = 'none';
+    // update position of cursor
+    this.setPos(pos);
 
-//       const { pos, active } = this.pos.block.unFocus();
-//       this.pos = pos;
-//       this.active = active;
-//     }
-//   }
+    // update the pos and active
+    this.pos = pos;
+    this.active = active;
+  }
+  unFocus() {
+    if (this.pos) {
+      // this.el.style.display = 'none';
 
-//   left(offset: number = 1) {
-//     if (!this.pos) return;
-//     const nextPos = this.pos.block.left(this.pos, this.active, offset);
-//     if (nextPos) {
-//       const { pos, active } = nextPos;
-//       this.setPos(pos);
+      const { pos, active } = this.pos.block.unFocus();
+      this.pos = pos;
+      this.active = active;
+    }
+  }
 
-//       this.pos = pos;
-//       this.active = active;
-//     }
-//   }
-//   right(offset: number = 1) {
-//     if (!this.pos) return;
-//     const nextPos = this.pos.block.right(this.pos, this.active, offset);
-//     if (nextPos) {
-//       const { pos, active } = nextPos;
-//       this.setPos(pos);
+  // left(offset: number = 1) {
+  //   if (!this.pos) return;
+  //   const nextPos = this.pos.block.left(this.pos, this.active, offset);
+  //   if (nextPos) {
+  //     const { pos, active } = nextPos;
+  //     this.setPos(pos);
 
-//       this.pos = pos;
-//       this.active = active;
-//     }
-//   }
-//   up(offset: number = 1) {
-//     if (!this.pos) return;
-//     const nextPos = this.pos.block.up(this.pos, this.active, offset);
-//     if (nextPos) {
-//       const { pos, active } = nextPos;
-//       this.setPos(pos);
+  //     this.pos = pos;
+  //     this.active = active;
+  //   }
+  // }
+  // right(offset: number = 1) {
+  //   if (!this.pos) return;
+  //   const nextPos = this.pos.block.right(this.pos, this.active, offset);
+  //   if (nextPos) {
+  //     const { pos, active } = nextPos;
+  //     this.setPos(pos);
 
-//       this.pos = pos;
-//       this.active = active;
-//     }
-//   }
-//   down(offset: number = 1) {
-//     if (!this.pos) return;
-//     const nextPos = this.pos.block.down(this.pos, this.active, offset);
-//     if (nextPos) {
-//       const { pos, active } = nextPos;
-//       this.setPos(pos);
+  //     this.pos = pos;
+  //     this.active = active;
+  //   }
+  // }
+  // up(offset: number = 1) {
+  //   if (!this.pos) return;
+  //   const nextPos = this.pos.block.up(this.pos, this.active, offset);
+  //   if (nextPos) {
+  //     const { pos, active } = nextPos;
+  //     this.setPos(pos);
 
-//       this.pos = pos;
-//       this.active = active;
-//     }
-//   }
+  //     this.pos = pos;
+  //     this.active = active;
+  //   }
+  // }
+  // down(offset: number = 1) {
+  //   if (!this.pos) return;
+  //   const nextPos = this.pos.block.down(this.pos, this.active, offset);
+  //   if (nextPos) {
+  //     const { pos, active } = nextPos;
+  //     this.setPos(pos);
 
-//   newLine(parser: (src: string) => SyntaxNode) {
-//     if (!this.pos) return;
+  //     this.pos = pos;
+  //     this.active = active;
+  //   }
+  // }
 
-//     const { pos, active } = this.pos.block.newLine(this.pos.offset, parser);
-//     this.active = active;
-//     this.pos = pos;
+  // newLine(parser: (src: string) => SyntaxNode) {
+  //   if (!this.pos) return;
 
-//     const { block, offset } = pos;
-//     this.focusOn(block, offset);
-//   }
+  //   const { pos, active } = this.pos.block.newLine(this.pos.offset, parser);
+  //   this.active = active;
+  //   this.pos = pos;
 
-//   updateBlockContent(char: string, parser: (src: string) => SyntaxNode) {
-//     if (!this.pos) return;
+  //   const { block, offset } = pos;
+  //   this.focusOn(block, offset);
+  // }
 
-//     const { pos, active } = this.pos.block.update(
-//       char,
-//       this.pos.offset,
-//       this.active,
-//       parser
-//     );
-//     this.active = active;
-//     this.pos = pos;
+  // updateBlockContent(char: string, parser: (src: string) => SyntaxNode) {
+  //   if (!this.pos) return;
 
-//     // move cursor right
-//     const { block, offset } = pos;
-//     this.focusOn(block, offset);
-//   }
+  //   const { pos, active } = this.pos.block.update(
+  //     char,
+  //     this.pos.offset,
+  //     this.active,
+  //     parser
+  //   );
+  //   this.active = active;
+  //   this.pos = pos;
 
-//   delete(parser: (src: string) => SyntaxNode) {
-//     if (!this.pos) return;
+  //   // move cursor right
+  //   const { block, offset } = pos;
+  //   this.focusOn(block, offset);
+  // }
 
-//     const { pos, active } = this.pos.block.delete(
-//       this.pos.offset,
-//       this.active,
-//       parser
-//     );
-//     this.active = active;
-//     this.pos = pos;
+  // delete(parser: (src: string) => SyntaxNode) {
+  //   if (!this.pos) return;
 
-//     const { block, offset } = pos;
-//     this.focusOn(block, offset);
-//   }
-// }
+  //   const { pos, active } = this.pos.block.delete(
+  //     this.pos.offset,
+  //     this.active,
+  //     parser
+  //   );
+  //   this.active = active;
+  //   this.pos = pos;
 
-export const a = 1;
+  //   const { block, offset } = pos;
+  //   this.focusOn(block, offset);
+  // }
+}

@@ -1,12 +1,15 @@
 import {
+  ClientRect,
   FontInfo,
+  Point,
+  Rect,
   SyntaxNode,
   SyntaxNodeWithLayerActivation,
   TextNode,
   VirtualNode,
 } from 'lib/types';
 import { NodeType } from 'lib/static';
-import { has, panicAt, set } from 'lib/utils';
+import { get, has, panicAt, set } from 'lib/utils';
 // import { syntaxMarker } from 'lib/model';
 
 const { PLAIN_TEXT, PREFIX, SUFFIX } = NodeType;
@@ -141,6 +144,14 @@ export const isSyntaxNodeWithLayerActivation = (
 //   return res.shift()!;
 // };
 
+export const isHitRect = (pos: Point, rect: Rect | ClientRect) => {
+  const [x, y] = pos;
+  const { width, height } = rect;
+  const xr = has(rect, 'x') ? get(rect, 'x') : get(rect, 'clientX');
+  const yr = has(rect, 'y') ? get(rect, 'y') : get(rect, 'clientY');
+  return x >= xr && y >= yr && x <= xr + width && y <= yr + height;
+};
+
 export const walkTextNode = (
   vNode: VirtualNode,
   callback: (
@@ -232,6 +243,12 @@ export const walkTextNodeWithMoreInformation = (
   };
 
   dfs(vNode, null, null, 1);
+};
+
+export const textContent = (vNode: VirtualNode): string => {
+  let res = '';
+  walkTextNode(vNode, ({ text }) => (res += text));
+  return res;
 };
 
 // export const getTextList = (vNode: SyntaxNode) => {
