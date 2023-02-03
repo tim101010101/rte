@@ -1,8 +1,16 @@
 import { EditorConfig, Operable } from 'lib/types';
-import { EventBus, LinkedList, textContent, walkTextNode } from 'lib/model';
+import {
+  EventBus,
+  Line,
+  LinkedList,
+  textContent,
+  walkTextNode,
+  Selection,
+} from 'lib/model';
 import { VNodeEventName, InnerEventName } from 'lib/static';
 import { Renderer } from 'lib/view';
 import { activedLine, activedWeirdLine, line, weirdLine } from 'lib/mock';
+import { throttle } from 'lib/utils';
 
 const { CLICK, MOUSE_DOWN, MOUSE_MOVE, MOUSE_UP } = VNodeEventName;
 const { KEYDOWN, KEYUP } = VNodeEventName;
@@ -15,7 +23,7 @@ export class Page extends LinkedList<Operable> {
   private eventBus: EventBus;
 
   // schema: Schema;
-  // selection: Selection;
+  selection: Selection;
 
   constructor(container: HTMLElement, config: EditorConfig) {
     super();
@@ -26,24 +34,34 @@ export class Page extends LinkedList<Operable> {
     this.renderer = new Renderer(this.container, config);
     this.eventBus = new EventBus();
 
-    // this.selection = new Selection(container, this.eventBus);
+    this.selection = new Selection(this.renderer, this.eventBus);
     // this.schema = schema;
   }
 
   init(text: string) {
-    const lines = [line, activedLine];
-    const res = this.renderer.fullPatch(lines);
+    // parse.....
+    const lineVNodes = [line, activedLine];
+    // const res = this.renderer.fullPatch(lines);
+    lineVNodes.forEach((vNode, i) => {
+      const line = new Line(this.renderer, this.eventBus);
+      this.appendTail(line);
 
-    res.forEach(({ lineRect }, i) => {
-      const vNode = lines[i];
-      this.eventBus.attach(
-        CLICK,
-        { vNode, rect: lineRect },
-        ({ target, clientPos }) => {
-          console.log('click1');
-        }
-      );
+      line.patch(vNode);
+      line.addEventListener(VNodeEventName.CLICK, e => {
+        console.log(i);
+      });
     });
+
+    // res.forEach(({ lineRect }, i) => {
+    //   const vNode = lines[i];
+    //   this.eventBus.attach(
+    //     CLICK,
+    //     { vNode, rect: lineRect },
+    //     ({ target, clientPos }) => {
+    //       console.log('click1');
+    //     }
+    //   );
+    // });
 
     this.initEventListener();
   }
@@ -51,9 +69,12 @@ export class Page extends LinkedList<Operable> {
   initEventListener() {
     [CLICK, MOUSE_DOWN, MOUSE_MOVE, MOUSE_UP, KEYDOWN, KEYUP].forEach(
       eventName => {
-        window.addEventListener(eventName, e => {
-          this.eventBus.emit(eventName as any, e);
-        });
+        window.addEventListener(
+          eventName,
+          throttle(e => {
+            this.eventBus.emit(eventName as any, e);
+          })
+        );
       }
     );
   }

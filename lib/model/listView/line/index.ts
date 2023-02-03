@@ -2,22 +2,22 @@ import { EventBus } from 'lib/model/event';
 import {
   Fence,
   SyntaxNode,
-  Rect,
   FenceInfo,
   VirtualNode,
   Pos,
   ActivePos,
   FeedbackPos,
+  ClientRect,
+  OperableNode,
 } from 'lib/types';
 import { panicAt } from 'lib/utils';
 import { Renderer } from 'lib/view';
-import { OperableNode } from '../base/operableNode';
 import { calcFence } from './helper/calcFence';
 
 export class Line extends OperableNode {
   private _fence: Fence | null;
   private _vNode: VirtualNode | null;
-  private _rect: Rect | null;
+  private _rect: ClientRect | null;
 
   constructor(renderer: Renderer, eventBus: EventBus) {
     super(renderer, eventBus);
@@ -27,7 +27,7 @@ export class Line extends OperableNode {
     this._rect = null;
   }
 
-  get rect(): Rect {
+  get rect(): ClientRect {
     if (!this._rect) {
       return panicAt('');
     }
@@ -53,8 +53,8 @@ export class Line extends OperableNode {
   patch(newVNode: VirtualNode): void {
     const { lineRect: rect, rectList } = this.renderer.patch(
       newVNode,
-      this.vNode,
-      this.rect
+      this._vNode,
+      this._rect
     );
 
     this._rect = rect;

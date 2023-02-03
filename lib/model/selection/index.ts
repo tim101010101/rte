@@ -1,31 +1,71 @@
-import { Operable, ActivePos, Pos, SyntaxNode } from 'lib/types';
+import {
+  Operable,
+  ActivePos,
+  Pos,
+  EventInteroperableObject,
+  VirtualNode,
+  EventListener,
+  EventName,
+  InnerEventListener,
+  Point,
+  VNodeEventListener,
+  VNodeKeyboardEventName,
+  VNodeMouseEventName,
+  VNodeMouseEvent,
+  VNodeKeyboardEvent,
+  ClientRect,
+} from 'lib/types';
 import { EventBus } from 'lib/model';
 import { Renderer } from 'lib/view';
+import { InnerEventName } from 'lib/static';
+import { panicAt } from 'lib/utils';
 
-export class Selection {
+export class Selection extends EventInteroperableObject {
   private renderer: Renderer;
-  private eventBus: EventBus;
-
   private pos: Pos | null;
   private active: ActivePos | null;
 
+  private _rect: ClientRect | null;
+
   constructor(renderer: Renderer, eventBus: EventBus) {
+    super(eventBus);
+
     this.renderer = renderer;
-    this.eventBus = eventBus;
 
     this.pos = null;
     this.active = null;
+
+    this._rect = null;
   }
 
-  private setShape(width: number, height: number, left: number, top: number) {
-    // TODO
+  private get rect(): ClientRect {
+    if (!this._rect) {
+      return panicAt('');
+    }
+    return this._rect;
   }
 
   private setPos({ block, offset }: Pos) {
     const { rect } = block.getFenceInfo(offset);
-    const { height, x, y } = rect;
+    const { height, clientX, clientY } = rect;
 
-    this.setShape(2, height, x, y);
+    // TODO
+  }
+
+  addEventListener(
+    eventName: VNodeMouseEventName,
+    listener: VNodeEventListener<VNodeMouseEvent>
+  ): void;
+  addEventListener(
+    eventName: VNodeKeyboardEventName,
+    listener: VNodeEventListener<VNodeKeyboardEvent>
+  ): void;
+  addEventListener(
+    eventName: InnerEventName,
+    listener: InnerEventListener<any>
+  ): void;
+  addEventListener(eventName: EventName, listener: EventListener): void {
+    // TODO
   }
 
   focusOn(block: Operable, offset: number) {

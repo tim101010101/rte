@@ -1,5 +1,6 @@
 import { isTextNode, walkTextNodeWithMoreInformation } from 'lib/model';
 import {
+  ClientRect,
   Fence,
   FenceRoot,
   Rect,
@@ -8,7 +9,10 @@ import {
 } from 'lib/types';
 import { panicAt } from 'lib/utils';
 
-export const calcFence = (vNode: VirtualNode, rectList: Array<Rect>): Fence => {
+export const calcFence = (
+  vNode: VirtualNode,
+  rectList: Array<ClientRect>
+): Fence => {
   if (isTextNode(vNode)) {
     return panicAt('try to calculate the fence of a text node');
   }

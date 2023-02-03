@@ -1,14 +1,16 @@
 import {
-  VNodeEventHandler,
+  VNodeEventListener,
   VNodeMouseEvent,
   VNodeKeyboardEvent,
-  VirtualNode,
   EventName,
-  EventHandler,
+  EventListener,
   EventDetachHandler,
   EventTarget,
-  InnerEventHandler,
+  InnerEventListener,
   VNodeEventTarget,
+  VNodeMouseEventName,
+  VNodeKeyboardEventName,
+  Operable,
 } from 'lib/types';
 import { VNodeEventName, InnerEventName, EventType } from 'lib/static';
 import { isArray, panicAt } from 'lib/utils';
@@ -30,7 +32,7 @@ const {
 } = InnerEventName;
 
 export class EventBus {
-  private _events: Map<EventName, Array<EventHandler>>;
+  private _events: Map<EventName, Array<EventListener>>;
 
   constructor() {
     this._events = new Map();
@@ -44,66 +46,62 @@ export class EventBus {
   }
   private set(
     eventName: EventName,
-    handler: EventHandler | Array<EventHandler>
+    listener: EventListener | Array<EventListener>
   ) {
     this._events.set(
       eventName,
-      isArray(handler)
-        ? handler
+      isArray(listener)
+        ? listener
         : this.has(eventName)
-        ? [...this.get(eventName), handler]
-        : [handler]
+        ? [...this.get(eventName), listener]
+        : [listener]
     );
   }
 
-  private proxyHandler(
+  private proxyListener(
     eventName: EventName,
     eventTarget: EventTarget,
-    handler: EventHandler
-  ): EventHandler {
+    listener: EventListener
+  ): EventListener {
     switch (getEventType(eventName)) {
       case MOUSE:
         return (e: MouseEvent) => {
-          const { rect, vNode } = eventTarget!;
+          const { rect, block } = eventTarget!;
           if (!isHitRect([e.clientX, e.clientY], rect)) return;
-          else handler(e2VNodeMouseEvent(e, vNode));
+          else listener(e2VNodeMouseEvent(e, block));
         };
 
       case KEYBOARD:
         return (e: KeyboardEvent) => {
-          handler(e2VNodeKeyboardEvent(e));
+          listener(e2VNodeKeyboardEvent(e));
         };
 
       default:
-        return handler;
+        return listener;
     }
   }
 
   attach(
-    eventName:
-      | VNodeEventName.CLICK
-      | VNodeEventName.MOUSE_DOWN
-      | VNodeEventName.MOUSE_MOVE
-      | VNodeEventName.MOUSE_UP,
+    eventName: VNodeMouseEventName,
     eventTarget: VNodeEventTarget,
-    handler: VNodeEventHandler<VNodeMouseEvent>
+    listener: VNodeEventListener<VNodeMouseEvent>
   ): EventDetachHandler;
   attach(
-    eventName: VNodeEventName.KEYDOWN | VNodeEventName.KEYUP,
+    eventName: VNodeKeyboardEventName,
     eventTarget: null,
-    handler: VNodeEventHandler<VNodeKeyboardEvent>
+    listener: VNodeEventListener<VNodeKeyboardEvent>
   ): EventDetachHandler;
   attach(
     eventName: InnerEventName,
     eventTarget: null,
-    handler: InnerEventHandler
+    listener: InnerEventListener
   ): EventDetachHandler;
   attach(
     eventName: EventName,
     eventTarget: EventTarget,
-    handler: EventHandler
+    listener: EventListener
   ): EventDetachHandler {
-    const proxiedHandler = this.proxyHandler(eventName, eventTarget, handler);
+    const proxiedHandler = this.proxyListener(eventName, eventTarget, listener);
 
     this.set(eventName, proxiedHandler);
 
@@ -119,59 +117,49 @@ export class EventBus {
     };
   }
 
-  emit(
-    eventName:
-      | VNodeEventName.CLICK
-      | VNodeEventName.MOUSE_DOWN
-      | VNodeEventName.MOUSE_MOVE
-      | VNodeEventName.MOUSE_UP,
-    e: MouseEvent
-  ): void;
-  emit(
-    eventName: VNodeEventName.KEYDOWN | VNodeEventName.KEYUP,
-    e: KeyboardEvent
-  ): void;
+  emit(eventName: VNodeMouseEventName, e: MouseEvent): void;
+  emit(eventName: VNodeKeyboardEventName, e: KeyboardEvent): void;
   emit(eventName: InnerEventName, ...rest: Array<any>): void;
   emit(eventName: EventName, ...rest: Array<any>): void {
     if (this.has(eventName)) {
-      this.get(eventName).forEach(h => h.apply(this, rest));
+      this.get(eventName).forEach(l => l.apply(this, rest));
     }
   }
 
   once(
-    eventName:
-      | VNodeEventName.CLICK
-      | VNodeEventName.MOUSE_DOWN
-      | VNodeEventName.MOUSE_MOVE
-      | VNodeEventName.MOUSE_UP,
+    eventName: VNodeMouseEventName,
     eventTarget: VNodeEventTarget,
-    handler: VNodeEventHandler<VNodeMouseEvent>
+    listener: VNodeEventListener<VNodeMouseEvent>
   ): void;
   once(
-    eventName: VNodeEventName.KEYDOWN | VNodeEventName.KEYUP,
+    eventName: VNodeKeyboardEventName,
     eventTarget: null,
-    handler: VNodeEventHandler<VNodeKeyboardEvent>
+    listener: VNodeEventListener<VNodeKeyboardEvent>
   ): void;
   once(
     eventName: InnerEventName,
     eventTarget: null,
-    handler: InnerEventHandler
+    listener: InnerEventListener
   ): void;
   once(
     eventName: EventName,
     eventTarget: EventTarget,
-    handler: EventHandler
+    listener: EventListener
   ): void {
-    const proxiedHandler = this.proxyHandler(eventName, eventTarget, handler);
+    const proxiedListener = this.proxyListener(
+      eventName,
+      eventTarget,
+      listener
+    );
     const detacher = () => {
       this.set(
         eventName,
-        this.get(eventName).filter(h => h !== proxiedHandler)
+        this.get(eventName).filter(l => l !== proxiedListener)
       );
     };
 
     this.set(eventName, (...rest: Array<any>) => {
-      proxiedHandler.apply(this, rest);
+      proxiedListener.apply(this, rest);
       detacher();
     });
   }
@@ -207,7 +195,7 @@ export const getEventType = (eventName: EventName): EventType => {
 
 export const e2VNodeMouseEvent = (
   e: MouseEvent,
-  target: VirtualNode
+  target: Operable
 ): VNodeMouseEvent => {
   const {
     screenX,
