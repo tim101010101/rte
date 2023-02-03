@@ -5,5 +5,5 @@ export * from './schema';
 export * from './utils';
 export * from './listView';
 export * from './event';
-export * from './operable';
 export * from './render';
+export * from './interfaces';

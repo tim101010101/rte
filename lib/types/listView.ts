@@ -1,9 +1,16 @@
-import {
-  VirtualNode,
-  Operable,
-  SyntaxNode,
-  SyntaxNodeWithLayerActivation,
-} from 'lib/types';
+import { Operable } from 'lib/interfaces';
+
+export interface Pos {
+  block: Operable;
+  offset: number;
+}
+
+export interface ActivePos {}
+
+export interface FeedbackPos {
+  pos: Pos;
+  active: ActivePos | null;
+}
 
 export interface Rect {
   width: number;
@@ -19,7 +26,7 @@ export interface ClientRect {
 }
 
 export interface FenceLeaf {
-  rect: Rect;
+  rect: ClientRect;
   prefixChange: number;
   textOffset: number;
 }
@@ -41,7 +48,7 @@ export interface FenceInfo {
 
   prefixLength: number;
 
-  rect: Rect;
+  rect: ClientRect;
   prefixChange: number;
   textOffset: number;
 }
