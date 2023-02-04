@@ -1,15 +1,18 @@
-import { Operable } from 'lib/interfaces';
+import { Operable, VirtualNode } from 'lib/types';
 
 export interface Pos {
   block: Operable;
   offset: number;
 }
 
-export interface ActivePos {}
+export interface ActivePos {
+  block: Operable;
+  ancestorIdx: number;
+}
 
 export interface FeedbackPos {
   pos: Pos;
-  active: ActivePos | null;
+  active: Array<ActivePos>;
 }
 
 export interface Rect {
@@ -48,6 +51,7 @@ export interface FenceInfo {
 
   prefixLength: number;
 
+  vNodes: Array<number>;
   rect: ClientRect;
   prefixChange: number;
   textOffset: number;

@@ -23,10 +23,13 @@ export abstract class EventInteroperableObject implements EventInteroperable {
     this.events = new Map();
   }
 
-  abstract addEventListener(eventName: VNodeMouseEventName, listener: VNodeEventListener<VNodeMouseEvent>): void;
-  abstract addEventListener(eventName: VNodeKeyboardEventName, listener: VNodeEventListener<VNodeKeyboardEvent>): void;
-  abstract addEventListener(eventName: InnerEventName, listener: InnerEventListener<any>): void;
-  abstract addEventListener(eventName: EventName, listener: EventListener): void;
+  addEventListener(eventName: VNodeMouseEventName, listener: VNodeEventListener<VNodeMouseEvent>): void;
+  addEventListener(eventName: VNodeKeyboardEventName, listener: VNodeEventListener<VNodeKeyboardEvent>): void;
+  addEventListener(eventName: InnerEventName, listener: InnerEventListener<any>): void;
+  addEventListener(eventName: EventName, listener: EventListener): void {
+    const detacher = this.eventBus.attach(eventName as any, listener, this)
+    this.events.set(listener, detacher);
+  }
 
   removeEventListener(listener: EventListener): void {
     if (this.events.has(listener)) {
