@@ -11,6 +11,9 @@ import {
   VNodeMouseEventName,
   VNodeKeyboardEventName,
   Operable,
+  EventInteroperable,
+  EventInteroperableObject,
+  OperableNode,
 } from 'lib/types';
 import { VNodeEventName, InnerEventName, EventType } from 'lib/static';
 import { isArray, panicAt } from 'lib/utils';
@@ -60,13 +63,13 @@ export class EventBus {
 
   private proxyListener(
     eventName: EventName,
-    eventTarget: EventTarget,
+    block: Operable,
     listener: EventListener
   ): EventListener {
     switch (getEventType(eventName)) {
       case MOUSE:
         return (e: MouseEvent) => {
-          const { rect, block } = eventTarget!;
+          const { rect } = block;
           if (!isHitRect([e.clientX, e.clientY], rect)) return;
           else listener(e2VNodeMouseEvent(e, block));
         };
@@ -83,33 +86,34 @@ export class EventBus {
 
   attach(
     eventName: VNodeMouseEventName,
-    eventTarget: VNodeEventTarget,
-    listener: VNodeEventListener<VNodeMouseEvent>
+    listener: VNodeEventListener<VNodeMouseEvent>,
+    target?: EventInteroperable | Operable
   ): EventDetachHandler;
   attach(
     eventName: VNodeKeyboardEventName,
-    eventTarget: null,
     listener: VNodeEventListener<VNodeKeyboardEvent>
   ): EventDetachHandler;
   attach(
     eventName: InnerEventName,
-    eventTarget: null,
     listener: InnerEventListener
   ): EventDetachHandler;
   attach(
     eventName: EventName,
-    eventTarget: EventTarget,
-    listener: EventListener
+    listener: EventListener,
+    target?: EventInteroperable | Operable
   ): EventDetachHandler {
-    const proxiedHandler = this.proxyListener(eventName, eventTarget, listener);
+    const proxiedListener =
+      target instanceof OperableNode
+        ? this.proxyListener(eventName, target, listener)
+        : listener;
 
-    this.set(eventName, proxiedHandler);
+    this.set(eventName, proxiedListener);
 
     return () => {
       if (this.has(eventName)) {
         this.set(
           eventName,
-          this.get(eventName).filter(h => h !== proxiedHandler)
+          this.get(eventName).filter(l => l !== proxiedListener)
         );
       } else {
         panicAt('try to detach a event that does not exist');
@@ -128,29 +132,24 @@ export class EventBus {
 
   once(
     eventName: VNodeMouseEventName,
-    eventTarget: VNodeEventTarget,
-    listener: VNodeEventListener<VNodeMouseEvent>
+    listener: VNodeEventListener<VNodeMouseEvent>,
+    target?: EventInteroperable | Operable
   ): void;
   once(
     eventName: VNodeKeyboardEventName,
-    eventTarget: null,
     listener: VNodeEventListener<VNodeKeyboardEvent>
   ): void;
-  once(
-    eventName: InnerEventName,
-    eventTarget: null,
-    listener: InnerEventListener
-  ): void;
+  once(eventName: InnerEventName, listener: InnerEventListener): void;
   once(
     eventName: EventName,
-    eventTarget: EventTarget,
-    listener: EventListener
+    listener: EventListener,
+    target?: EventInteroperable | Operable
   ): void {
-    const proxiedListener = this.proxyListener(
-      eventName,
-      eventTarget,
-      listener
-    );
+    const proxiedListener =
+      target instanceof OperableNode
+        ? this.proxyListener(eventName, target, listener)
+        : listener;
+
     const detacher = () => {
       this.set(
         eventName,
