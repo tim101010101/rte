@@ -9,11 +9,19 @@ import {
 } from 'lib/model';
 import { VNodeEventName, InnerEventName } from 'lib/static';
 import { Renderer } from 'lib/view';
-import { activedLine, activedWeirdLine, line, weirdLine } from 'lib/mock';
-import { throttle } from 'lib/utils';
+import {
+  activedLine,
+  activedSimpleLine,
+  activedWeirdLine,
+  line,
+  simpleLine,
+  weirdLine,
+} from 'lib/mock';
+import { getNearestIdx, throttle } from 'lib/utils';
 
 const { CLICK, MOUSE_DOWN, MOUSE_MOVE, MOUSE_UP } = VNodeEventName;
 const { KEYDOWN, KEYUP } = VNodeEventName;
+const { FOCUS_ON } = InnerEventName;
 
 export class Page extends LinkedList<Operable> {
   private container: HTMLElement;
@@ -40,29 +48,34 @@ export class Page extends LinkedList<Operable> {
 
   init(text: string) {
     // parse.....
-    const lineVNodes = [line, activedLine];
-    // const res = this.renderer.fullPatch(lines);
+    // const lineVNodes = [line, activedLine];
+    const lineVNodes = [simpleLine, activedSimpleLine];
+    // const lineVNodes = [activedSimpleLine];
     lineVNodes.forEach((vNode, i) => {
       const line = new Line(this.renderer, this.eventBus);
       this.appendTail(line);
 
       line.patch(vNode);
       line.addEventListener(VNodeEventName.CLICK, e => {
-        console.log(i);
+        const rectList = line.fence.reduce((arr, cur) => {
+          cur.fenceList.forEach(({ rect }) => {
+            arr.push(rect.clientX);
+          });
+          return arr;
+        }, [] as Array<number>);
+        const offset = getNearestIdx(rectList, e.clientPos[0]);
+        this.eventBus.emit(FOCUS_ON, { block: line, offset });
       });
     });
 
-    // res.forEach(({ lineRect }, i) => {
-    //   const vNode = lines[i];
-    //   this.eventBus.attach(
-    //     CLICK,
-    //     { vNode, rect: lineRect },
-    //     ({ target, clientPos }) => {
-    //       console.log('click1');
-    //     }
-    //   );
-    // });
-
+    this.selection.initEventListener();
+    this.selection.addEventListener(KEYDOWN, e => {
+      if (e.key === 'Tab' && !this.selection.rect && this.head) {
+        this.selection.focusOn(this.head, 0);
+      } else if (e.key === 'Escape' && this.selection.rect) {
+        this.selection.unFocus();
+      }
+    });
     this.initEventListener();
   }
 
