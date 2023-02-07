@@ -1,6 +1,6 @@
 import { s, sl, t } from 'lib/model';
 import { NodeType } from 'lib/static';
-import { FenceLeaf, FenceRoot, Rect, VirtualNode } from 'lib/types';
+import { FenceLeaf, FenceRoot, ClientRect, VirtualNode } from 'lib/types';
 import { get, has } from 'lib/utils';
 import { calcFence } from '../line/helper/calcFence';
 
@@ -20,10 +20,10 @@ export const sla = (
   return n;
 };
 
-export const mockRectList = (length: number = 20): Array<Rect> => {
+export const mockRectList = (length: number = 20): Array<ClientRect> => {
   return Array.from({ length }, () => ({
-    x: 0,
-    y: 0,
+    clientX: 0,
+    clientY: 0,
     width: 0,
     height: 0,
   }));
@@ -81,29 +81,37 @@ export const anyHeading = (
   return isActive
     ? sla(
         NodeType.HEADING,
-        [t(fontInfo, marker, { beforeActived: { show: false } })],
+        [
+          sa(NodeType.HEADING_MARKER, [
+            t(fontInfo, marker, { beforeActived: { show: false } }),
+          ]),
+        ],
         children
       )
     : sl(
         NodeType.HEADING,
-        [t(fontInfo, marker, { beforeActived: { show: false } })],
+        [
+          s(NodeType.HEADING_MARKER, [
+            t(fontInfo, marker, { beforeActived: { show: false } }),
+          ]),
+        ],
         children
       );
 };
 
 export function getFenceAndExtract<T extends keyof FenceLeaf>(
   vNode: VirtualNode,
-  rectList: Array<Rect>,
+  rectList: Array<ClientRect>,
   key: T
 ): Array<FenceLeaf[T]>;
 export function getFenceAndExtract<T extends keyof FenceRoot>(
   vNode: VirtualNode,
-  rectList: Array<Rect>,
+  rectList: Array<ClientRect>,
   key: T
 ): Array<FenceRoot[T]>;
 export function getFenceAndExtract<T extends keyof FenceRoot | keyof FenceLeaf>(
   vNode: VirtualNode,
-  rectList: Array<Rect>,
+  rectList: Array<ClientRect>,
   key: T
 ): Array<any> {
   const fence = calcFence(vNode, rectList);

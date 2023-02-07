@@ -1,9 +1,12 @@
-import { isTextNode, walkTextNodeWithMoreInformation } from 'lib/model';
+import {
+  isSyntaxNodeWithLayerActivation,
+  isTextNode,
+  walkTextNode,
+} from 'lib/model';
 import {
   ClientRect,
   Fence,
-  FenceRoot,
-  Rect,
+  FenceLeaf,
   VirtualNode,
   VirtualNodeBehavior,
 } from 'lib/types';
@@ -19,266 +22,108 @@ export const calcFence = (
 
   const fence: Fence = [];
 
-  let fenceList: FenceRoot['fenceList'] = [];
-  let prevPrefixChange = 0;
-  let curTotalTextLength = 0;
-  let curTotalChange = 0;
-  let prefixChange = 0;
-  let prefixLength = 0;
   let textLength = 0;
-  let curAncestor: VirtualNode | null = null;
-  let prevAncestor: VirtualNode | null = null;
+  let prefixLength = 0;
 
-  walkTextNodeWithMoreInformation(
-    vNode,
-    (textNode, parent, ancestor, i, contentFlag) => {
-      const { isActive } = parent;
-      const { behavior, text } = textNode;
+  let prevPrefixChange = 0;
+  let curPrefixChange = 0;
 
-      // content -> children
-      if (contentFlag === 0) {
-        if (prevAncestor) {
-          fence.push({
-            totalLength: curTotalTextLength,
-            totalChange: curTotalChange,
-            fenceList: [...fenceList],
-            prefixLength,
-          });
+  let needToFixPrefixChange = false;
+  let lastContentPrefixChange = 0;
 
-          curTotalTextLength = 0;
-          curTotalChange = 0;
-          fenceList = [];
-        }
+  const calcAncestorFence = (ancestor: VirtualNode) => {
+    const fenceList: Array<FenceLeaf> = [];
+    let totalLength = 0;
+    let totalChange = 0;
 
-        if (!isHidden(behavior)) {
-          prevPrefixChange = prefixChange;
-          prefixChange = 0;
+    walkTextNode(ancestor, textNode => {
+      const { text, behavior } = textNode;
 
-          Array.from(text).forEach((_, j) => {
-            const rect = rectList[prefixLength];
-            const textOffset = textLength;
-            let curPrefixChange = 0;
+      if (
+        isTextNode(ancestor) ||
+        (!isTextNode(ancestor) && ancestor.isActive === true)
+      ) {
+        Array.from(text).forEach(() => {
+          const rect = rectList[textLength - curPrefixChange];
+          const prefixChange = curPrefixChange;
+          const textOffset = textLength;
 
-            if (j === 0) {
-              if (textNode === ancestor) {
-                curPrefixChange = prevPrefixChange;
-              } else if (i === 0) {
-                curPrefixChange = prefixChange;
-              } else {
-                curPrefixChange = 0;
-              }
-            } else {
-              curPrefixChange = prefixChange;
-            }
-
-            fenceList.push({
-              rect,
-              prefixChange: curPrefixChange,
-              textOffset,
-            });
-
-            textLength++;
-            prefixLength++;
-          });
-        } else {
-          if (!isActive) {
-            prevPrefixChange = prefixChange;
-            prefixChange = text.length;
-
-            textLength += text.length;
-          } else {
-            prevPrefixChange = prefixChange;
-            prefixChange = 0;
-            Array.from(text).forEach((_, j) => {
-              const rect = rectList[prefixLength];
-              const textOffset = textLength;
-              let curPrefixChange = 0;
-
-              if (j === 0) {
-                if (textNode === ancestor) {
-                  curPrefixChange = prevPrefixChange;
-                } else {
-                  curPrefixChange = prefixChange;
-                }
-              } else {
-                curPrefixChange = prefixChange;
-              }
-
-              fenceList.push({
-                rect,
-                textOffset,
-                prefixChange: curPrefixChange,
-              });
-
-              textLength++;
-              prefixLength++;
-              prefixChange++;
-            });
+          if (isHidden(behavior)) {
+            prevPrefixChange = curPrefixChange;
+            curPrefixChange++;
           }
-        }
-      }
 
-      // ancestor1 -> ancestor2
-      else if (curAncestor !== ancestor) {
-        prevAncestor = curAncestor;
-        curAncestor = ancestor;
-
-        if (prevAncestor) {
-          fence.push({
-            totalLength: curTotalTextLength,
-            totalChange: curTotalChange,
-            fenceList: [...fenceList],
-            prefixLength,
+          fenceList.push({
+            rect,
+            textOffset,
+            prefixChange,
           });
 
-          curTotalTextLength = 0;
-          curTotalChange = 0;
-          fenceList = [];
-        }
-
-        if (!isHidden(behavior)) {
-          Array.from(text).forEach((_, j) => {
-            const rect = rectList[prefixLength];
-            const textOffset = textLength;
-            let curPrefixChange = 0;
-
-            if (j === 0) {
-              if (textNode === ancestor) {
-                curPrefixChange = prefixChange;
-                prefixChange = 0;
-              } else if (i === 0) {
-                curPrefixChange = prefixChange;
-              } else {
-                curPrefixChange = 0;
-              }
-            } else {
-              curPrefixChange = prefixChange;
-            }
+          textLength++;
+        });
+      } else {
+        if (isHidden(behavior)) {
+          prevPrefixChange = curPrefixChange;
+          curPrefixChange += text.length;
+          textLength += text.length;
+        } else {
+          Array.from(text).forEach(() => {
+            const rect = rectList[textLength - curPrefixChange];
+            const prefixChange = prevPrefixChange;
+            const textOffset = textLength + prefixChange;
 
             fenceList.push({
               rect,
               textOffset,
-              prefixChange: curPrefixChange,
+              prefixChange,
             });
 
             textLength++;
-            prefixLength++;
           });
-        } else {
-          if (!isActive) {
-            prevPrefixChange = prefixChange;
-            prefixChange = text.length;
-            curTotalChange += text.length;
-            textLength += text.length;
-          } else {
-            Array.from(text).forEach((_, j) => {
-              const rect = rectList[prefixLength];
-              const textOffset = textLength;
-              let curPrefixChange = 0;
-
-              if (j === 0) {
-                if (textNode === ancestor) {
-                  curPrefixChange = prefixChange;
-                } else {
-                  curPrefixChange = prefixChange;
-                }
-                prefixChange = 0;
-              } else {
-                curPrefixChange = prefixChange;
-              }
-
-              fenceList.push({
-                rect,
-                textOffset,
-                prefixChange: curPrefixChange,
-              });
-
-              curTotalChange++;
-              textLength++;
-              prefixChange++;
-            });
-
-            prevPrefixChange = prefixChange;
-          }
         }
       }
 
-      // ancestor1 -> ancestor1
-      else if (curAncestor === ancestor) {
-        if (!isHidden(behavior)) {
-          Array.from(text).forEach((_, j) => {
-            const rect = rectList[prefixLength];
-            const textOffset = textLength;
-            let curPrefixChange = 0;
+      totalLength += text.length;
+    });
 
-            if (j === 0) {
-              if (i === 0) {
-                curPrefixChange = prefixChange;
-              } else {
-                curPrefixChange = prevPrefixChange;
-              }
-            } else {
-              curPrefixChange = prefixChange;
-            }
-
-            fenceList.push({
-              rect,
-              textOffset,
-              prefixChange: curPrefixChange,
-            });
-
-            textLength++;
-            prefixLength++;
-          });
-        } else {
-          if (!isActive) {
-            prevPrefixChange = prefixChange;
-            prefixChange += text.length;
-            curTotalChange += text.length;
-            textLength += text.length;
-          } else {
-            Array.from(text).forEach((_, j) => {
-              const rect = rectList[prefixLength];
-              const textOffset = textLength;
-              let curPrefixChange = 0;
-
-              if (j === 0) {
-                curPrefixChange = prevPrefixChange;
-              } else {
-                curPrefixChange = prefixChange;
-              }
-
-              fenceList.push({
-                rect,
-                textOffset,
-                prefixChange: curPrefixChange,
-              });
-
-              curTotalChange++;
-              textLength++;
-              prefixChange++;
-            });
-            prevPrefixChange = prefixChange;
-          }
-        }
-      }
-
-      curTotalTextLength += text.length;
+    if (needToFixPrefixChange) {
+      fenceList[0].prefixChange = lastContentPrefixChange;
+      needToFixPrefixChange = false;
     }
-  );
 
-  fence.push({
-    totalLength: curTotalTextLength,
-    totalChange: curTotalChange,
-    fenceList: [
-      ...fenceList,
-      {
-        rect: rectList[prefixLength],
+    fenceList.length &&
+      fenceList.push({
+        rect: rectList[textLength - curPrefixChange],
+        prefixChange: curPrefixChange,
         textOffset: textLength,
-        prefixChange,
-      },
-    ],
-    prefixLength,
+      });
+
+    fence.push({
+      totalLength,
+      totalChange: curPrefixChange,
+      fenceList,
+      prefixLength,
+    });
+
+    prefixLength += totalLength;
+  };
+
+  if (isSyntaxNodeWithLayerActivation(vNode)) {
+    vNode.content.forEach(ancestor => {
+      prevPrefixChange = 0;
+      curPrefixChange = 0;
+      calcAncestorFence(ancestor);
+
+      needToFixPrefixChange = isTextNode(ancestor) ? false : !ancestor.isActive;
+    });
+    lastContentPrefixChange = curPrefixChange;
+    prevPrefixChange = curPrefixChange;
+    curPrefixChange = 0;
+  }
+  vNode.children.forEach(ancestor => {
+    calcAncestorFence(ancestor);
+    prevPrefixChange = 0;
+    curPrefixChange = 0;
   });
 
   return fence;

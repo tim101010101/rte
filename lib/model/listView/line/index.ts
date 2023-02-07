@@ -1,4 +1,4 @@
-import { EventBus } from 'lib/model/event';
+import { isTextNode, EventBus, getAncestorByIdx } from 'lib/model';
 import {
   Fence,
   SyntaxNode,
@@ -9,22 +9,20 @@ import {
   FeedbackPos,
   ClientRect,
   OperableNode,
+  SyntaxNodeWithLayerActivation,
 } from 'lib/types';
 import { panicAt } from 'lib/utils';
 import { Renderer } from 'lib/view';
 import { calcFence } from './helper/calcFence';
+import { tryActiveAndCancelActive } from './helper/tryActiveAndCancelActive';
 
 export class Line extends OperableNode {
-  private _fence: Fence | null;
-  private _vNode: VirtualNode | null;
-  private _rect: ClientRect | null;
+  private _fence?: Fence;
+  private _vNode?: VirtualNode;
+  private _rect?: ClientRect;
 
   constructor(renderer: Renderer, eventBus: EventBus) {
     super(renderer, eventBus);
-
-    this._fence = null;
-    this._vNode = null;
-    this._rect = null;
   }
 
   get rect(): ClientRect {
@@ -46,11 +44,47 @@ export class Line extends OperableNode {
     return this._fence;
   }
 
+  private get fenceLength(): number {
+    const fence = this.fence;
+    const { prefixLength, fenceList } = fence[fence.length - 1];
+    return prefixLength + fenceList.length;
+  }
+
+  // TODO to be optimized by binary-search
   getFenceInfo(offset: number): FenceInfo {
-    throw new Error('Method not implemented.');
+    const fence = this.fence;
+    for (let i = 0; i < fence.length; i++) {
+      const curFenceRoot = fence[i];
+      const { fenceList } = curFenceRoot;
+
+      if (offset >= fenceList.length) {
+        offset -= fenceList.length;
+      } else {
+        const vNodes: Array<number> = [];
+        if (i !== 0 && offset === 0) {
+          vNodes.push(i - 1, i);
+        } else if (i !== fence.length - 1 && offset === fenceList.length) {
+          vNodes.push(i, i + 1);
+        } else {
+          vNodes.push(i);
+        }
+
+        return {
+          ...curFenceRoot,
+          ...fenceList[offset],
+          vNodes,
+        };
+      }
+    }
+
+    return panicAt('offset out of bound');
   }
 
   patch(newVNode: VirtualNode): void {
+    if (isTextNode(newVNode)) {
+      return panicAt('try to patch a single textNode');
+    }
+
     const { lineRect: rect, rectList } = this.renderer.patch(
       newVNode,
       this._vNode,
@@ -65,12 +99,16 @@ export class Line extends OperableNode {
   focusOn(
     prevPos: Pos | null,
     curOffset: number,
-    curActive: ActivePos | null
+    curActive: Array<ActivePos>
   ): FeedbackPos {
-    throw new Error('Method not implemented.');
+    return tryActiveAndCancelActive(
+      prevPos,
+      { block: this, offset: curOffset },
+      curActive
+    );
   }
-  unFocus(): { pos: Pos | null; active: ActivePos | null } {
-    throw new Error('Method not implemented.');
+  unFocus(prevPos: Pos, curActive: Array<ActivePos>): FeedbackPos {
+    return tryActiveAndCancelActive(prevPos, null, curActive);
   }
 
   newLine(offset: number, parser: (src: string) => SyntaxNode): FeedbackPos {
@@ -80,7 +118,7 @@ export class Line extends OperableNode {
   update(
     char: string,
     offset: number,
-    active: ActivePos | null,
+    active: Array<ActivePos>,
     parser: (src: string) => SyntaxNode
   ): FeedbackPos {
     throw new Error('Method not implemented.');
@@ -88,26 +126,75 @@ export class Line extends OperableNode {
 
   delete(
     offset: number,
-    active: ActivePos | null,
+    active: Array<ActivePos>,
     parser: (src: string) => SyntaxNode
   ): FeedbackPos {
     throw new Error('Method not implemented.');
   }
 
-  left(pos: Pos, active: ActivePos | null, offset: number): FeedbackPos | null {
-    throw new Error('Method not implemented.');
-  }
-  right(
-    pos: Pos,
-    active: ActivePos | null,
+  left(
+    { block: prevBlock, offset: prevOffset }: Pos,
+    active: Array<ActivePos>,
     offset: number
   ): FeedbackPos | null {
-    throw new Error('Method not implemented.');
+    if (prevOffset - offset >= 0) {
+      return this.focusOn(
+        { block: prevBlock, offset: prevOffset },
+        prevOffset - offset,
+        active
+      );
+    } else {
+      return null;
+    }
   }
-  up(pos: Pos, active: ActivePos | null, offset: number): FeedbackPos | null {
-    throw new Error('Method not implemented.');
+  right(
+    { block: prevBlock, offset: prevOffset }: Pos,
+    active: Array<ActivePos>,
+    offset: number
+  ): FeedbackPos | null {
+    if (prevOffset + offset >= this.fenceLength) return null;
+    return this.focusOn(
+      { block: prevBlock, offset: prevOffset },
+      prevOffset + offset,
+      active
+    );
   }
-  down(pos: Pos, active: ActivePos | null, offset: number): FeedbackPos | null {
-    throw new Error('Method not implemented.');
+  up(
+    { block: prevBlock, offset: prevOffset }: Pos,
+    active: Array<ActivePos>,
+    offset: number
+  ): FeedbackPos | null {
+    let curBlock = prevBlock;
+    while (offset--) {
+      if (curBlock.prev) {
+        curBlock = curBlock.prev;
+      } else {
+        return null;
+      }
+    }
+    return this.focusOn(
+      { block: curBlock, offset: prevOffset },
+      prevOffset,
+      active
+    );
+  }
+  down(
+    { block: prevBlock, offset: prevOffset }: Pos,
+    active: Array<ActivePos>,
+    offset: number
+  ): FeedbackPos | null {
+    let curBlock = prevBlock;
+    while (offset--) {
+      if (curBlock.next) {
+        curBlock = curBlock.next;
+      } else {
+        return null;
+      }
+    }
+    return this.focusOn(
+      { block: curBlock, offset: prevOffset },
+      prevOffset,
+      active
+    );
   }
 }
