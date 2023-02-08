@@ -1,4 +1,4 @@
-import { isTextNode, EventBus, getAncestorByIdx } from 'lib/model';
+import { isTextNode, EventBus, getAncestorByIdx, textContent } from 'lib/model';
 import {
   Fence,
   SyntaxNode,
@@ -10,10 +10,15 @@ import {
   ClientRect,
   OperableNode,
   SyntaxNodeWithLayerActivation,
+  FenceInfoItem,
 } from 'lib/types';
-import { panicAt } from 'lib/utils';
+import { min, panicAt } from 'lib/utils';
 import { Renderer } from 'lib/view';
 import { calcFence } from './helper/calcFence';
+import {
+  getFenceInfoByOffset,
+  getFenceLength,
+} from './helper/getFenceInfoByOffset';
 import { tryActiveAndCancelActive } from './helper/tryActiveAndCancelActive';
 
 export class Line extends OperableNode {
@@ -44,40 +49,8 @@ export class Line extends OperableNode {
     return this._fence;
   }
 
-  private get fenceLength(): number {
-    const fence = this.fence;
-    const { prefixLength, fenceList } = fence[fence.length - 1];
-    return prefixLength + fenceList.length;
-  }
-
-  // TODO to be optimized by binary-search
   getFenceInfo(offset: number): FenceInfo {
-    const fence = this.fence;
-    for (let i = 0; i < fence.length; i++) {
-      const curFenceRoot = fence[i];
-      const { fenceList } = curFenceRoot;
-
-      if (offset >= fenceList.length) {
-        offset -= fenceList.length;
-      } else {
-        const vNodes: Array<number> = [];
-        if (i !== 0 && offset === 0) {
-          vNodes.push(i - 1, i);
-        } else if (i !== fence.length - 1 && offset === fenceList.length) {
-          vNodes.push(i, i + 1);
-        } else {
-          vNodes.push(i);
-        }
-
-        return {
-          ...curFenceRoot,
-          ...fenceList[offset],
-          vNodes,
-        };
-      }
-    }
-
-    return panicAt('offset out of bound');
+    return getFenceInfoByOffset(this.fence, offset);
   }
 
   patch(newVNode: VirtualNode): void {
@@ -94,6 +67,9 @@ export class Line extends OperableNode {
     this._rect = rect;
     this._vNode = newVNode;
     this._fence = calcFence(newVNode, rectList);
+
+    console.log(this.fence);
+    console.log(textContent(this.vNode));
   }
 
   focusOn(
@@ -152,7 +128,7 @@ export class Line extends OperableNode {
     active: Array<ActivePos>,
     offset: number
   ): FeedbackPos | null {
-    if (prevOffset + offset >= this.fenceLength) return null;
+    if (prevOffset + offset >= getFenceLength(this.fence) - 1) return null;
     return this.focusOn(
       { block: prevBlock, offset: prevOffset },
       prevOffset + offset,
@@ -172,9 +148,12 @@ export class Line extends OperableNode {
         return null;
       }
     }
-    return this.focusOn(
-      { block: curBlock, offset: prevOffset },
-      prevOffset,
+    return curBlock.focusOn(
+      {
+        block: prevBlock,
+        offset: prevOffset,
+      },
+      min(prevOffset, getFenceLength(curBlock.fence) - 1),
       active
     );
   }
@@ -191,9 +170,12 @@ export class Line extends OperableNode {
         return null;
       }
     }
-    return this.focusOn(
-      { block: curBlock, offset: prevOffset },
-      prevOffset,
+    return curBlock.focusOn(
+      {
+        block: prevBlock,
+        offset: prevOffset,
+      },
+      min(prevOffset, getFenceLength(curBlock.fence) - 1),
       active
     );
   }

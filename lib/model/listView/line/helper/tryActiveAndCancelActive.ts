@@ -1,5 +1,11 @@
-import { deepCloneVNode, getAncestorByIdx, isTextNode } from 'lib/model';
-import { ActivePos, FeedbackPos, Operable, Pos, VirtualNode } from 'lib/types';
+import { deepCloneVNode, isTextNode } from 'lib/model';
+import {
+  ActivePos,
+  FeedbackPos,
+  FenceInfoItem,
+  Operable,
+  Pos,
+} from 'lib/types';
 
 const initPatchBuffer = () => {
   const buffer = new Map<Operable, Array<number>>();
@@ -32,6 +38,66 @@ const initPatchBuffer = () => {
   };
 };
 
+const diffFence = (
+  prevPos: Pos | null,
+  { block: curBlock, offset: curOffset }: Pos,
+  actived: Array<ActivePos>
+): {
+  finalOffset: number;
+  toBeDeactived: Array<ActivePos>;
+  toBeActived: Array<ActivePos>;
+  finalActive: Array<ActivePos>;
+} => {
+  const finalActive: Array<ActivePos> = [];
+  const toBeDeactived: Array<ActivePos> = [];
+  const toBeActived: Array<ActivePos> = [];
+  let finalOffset = curOffset;
+
+  const { fenceInfoList: curFenceInfo } = curBlock.getFenceInfo(curOffset);
+
+  if (prevPos) {
+    const { block: prevBlock, offset: prevOffset } = prevPos;
+    const { fenceInfoList: prevFenceInfo } = prevBlock.getFenceInfo(prevOffset);
+
+    prevFenceInfo.forEach(({ ancestorIdx: prevIdx, prefixChange }) => {
+      const finder = ({ ancestorIdx: curIdx }: FenceInfoItem) => {
+        return curBlock === prevBlock && prevIdx === curIdx;
+      };
+
+      if (!curFenceInfo.find(finder)) {
+        toBeDeactived.push({ block: prevBlock, ancestorIdx: prevIdx });
+        if (curBlock === prevBlock && curOffset >= prevOffset) {
+          finalOffset -= prefixChange;
+        }
+      } else {
+        finalActive.push({ block: prevBlock, ancestorIdx: prevIdx });
+      }
+    });
+  }
+
+  curFenceInfo.forEach(({ ancestorIdx: curIdx, prefixChange }) => {
+    const finder = ({
+      block: activedBlock,
+      ancestorIdx: activedIdx,
+    }: ActivePos) => {
+      return curIdx === activedIdx && curBlock === activedBlock;
+    };
+
+    if (!actived.find(finder)) {
+      toBeActived.push({ block: curBlock, ancestorIdx: curIdx });
+      finalActive.push({ block: curBlock, ancestorIdx: curIdx });
+      finalOffset += prefixChange;
+    }
+  });
+
+  return {
+    finalOffset,
+    toBeDeactived,
+    toBeActived,
+    finalActive,
+  };
+};
+
 export const tryActiveAndCancelActive = (
   prevPos: Pos | null,
   curPos: Pos | null,
@@ -40,69 +106,25 @@ export const tryActiveAndCancelActive = (
   const { addTarget, flushBuffer } = initPatchBuffer();
 
   if (curPos) {
-    const { block: curBlock, offset: curOffset } = curPos;
-    let finalOffset = curOffset;
-    const { vNodes: curActive } = curBlock.getFenceInfo(curOffset);
-
-    const curActiveVNode = curActive.map(ancestorIdx =>
-      getAncestorByIdx(curBlock.vNode, ancestorIdx)
-    );
-    const prevActiveVNode = prevActive.map(({ block, ancestorIdx }) =>
-      getAncestorByIdx(block.vNode, ancestorIdx)
+    const { finalOffset, toBeDeactived, toBeActived, finalActive } = diffFence(
+      prevPos,
+      curPos,
+      prevActive
     );
 
-    if (prevPos) {
-      const { block: prevBlock, offset: prevOffset } = prevPos;
+    toBeDeactived.forEach(({ block, ancestorIdx }) => {
+      addTarget(block, ancestorIdx);
+    });
+    flushBuffer(false);
 
-      // TODO bad design, to be refactored
-      let needToFixOffset = false;
-
-      // cross line, dump curActive
-      if (prevBlock !== curBlock) {
-        prevActive.forEach(({ block, ancestorIdx }) => {
-          addTarget(block, ancestorIdx);
-          needToFixOffset = true;
-        });
-      }
-
-      // same line, deactive which not exist in curActive
-      else {
-        prevActive.forEach(({ block, ancestorIdx }, i) => {
-          if (
-            !curActiveVNode.includes(getAncestorByIdx(block.vNode, ancestorIdx))
-          ) {
-            addTarget(block, ancestorIdx);
-            needToFixOffset = true;
-          }
-        });
-      }
-
-      flushBuffer(false);
-
-      // fix the offset only when the cursor moves to the right and needs to be deactivated
-      if (needToFixOffset && curOffset > prevOffset) {
-        const { prefixChange } = prevBlock.getFenceInfo(prevOffset);
-        finalOffset -= prefixChange;
-      }
-    }
-
-    // active
-    curActiveVNode.forEach((vNodeToBeActive, i) => {
-      if (!prevActiveVNode.includes(vNodeToBeActive)) {
-        addTarget(curBlock, curActive[i]);
-        const { prefixChange } = curBlock.getFenceInfo(curOffset);
-        //! ERROR prefixChange === 1
-        finalOffset += prefixChange;
-      }
+    toBeActived.forEach(({ block, ancestorIdx }) => {
+      addTarget(block, ancestorIdx);
     });
     flushBuffer(true);
 
     return {
-      pos: { block: curBlock, offset: finalOffset },
-      active: curActive.map(ancestorIdx => ({
-        block: curBlock,
-        ancestorIdx,
-      })),
+      pos: { block: curPos.block, offset: finalOffset },
+      active: finalActive,
     };
   } else {
     prevActive.forEach(({ block, ancestorIdx }) => {

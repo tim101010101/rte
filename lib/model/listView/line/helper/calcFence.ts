@@ -10,7 +10,7 @@ import {
   VirtualNode,
   VirtualNodeBehavior,
 } from 'lib/types';
-import { panicAt } from 'lib/utils';
+import { panicAt, lastItem } from 'lib/utils';
 
 export const calcFence = (
   vNode: VirtualNode,
@@ -34,7 +34,6 @@ export const calcFence = (
   const calcAncestorFence = (ancestor: VirtualNode) => {
     const fenceList: Array<FenceLeaf> = [];
     let totalLength = 0;
-    let totalChange = 0;
 
     walkTextNode(ancestor, textNode => {
       const { text, behavior } = textNode;
@@ -44,9 +43,12 @@ export const calcFence = (
         (!isTextNode(ancestor) && ancestor.isActive === true)
       ) {
         Array.from(text).forEach(() => {
-          const rect = rectList[textLength - curPrefixChange];
           const prefixChange = curPrefixChange;
           const textOffset = textLength;
+          const rect =
+            fence.length && fenceList.length === 0
+              ? lastItem(lastItem(fence).fenceList).rect
+              : rectList.shift()!;
 
           if (isHidden(behavior)) {
             prevPrefixChange = curPrefixChange;
@@ -68,9 +70,12 @@ export const calcFence = (
           textLength += text.length;
         } else {
           Array.from(text).forEach(() => {
-            const rect = rectList[textLength - curPrefixChange];
             const prefixChange = prevPrefixChange;
             const textOffset = textLength + prefixChange;
+            const rect =
+              fence.length && fenceList.length === 0
+                ? lastItem(lastItem(fence).fenceList).rect
+                : rectList.shift()!;
 
             fenceList.push({
               rect,
@@ -91,21 +96,22 @@ export const calcFence = (
       needToFixPrefixChange = false;
     }
 
-    fenceList.length &&
+    if (fenceList.length) {
       fenceList.push({
-        rect: rectList[textLength - curPrefixChange],
+        rect: rectList.shift()!,
         prefixChange: curPrefixChange,
         textOffset: textLength,
       });
 
-    fence.push({
-      totalLength,
-      totalChange: curPrefixChange,
-      fenceList,
-      prefixLength,
-    });
+      fence.push({
+        totalLength,
+        totalChange: curPrefixChange,
+        fenceList,
+        prefixLength,
+      });
 
-    prefixLength += totalLength;
+      prefixLength += fenceList.length;
+    }
   };
 
   if (isSyntaxNodeWithLayerActivation(vNode)) {
