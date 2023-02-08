@@ -6,6 +6,7 @@ import {
   anyEm,
   anyHeading,
   anyLine,
+  anyText,
   getFenceAndExtract,
   mockFontInfo,
   mockRectList,
@@ -1616,8 +1617,8 @@ describe('calcFence', () => {
           // `# **foo**_bar_`
           test('smoke', () => {
             const vNode = anyHeading([anyBold('foo'), anyEm('bar')]);
-            expect(getTotalLength(vNode)).toStrictEqual([2, 7, 5]);
-            expect(getTotalChange(vNode)).toStrictEqual([2, 4, 2]);
+            expect(getTotalLength(vNode)).toStrictEqual([7, 5]);
+            expect(getTotalChange(vNode)).toStrictEqual([4, 2]);
           });
         });
       });
@@ -1645,6 +1646,154 @@ describe('calcFence', () => {
             expect(getTotalLength(vNode)).toStrictEqual([2, 7, 5]);
             expect(getTotalChange(vNode)).toStrictEqual([2, 4, 2]);
           });
+        });
+      });
+    });
+
+    describe('rect', () => {
+      const getRect = (vNode: VirtualNode) => {
+        return getFenceAndExtract(vNode, mockRectList(), 'rect').map(
+          ({ clientX }) => clientX
+        );
+      };
+
+      describe('before active', () => {
+        describe('normal syntax', () => {
+          // `foo*bar*`
+          // `foobar`
+          test('smoke', () => {
+            expect(
+              getRect(anyLine([anyText('foo'), anyEm('bar')]))
+            ).toStrictEqual([0, 1, 2, 3, 3, 4, 5, 6]);
+          });
+
+          // `*foo*bar`
+          // `foobar`
+          test('smoke', () => {
+            expect(
+              getRect(anyLine([anyEm('foo'), anyText('bar')]))
+            ).toStrictEqual([0, 1, 2, 3, 3, 4, 5, 6]);
+          });
+        });
+
+        describe('syntaxNode with layer activation', () => {
+          // `# foo*bar*`
+          // `foobar`
+          test('smoke', () => {
+            expect(
+              getRect(anyHeading([anyText('foo'), anyEm('bar')]))
+            ).toStrictEqual([0, 1, 2, 3, 3, 4, 5, 6]);
+          });
+
+          // `# *foo*bar`
+          // `foobar`
+          test('smoke', () => {
+            expect(
+              getRect(anyHeading([anyEm('foo'), anyText('bar')]))
+            ).toStrictEqual([0, 1, 2, 3, 3, 4, 5, 6]);
+          });
+        });
+      });
+
+      describe('actived', () => {
+        describe('normal syntax', () => {
+          // `foo*bar*`
+          // `foo*bar*`
+          test('smoke', () => {
+            expect(
+              getRect(anyLine([anyText('foo'), anyEm('bar', true)]))
+            ).toStrictEqual([0, 1, 2, 3, 3, 4, 5, 6, 7, 8]);
+          });
+
+          // `*foo*bar`
+          // `*foo*bar`
+          test('smoke', () => {
+            expect(
+              getRect(anyLine([anyEm('foo', true), anyText('bar')]))
+            ).toStrictEqual([0, 1, 2, 3, 4, 5, 5, 6, 7, 8]);
+          });
+        });
+
+        describe('syntaxNode with layer activation', () => {
+          // `# foo*bar*`
+          // `# foo*bar*`
+          test('smoke', () => {
+            expect(
+              getRect(anyHeading([anyText('foo'), anyEm('bar', true)], true))
+            ).toStrictEqual([0, 1, 2, 2, 3, 4, 5, 5, 6, 7, 8, 9, 10]);
+          });
+
+          // `# *foo*bar`
+          // `# *foo*bar`
+          test('smoke', () => {
+            expect(
+              getRect(anyHeading([anyEm('foo', true), anyText('bar')], true))
+            ).toStrictEqual([0, 1, 2, 2, 3, 4, 5, 6, 7, 7, 8, 9, 10]);
+          });
+        });
+      });
+
+      describe('patical actived', () => {
+        describe('normal syntax', () => {
+          // `**foo**_bar_`
+          // `**foo**bar`
+          test('smoke', () => {
+            expect(
+              getRect(anyLine([anyBold('foo', true), anyEm('bar')]))
+            ).toStrictEqual([0, 1, 2, 3, 4, 5, 6, 7, 7, 8, 9, 10]);
+          });
+
+          // `**foo**_bar_`
+          // `foo_bar_`
+          test('smoke', () => {
+            expect(
+              getRect(anyLine([anyBold('foo'), anyEm('bar', true)]))
+            ).toStrictEqual([0, 1, 2, 3, 3, 4, 5, 6, 7, 8]);
+          });
+        });
+
+        describe('syntaxNode with layer activation', () => {
+          // `# foo*bar*`
+          // `# foobar`
+          test('smoke', () => {
+            expect(
+              getRect(anyHeading([anyText('foo'), anyEm('bar')], true))
+            ).toStrictEqual([0, 1, 2, 2, 3, 4, 5, 5, 6, 7, 8]);
+          });
+
+          // `# *foo*bar`
+          // `*foo*bar`
+          test('smoke', () => {
+            expect(
+              getRect(anyHeading([anyEm('foo', true), anyText('bar')]))
+            ).toStrictEqual([0, 1, 2, 3, 4, 5, 5, 6, 7, 8]);
+          });
+        });
+      });
+    });
+
+    describe('prefixLength', () => {
+      const getPrefixLength = (vNode: VirtualNode) => {
+        return getFenceAndExtract(vNode, mockRectList(), 'prefixLength');
+      };
+
+      describe('normal syntaxNode', () => {
+        // `**foo**bar`
+        // `foobar`
+        test('smoke', () => {
+          expect(
+            getPrefixLength(anyLine([anyBold('foo'), anyText('bar')]))
+          ).toStrictEqual([0, 4]);
+        });
+      });
+
+      describe('syntaxNode with layer activation', () => {
+        // `# **foo**bar`
+        // `foobar`
+        test('smoke', () => {
+          expect(
+            getPrefixLength(anyHeading([anyBold('foo'), anyText('bar')]))
+          ).toStrictEqual([0, 4]);
         });
       });
     });

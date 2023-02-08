@@ -21,11 +21,11 @@ export const sla = (
 };
 
 export const mockRectList = (length: number = 20): Array<ClientRect> => {
-  return Array.from({ length }, () => ({
-    clientX: 0,
-    clientY: 0,
-    width: 0,
-    height: 0,
+  return Array.from({ length }, (_, i) => ({
+    clientX: i,
+    clientY: i,
+    width: i,
+    height: i,
   }));
 };
 
@@ -34,6 +34,11 @@ export const mockFontInfo = {
   family: '',
   bold: false,
   italic: false,
+};
+
+export const anyText = (text: string) => {
+  const fontInfo = { ...mockFontInfo };
+  return t(fontInfo, text);
 };
 
 export const anyBold = (text: string, isActive = false, marker = '**') => {
