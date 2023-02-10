@@ -1,4 +1,4 @@
-import { isTextNode, EventBus, getAncestorByIdx, textContent } from 'lib/model';
+import { isTextNode, EventBus } from 'lib/model';
 import {
   Fence,
   SyntaxNode,
@@ -9,17 +9,15 @@ import {
   FeedbackPos,
   ClientRect,
   OperableNode,
-  SyntaxNodeWithLayerActivation,
-  FenceInfoItem,
 } from 'lib/types';
 import { min, panicAt } from 'lib/utils';
 import { Renderer } from 'lib/view';
-import { calcFence } from './helper/calcFence';
 import {
+  calcFence,
+  tryActiveAndCancelActive,
   getFenceInfoByOffset,
   getFenceLength,
-} from './helper/getFenceInfoByOffset';
-import { tryActiveAndCancelActive } from './helper/tryActiveAndCancelActive';
+} from './helper';
 
 export class Line extends OperableNode {
   private _fence?: Fence;
@@ -67,9 +65,6 @@ export class Line extends OperableNode {
     this._rect = rect;
     this._vNode = newVNode;
     this._fence = calcFence(newVNode, rectList);
-
-    console.log(this.fence);
-    console.log(textContent(this.vNode));
   }
 
   focusOn(
@@ -109,38 +104,32 @@ export class Line extends OperableNode {
   }
 
   left(
-    { block: prevBlock, offset: prevOffset }: Pos,
+    prevPos: Pos,
     active: Array<ActivePos>,
     offset: number
   ): FeedbackPos | null {
-    if (prevOffset - offset >= 0) {
-      return this.focusOn(
-        { block: prevBlock, offset: prevOffset },
-        prevOffset - offset,
-        active
-      );
+    const finalOffset = prevPos.offset - offset;
+    if (finalOffset >= 0) {
+      return this.focusOn(prevPos, finalOffset, active);
     } else {
       return null;
     }
   }
   right(
-    { block: prevBlock, offset: prevOffset }: Pos,
+    prevPos: Pos,
     active: Array<ActivePos>,
     offset: number
   ): FeedbackPos | null {
-    if (prevOffset + offset >= getFenceLength(this.fence) - 1) return null;
-    return this.focusOn(
-      { block: prevBlock, offset: prevOffset },
-      prevOffset + offset,
-      active
-    );
+    const finalOffset = prevPos.offset + offset;
+    if (finalOffset > getFenceLength(this.fence)) return null;
+    return this.focusOn(prevPos, finalOffset, active);
   }
   up(
-    { block: prevBlock, offset: prevOffset }: Pos,
+    prevPos: Pos,
     active: Array<ActivePos>,
     offset: number
   ): FeedbackPos | null {
-    let curBlock = prevBlock;
+    let curBlock = prevPos.block;
     while (offset--) {
       if (curBlock.prev) {
         curBlock = curBlock.prev;
@@ -149,20 +138,17 @@ export class Line extends OperableNode {
       }
     }
     return curBlock.focusOn(
-      {
-        block: prevBlock,
-        offset: prevOffset,
-      },
-      min(prevOffset, getFenceLength(curBlock.fence) - 1),
+      prevPos,
+      min(prevPos.offset, getFenceLength(curBlock.fence) - 1),
       active
     );
   }
   down(
-    { block: prevBlock, offset: prevOffset }: Pos,
+    prevPos: Pos,
     active: Array<ActivePos>,
     offset: number
   ): FeedbackPos | null {
-    let curBlock = prevBlock;
+    let curBlock = prevPos.block;
     while (offset--) {
       if (curBlock.next) {
         curBlock = curBlock.next;
@@ -171,11 +157,8 @@ export class Line extends OperableNode {
       }
     }
     return curBlock.focusOn(
-      {
-        block: prevBlock,
-        offset: prevOffset,
-      },
-      min(prevOffset, getFenceLength(curBlock.fence) - 1),
+      prevPos,
+      min(prevPos.offset, getFenceLength(curBlock.fence) - 1),
       active
     );
   }
