@@ -1,86 +1,116 @@
-import { Fence, FenceInfo, FenceInfoItem } from 'lib/types';
+import { Fence, FenceInfo } from 'lib/types';
 import { lastItem, panicAt } from 'lib/utils';
 
 export const getFenceLength = (fence: Fence): number => {
   if (fence.length) {
     const { prefixLength, fenceList } = lastItem(fence);
-    return prefixLength + fenceList.length;
+    return prefixLength + fenceList.length - fence.length;
   } else {
     return 0;
   }
 };
 
-// TODO to be optimized by binary-search
 export const getFenceInfoByOffset = (
   fence: Fence,
   offset: number
 ): FenceInfo => {
-  for (let i = 0; i < fence.length; i++) {
-    const curFenceRoot = fence[i];
-    const { fenceList } = curFenceRoot;
+  let left = 0;
+  let right = fence.length - 1;
 
-    if (offset >= fenceList.length - 1 && i !== fence.length - 1) {
-      offset -= fenceList.length - 1;
+  while (left <= right) {
+    const mid = ~~((left + right) / 2);
+    const cur = fence[mid];
+    const start = cur.prefixLength - mid;
+    const end = start + cur.fenceList.length - 1;
+
+    if (offset > end) {
+      left = mid + 1;
+    } else if (offset < start) {
+      right = mid - 1;
     } else {
-      const fenceInfoList: Array<FenceInfoItem> = [];
+      const specificIndex = offset - start;
+      const { fenceList } = cur;
 
       // x x
-      //   x x x
+      //   x x
       //   ^
-      if (i !== 0 && offset === 0) {
-        const {
-          totalChange: curChange,
-          totalLength: curLength,
-          fenceList: curFenceList,
-        } = fence[i - 1];
-        const {
-          totalChange: nextChange,
-          totalLength: nextLength,
-          fenceList: nextFenceList,
-        } = fence[i];
-        const { textOffset, rect } = nextFenceList[offset];
-        fenceInfoList.push(
-          {
-            ancestorIdx: i - 1,
-            totalLength: curLength,
-            totalChange: curChange,
-            prefixChange: curFenceList[curFenceList.length - 1].prefixChange,
-          },
-          {
-            ancestorIdx: i,
-            totalLength: nextLength,
-            totalChange: nextChange,
-            prefixChange: nextFenceList[0].prefixChange,
-          }
-        );
+      //   |
+      if (mid !== 0 && specificIndex === 0) {
+        const prev = lastItem(fence[mid - 1].fenceList);
+        const cur = fenceList[specificIndex];
+        const { rect, textOffset } = cur;
 
         return {
           rect,
           textOffset,
-          fenceInfoList,
+          fenceInfoList: [
+            {
+              ancestorIdx: mid - 1,
+              totalLength: fence[mid - 1].totalLength,
+              totalChange: fence[mid - 1].totalChange,
+              prefixChange: prev.prefixChange,
+            },
+            {
+              ancestorIdx: mid,
+              totalLength: fence[mid].totalLength,
+              totalChange: fence[mid].totalChange,
+              prefixChange: cur.prefixChange,
+            },
+          ],
         };
       }
 
-      // other cases
-      else {
-        const {
-          totalChange: curChange,
-          totalLength: curLength,
-          fenceList: curFenceList,
-        } = fence[i];
-        const { textOffset, rect } = curFenceList[offset];
-
-        fenceInfoList.push({
-          ancestorIdx: i,
-          totalLength: curLength,
-          totalChange: curChange,
-          prefixChange: curFenceList[offset].prefixChange,
-        });
+      // x x
+      //   ^
+      //   |
+      //   x x
+      else if (
+        mid !== fence.length - 1 &&
+        specificIndex === fenceList.length - 1
+      ) {
+        const cur = fenceList[specificIndex];
+        const next = fence[mid + 1].fenceList[0];
+        const { rect, textOffset } = cur;
 
         return {
           rect,
           textOffset,
-          fenceInfoList,
+          fenceInfoList: [
+            {
+              ancestorIdx: mid,
+              totalLength: fence[mid].totalLength,
+              totalChange: fence[mid].totalChange,
+              prefixChange: cur.prefixChange,
+            },
+            {
+              ancestorIdx: mid + 1,
+              totalLength: fence[mid + 1].totalLength,
+              totalChange: fence[mid + 1].totalChange,
+              prefixChange: next.prefixChange,
+            },
+          ],
+        };
+      }
+
+      // x x x
+      //     x x x
+      //   ^
+      //   |
+      else {
+        const cur = fenceList[specificIndex];
+        const { rect, textOffset } = cur;
+
+        return {
+          rect,
+          textOffset,
+          fenceInfoList: [
+            {
+              ancestorIdx: mid,
+              totalLength: fence[mid].totalLength,
+              totalChange: fence[mid].totalChange,
+              prefixChange: cur.prefixChange,
+            },
+          ],
         };
       }
     }
