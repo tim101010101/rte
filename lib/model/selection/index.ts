@@ -3,16 +3,6 @@ import {
   ActivePos,
   Pos,
   EventInteroperableObject,
-  VirtualNode,
-  EventListener,
-  EventName,
-  InnerEventListener,
-  Point,
-  VNodeEventListener,
-  VNodeKeyboardEventName,
-  VNodeMouseEventName,
-  VNodeMouseEvent,
-  VNodeKeyboardEvent,
   ClientRect,
   SyntaxNode,
 } from 'lib/types';
@@ -20,7 +10,6 @@ import { EventBus } from 'lib/model';
 import { Renderer } from 'lib/view';
 import { InnerEventName, VNodeEventName } from 'lib/static';
 import { panicAt } from 'lib/utils';
-import { toUnicode } from 'punycode';
 
 const { KEYDOWN } = VNodeEventName;
 const { FOCUS_ON, UNFOCUS } = InnerEventName;
@@ -41,28 +30,50 @@ export class Selection extends EventInteroperableObject {
     this.active = [];
   }
 
-  private setPos({ block, offset }: Pos) {
-    const { rect } = block.getFenceInfo(offset);
-    const { height, clientX, clientY } = rect;
-
-    this.renderer.renderCursor(
-      { clientX, clientY, height, width: 2 },
-      this.rect
-    );
-    this.rect = rect;
+  private setPos(rect: ClientRect | null) {
+    if (rect) {
+      const { height, clientX, clientY } = rect;
+      this.renderer.renderCursor(
+        { clientX, clientY, height, width: 2 },
+        this.rect
+      );
+      this.rect = rect;
+    } else if (this.rect) {
+      this.renderer.clearCursor(this.rect);
+      this.rect = null;
+    }
   }
 
   initEventListener() {
     this.addEventListener(FOCUS_ON, ({ block, offset }) => {
       this.focusOn(block, offset);
     });
+    this.addEventListener(KEYDOWN, e => {
+      switch (e.key) {
+        case 'ArrowUp':
+          this.up();
+          break;
+        case 'ArrowDown':
+          this.down();
+          break;
+        case 'ArrowLeft':
+          this.left();
+          break;
+        case 'ArrowRight':
+          this.right();
+          break;
+
+        default:
+          break;
+      }
+    });
   }
 
   focusOn(block: Operable, offset: number) {
-    const { pos, active } = block.focusOn(this.pos, offset, this.active);
+    const { rect, pos, active } = block.focusOn(this.pos, offset, this.active);
 
     // update position of cursor
-    this.setPos(pos);
+    this.setPos(rect);
 
     // update the pos and active
     this.pos = pos;
@@ -73,7 +84,7 @@ export class Selection extends EventInteroperableObject {
       this.renderer.clearCursor(this.rect);
       this.rect = null;
 
-      const { pos, active } = this.pos.block.unFocus();
+      const { pos, active } = this.pos.block.unFocus(this.pos, this.active);
       this.pos = pos;
       this.active = active;
     }
@@ -83,8 +94,8 @@ export class Selection extends EventInteroperableObject {
     if (!this.pos) return;
     const nextPos = this.pos.block.left(this.pos, this.active, offset);
     if (nextPos) {
-      const { pos, active } = nextPos;
-      this.setPos(pos);
+      const { rect, pos, active } = nextPos;
+      this.setPos(rect);
 
       this.pos = pos;
       this.active = active;
@@ -94,8 +105,8 @@ export class Selection extends EventInteroperableObject {
     if (!this.pos) return;
     const nextPos = this.pos.block.right(this.pos, this.active, offset);
     if (nextPos) {
-      const { pos, active } = nextPos;
-      this.setPos(pos);
+      const { rect, pos, active } = nextPos;
+      this.setPos(rect);
 
       this.pos = pos;
       this.active = active;
@@ -105,8 +116,8 @@ export class Selection extends EventInteroperableObject {
     if (!this.pos) return;
     const nextPos = this.pos.block.up(this.pos, this.active, offset);
     if (nextPos) {
-      const { pos, active } = nextPos;
-      this.setPos(pos);
+      const { rect, pos, active } = nextPos;
+      this.setPos(rect);
 
       this.pos = pos;
       this.active = active;
@@ -116,8 +127,8 @@ export class Selection extends EventInteroperableObject {
     if (!this.pos) return;
     const nextPos = this.pos.block.down(this.pos, this.active, offset);
     if (nextPos) {
-      const { pos, active } = nextPos;
-      this.setPos(pos);
+      const { rect, pos, active } = nextPos;
+      this.setPos(rect);
 
       this.pos = pos;
       this.active = active;
@@ -131,8 +142,10 @@ export class Selection extends EventInteroperableObject {
     this.active = active;
     this.pos = pos;
 
-    const { block, offset } = pos;
-    this.focusOn(block, offset);
+    if (pos) {
+      const { block, offset } = pos;
+      this.focusOn(block, offset);
+    }
   }
 
   updateBlockContent(char: string, parser: (src: string) => SyntaxNode) {
@@ -148,8 +161,10 @@ export class Selection extends EventInteroperableObject {
     this.pos = pos;
 
     // move cursor right
-    const { block, offset } = pos;
-    this.focusOn(block, offset);
+    if (pos) {
+      const { block, offset } = pos;
+      this.focusOn(block, offset);
+    }
   }
 
   delete(parser: (src: string) => SyntaxNode) {
@@ -163,7 +178,9 @@ export class Selection extends EventInteroperableObject {
     this.active = active;
     this.pos = pos;
 
-    const { block, offset } = pos;
-    this.focusOn(block, offset);
+    if (pos) {
+      const { block, offset } = pos;
+      this.focusOn(block, offset);
+    }
   }
 }
