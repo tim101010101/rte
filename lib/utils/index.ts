@@ -7,3 +7,4 @@ export * from './typeJudgument';
 export * from './string';
 export * from './canvas';
 export * from './funtional';
+export * from './strategy';

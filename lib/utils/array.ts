@@ -5,6 +5,36 @@ export const isEmptyArray = <T extends Array<any>>(arr: T): boolean => {
   return !arr.length;
 };
 
+export const nextItem = <T>(
+  arr: Array<T>,
+  idx: number,
+  skip: (item: T) => boolean = (item: T) => !item
+): T => {
+  let cur = idx + 1;
+  while (skip(arr[cur])) {
+    cur++;
+    if (cur >= arr.length - 1) {
+      return panicAt(`out of bound: ${cur}`);
+    }
+  }
+  return arr[cur];
+};
+
+export const prevItem = <T>(
+  arr: Array<T>,
+  idx: number,
+  skip: (item: T) => boolean = (item: T) => !item
+): T => {
+  let cur = idx - 1;
+  while (skip(arr[cur])) {
+    cur--;
+    if (cur < 0) {
+      return panicAt(`out of bound: ${cur}`);
+    }
+  }
+  return arr[cur];
+};
+
 export const firstItem = <T>(arr: Array<T>): T => {
   if (!arr.length) return panicAt('try to get first item in a empty array');
   return arr[0];
