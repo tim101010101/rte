@@ -6,6 +6,7 @@ import {
   Operable,
   Pos,
 } from 'lib/types';
+import { getFenceInfo } from './getFenceInfo';
 
 const initPatchBuffer = () => {
   const buffer = new Map<Operable, Array<number>>();
@@ -40,7 +41,7 @@ const initPatchBuffer = () => {
 
 const diffFence = (
   prevPos: Pos | null,
-  { block: curBlock, offset: curOffset }: Pos,
+  curPos: Pos,
   actived: Array<ActivePos>
 ): {
   finalOffset: number;
@@ -51,13 +52,15 @@ const diffFence = (
   const finalActive: Array<ActivePos> = [];
   const toBeDeactived: Array<ActivePos> = [];
   const toBeActived: Array<ActivePos> = [];
-  let finalOffset = curOffset;
 
-  const { fenceInfoList: curFenceInfo } = curBlock.getFenceInfo(curOffset);
+  const { block: curBlock, offset: curOffset } = curPos;
+  const { fenceInfoList: curFenceInfo } = getFenceInfo(curPos, prevPos);
+
+  let finalOffset = curOffset;
 
   if (prevPos) {
     const { block: prevBlock, offset: prevOffset } = prevPos;
-    const { fenceInfoList: prevFenceInfo } = prevBlock.getFenceInfo(prevOffset);
+    const { fenceInfoList: prevFenceInfo } = getFenceInfo(prevPos, null);
 
     prevFenceInfo.forEach(({ ancestorIdx: prevIdx, prefixChange }) => {
       const finder = ({ ancestorIdx: curIdx }: FenceInfoItem) => {
@@ -69,8 +72,6 @@ const diffFence = (
         if (curBlock === prevBlock && curOffset >= prevOffset) {
           finalOffset -= prefixChange;
         }
-      } else {
-        finalActive.push({ block: prevBlock, ancestorIdx: prevIdx });
       }
     });
   }
@@ -85,9 +86,10 @@ const diffFence = (
 
     if (!actived.find(finder)) {
       toBeActived.push({ block: curBlock, ancestorIdx: curIdx });
-      finalActive.push({ block: curBlock, ancestorIdx: curIdx });
       finalOffset += prefixChange;
     }
+
+    finalActive.push({ block: curBlock, ancestorIdx: curIdx });
   });
 
   return {
@@ -98,7 +100,7 @@ const diffFence = (
   };
 };
 
-export const tryActiveAndCancelActive = (
+export const tryActiveAndDeactive = (
   prevPos: Pos | null,
   curPos: Pos | null,
   prevActive: Array<ActivePos>
@@ -122,8 +124,12 @@ export const tryActiveAndCancelActive = (
     });
     flushBuffer(true);
 
+    const finalPos = { block: curPos.block, offset: finalOffset };
+    const { rect } = getFenceInfo(finalPos, null);
+
     return {
-      pos: { block: curPos.block, offset: finalOffset },
+      rect,
+      pos: finalPos,
       active: finalActive,
     };
   } else {
@@ -133,6 +139,7 @@ export const tryActiveAndCancelActive = (
     flushBuffer(false);
 
     return {
+      rect: null,
       pos: null,
       active: [],
     };

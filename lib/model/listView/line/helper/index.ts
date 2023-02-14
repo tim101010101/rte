@@ -1,3 +1,3 @@
 export * from './calcFence';
-export * from './getFenceInfoByOffset';
-export * from './tryActiveAndCancelActive';
+export * from './tryActiveAndDeactive';
+export * from './getFenceInfo';
