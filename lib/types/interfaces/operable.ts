@@ -15,7 +15,6 @@ export interface Operable extends ListNode {
   vNode: VirtualNode;
   rect: ClientRect;
 
-  getFenceInfo(offset: number): FenceInfo;
   patch(newVNode: VirtualNode): void;
 
   focusOn(
@@ -23,7 +22,7 @@ export interface Operable extends ListNode {
     curOffset: number,
     active: Array<ActivePos>
   ): FeedbackPos;
-  unFocus(): { pos: Pos | null; active: Array<ActivePos> };
+  unFocus(prevPos: Pos, curActive: Array<ActivePos>): FeedbackPos;
 
   left(pos: Pos, active: Array<ActivePos>, offset: number): FeedbackPos | null;
   right(pos: Pos, active: Array<ActivePos>, offset: number): FeedbackPos | null;

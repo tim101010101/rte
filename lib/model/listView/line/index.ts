@@ -2,7 +2,6 @@ import { isTextNode, EventBus } from 'lib/model';
 import {
   Fence,
   SyntaxNode,
-  FenceInfo,
   VirtualNode,
   Pos,
   ActivePos,
@@ -12,12 +11,7 @@ import {
 } from 'lib/types';
 import { min, panicAt } from 'lib/utils';
 import { Renderer } from 'lib/view';
-import {
-  calcFence,
-  tryActiveAndCancelActive,
-  getFenceInfoByOffset,
-  getFenceLength,
-} from './helper';
+import { calcFence, tryActiveAndDeactive, getFenceLength } from './helper';
 
 export class Line extends OperableNode {
   private _fence?: Fence;
@@ -47,10 +41,6 @@ export class Line extends OperableNode {
     return this._fence;
   }
 
-  getFenceInfo(offset: number): FenceInfo {
-    return getFenceInfoByOffset(this.fence, offset);
-  }
-
   patch(newVNode: VirtualNode): void {
     if (isTextNode(newVNode)) {
       return panicAt('try to patch a single textNode');
@@ -72,14 +62,14 @@ export class Line extends OperableNode {
     curOffset: number,
     curActive: Array<ActivePos>
   ): FeedbackPos {
-    return tryActiveAndCancelActive(
+    return tryActiveAndDeactive(
       prevPos,
       { block: this, offset: curOffset },
       curActive
     );
   }
   unFocus(prevPos: Pos, curActive: Array<ActivePos>): FeedbackPos {
-    return tryActiveAndCancelActive(prevPos, null, curActive);
+    return tryActiveAndDeactive(prevPos, null, curActive);
   }
 
   newLine(offset: number, parser: (src: string) => SyntaxNode): FeedbackPos {
