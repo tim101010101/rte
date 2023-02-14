@@ -1,4 +1,4 @@
-import { s, sl, t } from 'lib/model';
+import { s, t } from 'lib/model';
 import { NodeType } from 'lib/static';
 import { FenceLeaf, FenceRoot, ClientRect, VirtualNode } from 'lib/types';
 import { get, has } from 'lib/utils';
@@ -6,16 +6,6 @@ import { calcFence } from '../line/helper/calcFence';
 
 export const sa = (type: NodeType, children: Array<VirtualNode>) => {
   const n = s(type, children);
-  n.isActive = true;
-  return n;
-};
-
-export const sla = (
-  type: NodeType,
-  content: Array<VirtualNode>,
-  children: Array<VirtualNode>
-) => {
-  const n = sl(type, content, children);
   n.isActive = true;
   return n;
 };
@@ -39,6 +29,17 @@ export const mockFontInfo = {
 export const anyText = (text: string) => {
   const fontInfo = { ...mockFontInfo };
   return t(fontInfo, text);
+};
+
+export const emptyNode = (isActive = false) => {
+  const fontInfo = { ...mockFontInfo };
+  return isActive
+    ? sa(NodeType.HEADING_MARKER, [
+        t(fontInfo, '~', { beforeActived: { show: false } }),
+      ])
+    : s(NodeType.HEADING_MARKER, [
+        t(fontInfo, '~', { beforeActived: { show: false } }),
+      ]);
 };
 
 export const anyBold = (text: string, isActive = false, marker = '**') => {
@@ -84,24 +85,18 @@ export const anyHeading = (
   const marker = '#'.repeat(level) + ' ';
 
   return isActive
-    ? sla(
-        NodeType.HEADING,
-        [
-          sa(NodeType.HEADING_MARKER, [
-            t(fontInfo, marker, { beforeActived: { show: false } }),
-          ]),
-        ],
-        children
-      )
-    : sl(
-        NodeType.HEADING,
-        [
-          s(NodeType.HEADING_MARKER, [
-            t(fontInfo, marker, { beforeActived: { show: false } }),
-          ]),
-        ],
-        children
-      );
+    ? sa(NodeType.HEADING, [
+        sa(NodeType.HEADING_MARKER, [
+          t(fontInfo, marker, { beforeActived: { show: false } }),
+        ]),
+        ...children,
+      ])
+    : s(NodeType.HEADING, [
+        s(NodeType.HEADING_MARKER, [
+          t(fontInfo, marker, { beforeActived: { show: false } }),
+        ]),
+        ...children,
+      ]);
 };
 
 export function getFenceAndExtract<T extends keyof FenceLeaf>(

@@ -1,12 +1,7 @@
 import { NodeType } from 'lib/static';
-import {
-  SyntaxNode,
-  SyntaxNodeWithLayerActivation,
-  TextNode,
-  VirtualNode,
-} from 'lib/types';
+import { SyntaxNode, TextNode, VirtualNode } from 'lib/types';
 import { get } from 'lib/utils';
-import { s, sl, t } from '../h';
+import { s, t } from '../h';
 import { walkTextNodeWithMoreInformation } from '../utils';
 
 const mockFontInfo = {
@@ -24,7 +19,7 @@ describe('utils', () => {
     ) => {
       const res: Array<{
         textNode: TextNode;
-        parent: SyntaxNode | SyntaxNodeWithLayerActivation;
+        parent: SyntaxNode;
         i: number;
       }> = [];
       walkTextNodeWithMoreInformation(vNode, (textNode, parent, _, i) => {
@@ -82,21 +77,19 @@ describe('utils', () => {
       describe('syntax node with layer activation', () => {
         // # __a__
         test('# a => [0 0]', () => {
-          const vNode = sl(
-            NodeType.HEADING,
-            [t(mockFontInfo, '# ')],
-            [s(NodeType.BOLD, [t(mockFontInfo, 'a')])]
-          );
+          const vNode = s(NodeType.HEADING, [
+            s(NodeType.HEADING_MARKER, [t(mockFontInfo, '# ')]),
+            s(NodeType.BOLD, [t(mockFontInfo, 'a')]),
+          ]);
           expect(walkTextNodeAndExtract(vNode, 'i')).toStrictEqual([0, 0]);
         });
 
         // # __ab__
         test('# ab => [0 0 1]', () => {
-          const vNode = sl(
-            NodeType.HEADING,
-            [t(mockFontInfo, '# ')],
-            [s(NodeType.BOLD, [t(mockFontInfo, 'a'), t(mockFontInfo, 'b')])]
-          );
+          const vNode = s(NodeType.HEADING, [
+            s(NodeType.HEADING_MARKER, [t(mockFontInfo, '# ')]),
+            s(NodeType.BOLD, [t(mockFontInfo, 'a'), t(mockFontInfo, 'b')]),
+          ]);
           expect(walkTextNodeAndExtract(vNode, 'i')).toStrictEqual([0, 0, 1]);
         });
       });

@@ -3,11 +3,7 @@ import { NodeType } from 'lib/static';
 
 const { BOLD, ITALIC } = NodeType;
 
-export const inline: SchemaConfig['inline'] = (
-  text,
-  syntax,
-  SyntaxNodeWithLayerActivation
-) => {
+export const inline: SchemaConfig['inline'] = (text, syntax) => {
   return {
     bold: {
       reg: /(?<prefix>\*\*|__)(?=\S)(?<content>[\s\S]+?)(\\*)\k<prefix>(?!(\*|_))/,

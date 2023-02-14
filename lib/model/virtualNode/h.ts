@@ -8,7 +8,6 @@ import {
   VirtualNodeBehavior,
   VirtualNode,
   FontInfo,
-  SyntaxNodeWithLayerActivation,
 } from 'lib/types';
 
 export function t(font: FontInfo, text: string): TextNode;
@@ -87,56 +86,6 @@ export function s(
   return {
     type,
     isActive: false,
-    children,
-
-    style,
-    events,
-    meta,
-  };
-}
-
-export function sl(
-  type: NodeType,
-  content: Array<VirtualNode>
-): SyntaxNodeWithLayerActivation;
-export function sl(
-  type: NodeType,
-  content: Array<VirtualNode>,
-  children: Array<VirtualNode>
-): SyntaxNodeWithLayerActivation;
-export function sl(
-  type: NodeType,
-  content: Array<VirtualNode>,
-  children: Array<VirtualNode>,
-  style: VirtualNodeStyle
-): SyntaxNodeWithLayerActivation;
-export function sl(
-  type: NodeType,
-  content: Array<VirtualNode>,
-  children: Array<VirtualNode>,
-  style: VirtualNodeStyle,
-  events: VirtualNodeEvents
-): SyntaxNodeWithLayerActivation;
-export function sl(
-  type: NodeType,
-  content: Array<VirtualNode>,
-  children: Array<VirtualNode>,
-  style: VirtualNodeStyle,
-  events: VirtualNodeEvents,
-  meta: VirtualNodeMetaData
-): SyntaxNodeWithLayerActivation;
-export function sl(
-  type: NodeType,
-  content: Array<VirtualNode> = [],
-  children: Array<VirtualNode> = [],
-  style: VirtualNodeStyle = {},
-  events: VirtualNodeEvents = [],
-  meta: VirtualNodeMetaData = {}
-): SyntaxNodeWithLayerActivation {
-  return {
-    type,
-    isActive: false,
-    content,
     children,
 
     style,

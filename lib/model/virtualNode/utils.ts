@@ -4,7 +4,6 @@ import {
   Point,
   Rect,
   SyntaxNode,
-  SyntaxNodeWithLayerActivation,
   TextNode,
   VirtualNode,
 } from 'lib/types';
@@ -25,11 +24,6 @@ export const isMarkerNode = (vNode: VirtualNode): vNode is SyntaxNode =>
 
 export const isTextNode = (vNode: VirtualNode): vNode is TextNode =>
   vNode.type === PLAIN_TEXT;
-
-export const isSyntaxNodeWithLayerActivation = (
-  vNode: VirtualNode
-): vNode is SyntaxNodeWithLayerActivation =>
-  vNode.type !== PLAIN_TEXT && has(vNode, 'content');
 
 export const isHitRect = (pos: Point, rect: Rect | ClientRect) => {
   const [x, y] = pos;
@@ -52,26 +46,13 @@ export function getAncestorByIdx(
     return panicAt('try to get ancestor from a single textNode');
   }
 
-  const getAncestor = (
-    vNode: SyntaxNode | SyntaxNodeWithLayerActivation,
-    idx: number
-  ) => {
+  const getAncestor = (vNode: SyntaxNode, idx: number) => {
     const { children } = vNode;
     const childrenLength = children.length;
 
-    if (isSyntaxNodeWithLayerActivation(vNode)) {
-      const { content } = vNode;
-      const contentLength = content.length;
-      return idx < 0 || idx >= contentLength + childrenLength
-        ? panicAt(`index of ancestor is out of bound: ${idx}`)
-        : idx < contentLength
-        ? content[idx]
-        : children[idx - contentLength];
-    } else {
-      return idx >= childrenLength
-        ? panicAt(`index of ancestor is out of bound: ${idx}`)
-        : children[idx];
-    }
+    return idx >= childrenLength
+      ? panicAt(`index of ancestor is out of bound: ${idx}`)
+      : children[idx];
   };
 
   if (indexes.length === 1) {
@@ -81,55 +62,45 @@ export function getAncestorByIdx(
   }
 }
 
-export const walkTextNode = (
+export function walkTextNode(
   vNode: VirtualNode,
   callback: (
     textNode: TextNode,
-    parent: SyntaxNode | SyntaxNodeWithLayerActivation,
-    ancestor: VirtualNode
+    i: number,
+    parent: SyntaxNode | null,
+    ancestor: VirtualNode | null
   ) => void
-) => {
+): void {
+  let idx = 0;
   const dfs = (
     cur: VirtualNode,
-    parent: SyntaxNode | SyntaxNodeWithLayerActivation | null,
+    parent: SyntaxNode | null,
     ancestor: VirtualNode | null
   ) => {
     if (!cur) return;
 
     if (isTextNode(cur)) {
       if (parent && ancestor) {
-        callback(cur, parent, ancestor);
+        callback(cur, idx, parent, ancestor);
       } else {
-        panicAt('try to manipulate a naked text node');
+        callback(cur, idx, null, null);
       }
     } else {
       const { children } = cur;
-      if (isSyntaxNodeWithLayerActivation(cur)) {
-        const { content } = cur;
-        let i = 0;
-        content.forEach(child => {
-          dfs(child, cur, ancestor || child);
-          i++;
-        });
-        children.forEach((child, j) => {
-          dfs(child, cur, ancestor || child);
-        });
-      } else {
-        children.forEach((child, i) => {
-          dfs(child, cur, ancestor || child);
-        });
-      }
+      children.forEach((child, i) => {
+        dfs(child, cur, ancestor || child);
+      });
     }
   };
 
   dfs(vNode, null, null);
-};
+}
 
 export const walkTextNodeWithMoreInformation = (
   vNode: VirtualNode,
   callback: (
     textNode: TextNode,
-    parent: SyntaxNode | SyntaxNodeWithLayerActivation,
+    parent: SyntaxNode,
     ancestor: VirtualNode,
     idxInAncestor: number,
     juncFlag: -1 | 0 | 1
@@ -140,7 +111,7 @@ export const walkTextNodeWithMoreInformation = (
 
   const dfs = (
     cur: VirtualNode,
-    parent: SyntaxNode | SyntaxNodeWithLayerActivation | null,
+    parent: SyntaxNode | null,
     ancestor: VirtualNode | null,
     juncFlag: -1 | 0 | 1
   ) => {
@@ -160,14 +131,7 @@ export const walkTextNodeWithMoreInformation = (
       }
     } else {
       const { children } = cur;
-      if (isSyntaxNodeWithLayerActivation(cur)) {
-        cur.content.forEach(child => dfs(child, cur, ancestor || child, -1));
-        children.forEach((child, j) => {
-          dfs(child, cur, ancestor || child, j === 0 ? 0 : 1);
-        });
-      } else {
-        children.forEach(child => dfs(child, cur, ancestor || child, 1));
-      }
+      children.forEach(child => dfs(child, cur, ancestor || child, 1));
     }
   };
 
@@ -182,19 +146,16 @@ export const textContent = (vNode: VirtualNode): string => {
 
 export const deepCloneVNode = <T extends VirtualNode>(
   vNode: T,
-  callback?: (vNode: VirtualNode) => void
+  callback?: (vNode: VirtualNode, ancestorIdx: number) => VirtualNode
 ): T => {
-  if (!vNode) return vNode;
-
-  const dfs = (vNode: T) => {
+  const dfs = (vNode: VirtualNode, ancestorIdx: number) => {
     const newVNode = entries(vNode).reduce((newVNode, [k, v]) => {
       switch (k) {
-        case 'content':
         case 'children':
           set(
             newVNode,
             k,
-            (v as Array<VirtualNode>).map(sub => deepCloneVNode(sub, callback))
+            (v as Array<VirtualNode>).map(sub => dfs(sub, ancestorIdx))
           );
           break;
         default:
@@ -205,19 +166,29 @@ export const deepCloneVNode = <T extends VirtualNode>(
       return newVNode;
     }, {} as VirtualNode);
 
-    callback && callback(newVNode);
-
-    return newVNode as T;
+    return callback ? callback(newVNode, ancestorIdx) : newVNode;
   };
 
-  return dfs(vNode);
+  const newRoot = { ...vNode };
+  if (isTextNode(vNode)) {
+    return newRoot;
+  } else {
+    const { children } = vNode;
+    set(
+      newRoot,
+      'children',
+      children.map((cur, i) => dfs(cur, i))
+    );
+  }
+
+  return newRoot;
 };
 
 export const walkSubtreeWithEffect = (
   vNode: VirtualNode,
   ancestorIdx: number,
   effectFn: (vNode: VirtualNode) => void
-): SyntaxNode | SyntaxNodeWithLayerActivation => {
+): SyntaxNode => {
   if (isTextNode(vNode)) {
     return panicAt('try to walk a single textNode');
   }
@@ -227,9 +198,6 @@ export const walkSubtreeWithEffect = (
 
     effectFn(vNode);
 
-    if (isSyntaxNodeWithLayerActivation(cur)) {
-      cur.content.forEach(dfs);
-    }
     cur.children.forEach(dfs);
   };
 

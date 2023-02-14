@@ -1,5 +1,5 @@
 import { NodeType } from 'lib/static';
-import { sl, t } from 'lib/model';
+import { s, t } from 'lib/model';
 import { DeepPartial, VNodeEventDetail, Noop } from 'lib/types';
 
 type BehaviorItem = {
@@ -50,11 +50,8 @@ interface BasicSyntaxNode extends BasicNode {
   children: Array<VirtualNode>;
 }
 export interface SyntaxNode extends BasicSyntaxNode {}
-export interface SyntaxNodeWithLayerActivation extends BasicSyntaxNode {
-  content: Array<VirtualNode>;
-}
 
-export type VirtualNode = SyntaxNode | SyntaxNodeWithLayerActivation | TextNode;
+export type VirtualNode = SyntaxNode | TextNode;
 
 export type TextFunction = typeof t;
-export type SyntaxFunction = typeof sl;
+export type SyntaxFunction = typeof s;

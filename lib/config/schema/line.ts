@@ -1,14 +1,9 @@
 import { SchemaConfig } from 'lib/types';
 import { NodeType } from 'lib/static';
-import { t } from 'lib/model';
 
 const { DIVIDE, HEADING, HEADING_MARKER } = NodeType;
 
-export const line: SchemaConfig['line'] = (
-  text,
-  syntax,
-  SyntaxNodeWithLayerActivation
-) => {
+export const line: SchemaConfig['line'] = (text, syntax) => {
   return {
     hr: {
       reg: /^(?<content>\*{3,}|-{3,}|_{3,})$/,
@@ -38,7 +33,7 @@ export const line: SchemaConfig['line'] = (
             break;
         }
 
-        return SyntaxNodeWithLayerActivation(
+        return syntax(
           HEADING,
           [
             syntax(HEADING_MARKER, [
@@ -48,8 +43,8 @@ export const line: SchemaConfig['line'] = (
                 { beforeActived: { show: false } }
               ),
             ]),
+            ...parseInlineWithRewiteFont(content, { size: fontSize }),
           ],
-          parseInlineWithRewiteFont(content, { size: fontSize }),
           {},
           [],
           { level }

@@ -3,11 +3,7 @@ import { NodeType } from 'lib/static';
 
 const { LIST_BLOCK, LIST_ITEM } = NodeType;
 
-export const block: SchemaConfig['block'] = (
-  text,
-  syntax,
-  syntaxWithLayerActivation
-) => {
+export const block: SchemaConfig['block'] = (text, syntax) => {
   return {
     list: {
       reg: /^(?<indent>(\t| {4})*)(?<prefix>((\d\. )|[*\-+] ){1})(?<content>[\s\S]+)$/,

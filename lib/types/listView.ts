@@ -1,4 +1,4 @@
-import { Operable, VirtualNode } from 'lib/types';
+import { Operable } from 'lib/types';
 
 export interface Pos {
   block: Operable;
@@ -8,11 +8,6 @@ export interface Pos {
 export interface ActivePos {
   block: Operable;
   ancestorIdx: number;
-}
-
-export interface FeedbackPos {
-  pos: Pos;
-  active: Array<ActivePos>;
 }
 
 export interface Rect {
@@ -28,6 +23,12 @@ export interface ClientRect {
   clientY: number;
 }
 
+export interface FeedbackPos {
+  rect: ClientRect | null;
+  pos: Pos | null;
+  active: Array<ActivePos>;
+}
+
 export interface FenceLeaf {
   rect: ClientRect;
   prefixChange: number;
@@ -35,24 +36,26 @@ export interface FenceLeaf {
 }
 
 export interface FenceRoot {
-  totalLength: number;
-  totalChange: number;
   fenceList: Array<FenceLeaf>;
 
   prefixLength: number;
+
+  totalLength: number;
+  totalChange: number;
 }
 
 export type Fence = Array<FenceRoot>;
 
-export interface FenceInfo {
+export interface FenceInfoItem {
+  ancestorIdx: number;
   totalLength: number;
   totalChange: number;
-  fenceList: Array<FenceLeaf>;
-
-  prefixLength: number;
-
-  vNodes: Array<number>;
-  rect: ClientRect;
   prefixChange: number;
+}
+
+export interface FenceInfo {
+  rect: ClientRect;
   textOffset: number;
+
+  fenceInfoList: Array<FenceInfoItem>;
 }

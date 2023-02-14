@@ -1,4 +1,4 @@
-import { s, sl, t } from 'lib/model';
+import { s, t } from 'lib/model';
 import {
   EditorConfig,
   ExportedTextFunction,
@@ -46,8 +46,8 @@ export class Schema {
       );
     };
 
-    this.inline = inline(exportedText, s, sl);
-    this.line = line(exportedText, s, sl);
+    this.inline = inline(exportedText, s);
+    this.line = line(exportedText, s);
   }
 
   parse(src: string): SyntaxNode {
