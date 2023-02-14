@@ -53,7 +53,7 @@ export class Renderer {
   }
 
   //! ERROR bug dev dairy 2023-1-15
-  private drawLineWithVNode(vNode: VirtualNode) {
+  private drawLineWithVNode(vNode: VirtualNode, rect?: ClientRect) {
     const rectList: Array<ClientRect> = [];
     const lineRect = this.pagePainter.drawLine(
       ({ clientX, clientY, maxWidth }) => {
@@ -62,10 +62,15 @@ export class Renderer {
         let lineHeight = 0;
         let totalLength = 0;
 
-        walkTextNode(vNode, (textNode, parent) => {
+        walkTextNode(vNode, (textNode, _, parent) => {
           const { text, font, behavior } = textNode;
           const fontSize = font.size;
-          const renderInfo = getRenderInfo(parent.isActive, font, behavior);
+          // TODO maybe bug here
+          const renderInfo = getRenderInfo(
+            parent ? parent.isActive : false,
+            font,
+            behavior
+          );
 
           if (renderInfo) {
             lineHeight = max(fontSize, lineHeight);
@@ -89,8 +94,14 @@ export class Renderer {
           height: lineHeight,
         });
 
-        return lineHeight;
-      }
+        return {
+          clientX,
+          clientY,
+          width: maxWidth,
+          height: lineHeight,
+        };
+      },
+      rect
     );
 
     return {
@@ -106,17 +117,13 @@ export class Renderer {
     return res;
   }
 
-  patch(
-    newVNode: VirtualNode,
-    oldVNode: VirtualNode | null = null,
-    oldRect: ClientRect | null = null
-  ) {
+  patch(newVNode: VirtualNode, oldVNode?: VirtualNode, oldRect?: ClientRect) {
     if (oldRect && oldVNode && this.lines.has(oldRect)) {
       this.pagePainter.clearRect(oldRect);
       this.lines.delete(oldRect);
     }
 
-    const { lineRect, rectList } = this.drawLineWithVNode(newVNode);
+    const { lineRect, rectList } = this.drawLineWithVNode(newVNode, oldRect);
 
     // rectList.forEach(rect => this.renderRect(rect, { strokeStyle: 'red' }));
 
@@ -135,8 +142,11 @@ export class Renderer {
 
   renderCursor(rect: ClientRect, oldRect?: ClientRect | null) {
     if (oldRect) {
-      this.cursorPainter.clearRect(oldRect);
+      this.clearCursor(oldRect);
     }
     this.cursorPainter.drawRect(rect, { fillStyle: 'green' }, true);
+  }
+  clearCursor(rect: ClientRect) {
+    this.cursorPainter.clearRect(rect);
   }
 }

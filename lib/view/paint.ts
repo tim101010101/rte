@@ -25,7 +25,7 @@ type DrawContentFunction = ({
   clientX,
   clientY,
   maxWidth,
-}: ClientPos & { maxWidth: number }) => number;
+}: ClientPos & { maxWidth: number }) => ClientRect;
 
 const initCanvas2D = (container: HTMLElement, config: EditorConfig) => {
   const [canvas, ctx] = createCanvasAndContext('2d');
@@ -164,16 +164,15 @@ export class Paint {
     return c;
   }
 
-  drawLine(drawContent: DrawContentFunction): ClientRect {
+  drawLine(drawContent: DrawContentFunction, rect?: ClientRect): ClientRect {
     const { width } = this.editableRect;
-    const lineHeight = drawContent({ ...this.startPos, maxWidth: width });
-    const lineRect = {
-      ...this.startPos,
-      width: width,
-      height: lineHeight,
-    };
+    const lineRect = drawContent(
+      rect
+        ? { clientX: rect.clientX, clientY: rect.clientY, maxWidth: width }
+        : { ...this.startPos, maxWidth: width }
+    );
 
-    this.newLine(lineHeight);
+    rect || this.newLine(lineRect.height);
 
     return lineRect;
   }
