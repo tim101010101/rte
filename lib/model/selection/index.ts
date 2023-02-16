@@ -5,10 +5,16 @@ import {
   EventInteroperableObject,
   ClientRect,
   SyntaxNode,
+  VirtualNode,
 } from 'lib/types';
 import { EventBus } from 'lib/model';
 import { Renderer } from 'lib/view';
-import { InnerEventName, VNodeEventName } from 'lib/static';
+import {
+  InnerEventName,
+  VNodeEventName,
+  ControlKey,
+  ShowableKey,
+} from 'lib/static';
 import { panicAt } from 'lib/utils';
 
 const { KEYDOWN } = VNodeEventName;
@@ -20,14 +26,20 @@ export class Selection extends EventInteroperableObject {
   private renderer: Renderer;
   private pos: Pos | null;
   private active: Array<ActivePos>;
+  private parser: (src: string) => SyntaxNode;
 
-  constructor(renderer: Renderer, eventBus: EventBus) {
+  constructor(
+    renderer: Renderer,
+    eventBus: EventBus,
+    parser: (src: string) => SyntaxNode
+  ) {
     super(eventBus);
 
     this.renderer = renderer;
     this.rect = null;
     this.pos = null;
     this.active = [];
+    this.parser = parser;
   }
 
   private setPos(rect: ClientRect | null) {
@@ -50,17 +62,26 @@ export class Selection extends EventInteroperableObject {
     });
     this.addEventListener(KEYDOWN, e => {
       switch (e.key) {
-        case 'ArrowUp':
+        case ControlKey.ARROW_UP:
           this.up();
           break;
-        case 'ArrowDown':
+        case ControlKey.ARROW_DOWN:
           this.down();
           break;
-        case 'ArrowLeft':
+        case ControlKey.ARROW_LEFT:
           this.left();
           break;
-        case 'ArrowRight':
+        case ControlKey.ARROW_RIGHT:
           this.right();
+          break;
+
+        case ControlKey.BACKSPACE:
+          this.delete(this.parser);
+          break;
+
+        case 'a':
+        case '*':
+          this.updateBlockContent(e.key, this.parser);
           break;
 
         default:
@@ -154,7 +175,6 @@ export class Selection extends EventInteroperableObject {
     const { pos, active } = this.pos.block.update(
       char,
       this.pos.offset,
-      this.active,
       parser
     );
     this.active = active;
@@ -170,11 +190,7 @@ export class Selection extends EventInteroperableObject {
   delete(parser: (src: string) => SyntaxNode) {
     if (!this.pos) return;
 
-    const { pos, active } = this.pos.block.delete(
-      this.pos.offset,
-      this.active,
-      parser
-    );
+    const { pos, active } = this.pos.block.delete(this.pos.offset, parser);
     this.active = active;
     this.pos = pos;
 

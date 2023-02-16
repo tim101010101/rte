@@ -1,43 +1,6 @@
-import { deepCloneVNode, isTextNode } from 'lib/model';
-import {
-  ActivePos,
-  FeedbackPos,
-  FenceInfoItem,
-  Operable,
-  Pos,
-} from 'lib/types';
+import { ActivePos, FeedbackPos, FenceInfoItem, Pos } from 'lib/types';
 import { getFenceInfo } from './getFenceInfo';
-
-const initPatchBuffer = () => {
-  const buffer = new Map<Operable, Array<number>>();
-
-  const addTarget = (block: Operable, target: number) => {
-    if (buffer.has(block)) {
-      buffer.set(block, [...buffer.get(block)!, target]);
-    } else {
-      buffer.set(block, [target]);
-    }
-  };
-
-  const flushBuffer = (active: boolean) => {
-    Array.from(buffer.entries()).forEach(([block, activeTargets]) => {
-      block.patch(
-        deepCloneVNode(block.vNode, (cur, i) => {
-          if (!isTextNode(cur) && activeTargets.includes(i)) {
-            cur.isActive = active;
-          }
-          return cur;
-        })
-      );
-    });
-    buffer.clear();
-  };
-
-  return {
-    addTarget,
-    flushBuffer,
-  };
-};
+import { initPatchBuffer } from './patchBuffer';
 
 const diffFence = (
   prevPos: Pos | null,

@@ -1,4 +1,4 @@
-import { isTextNode, EventBus } from 'lib/model';
+import { isTextNode, EventBus, textContent } from 'lib/model';
 import {
   Fence,
   SyntaxNode,
@@ -8,10 +8,17 @@ import {
   FeedbackPos,
   ClientRect,
   OperableNode,
+  Operable,
 } from 'lib/types';
-import { min, panicAt } from 'lib/utils';
+import { deepClone, insertAt, min, panicAt, removeAt } from 'lib/utils';
 import { Renderer } from 'lib/view';
-import { calcFence, tryActiveAndDeactive, getFenceLength } from './helper';
+import {
+  calcFence,
+  tryActiveAndDeactive,
+  getFenceLength,
+  getFenceInfo,
+} from './helper';
+import { updateContent } from './helper/updateContent';
 
 export class Line extends OperableNode {
   private _fence?: Fence;
@@ -39,6 +46,10 @@ export class Line extends OperableNode {
       return panicAt('');
     }
     return this._fence;
+  }
+
+  snapshot(): this {
+    return deepClone(this);
   }
 
   patch(newVNode: VirtualNode): void {
@@ -79,18 +90,26 @@ export class Line extends OperableNode {
   update(
     char: string,
     offset: number,
-    active: Array<ActivePos>,
-    parser: (src: string) => SyntaxNode
+    parse: (src: string) => SyntaxNode
   ): FeedbackPos {
-    throw new Error('Method not implemented.');
+    const { textOffset } = getFenceInfo({ block: this, offset }, null);
+    const newVNode = parse(insertAt(textContent(this.vNode), textOffset, char));
+    const { active, offset: nextOffset } = updateContent(
+      { block: this, offset: offset + 1 },
+      newVNode
+    );
+    return this.focusOn({ block: this, offset }, nextOffset, active);
   }
 
-  delete(
-    offset: number,
-    active: Array<ActivePos>,
-    parser: (src: string) => SyntaxNode
-  ): FeedbackPos {
-    throw new Error('Method not implemented.');
+  delete(offset: number, parse: (src: string) => SyntaxNode): FeedbackPos {
+    const snapshot = this.snapshot();
+    const { textOffset } = getFenceInfo({ block: this, offset }, null);
+    const newVNode = parse(removeAt(textContent(this.vNode), textOffset - 1));
+    const { active, offset: nextOffset } = updateContent(
+      { block: this, offset: offset - 1 },
+      newVNode
+    );
+    return this.focusOn({ block: snapshot, offset }, nextOffset, active);
   }
 
   left(
