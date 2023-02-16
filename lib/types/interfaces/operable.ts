@@ -6,6 +6,7 @@ import {
   Fence,
   FenceInfo,
   Pos,
+  Snapshot,
   SyntaxNode,
   VirtualNode,
 } from 'lib/types';
@@ -14,6 +15,8 @@ export interface Operable extends ListNode {
   fence: Fence;
   vNode: VirtualNode;
   rect: ClientRect;
+
+  snapshot(): Snapshot;
 
   patch(newVNode: VirtualNode): void;
 
@@ -34,13 +37,8 @@ export interface Operable extends ListNode {
   update(
     char: string,
     offset: number,
-    active: Array<ActivePos>,
     parser: (src: string) => SyntaxNode
   ): FeedbackPos;
 
-  delete(
-    offset: number,
-    active: Array<ActivePos>,
-    parser: (src: string) => SyntaxNode
-  ): FeedbackPos;
+  delete(offset: number, parser: (src: string) => SyntaxNode): FeedbackPos;
 }

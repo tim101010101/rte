@@ -59,3 +59,7 @@ export interface FenceInfo {
 
   fenceInfoList: Array<FenceInfoItem>;
 }
+
+export interface Snapshot {
+  // TODO
+}

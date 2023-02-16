@@ -36,14 +36,16 @@ export abstract class OperableNode extends EventInteroperableObject implements O
   abstract get vNode(): VirtualNode;
   abstract get fence(): Fence
 
+  abstract snapshot(): this;
+
   abstract patch(newVNode: VirtualNode): void;
 
   abstract focusOn(prevPos: Pos | null, curOffset: number, curActive: Array<ActivePos>): FeedbackPos;
   abstract unFocus(prevPos: Pos, curActive: Array<ActivePos>): FeedbackPos;
 
   abstract newLine(offset: number, parser: (src: string) => SyntaxNode): FeedbackPos;
-  abstract update(char: string, offset: number, active: Array<ActivePos>, parser: (src: string) => SyntaxNode): FeedbackPos;
-  abstract delete(offset: number, active: Array<ActivePos>, parser: (src: string) => SyntaxNode): FeedbackPos;
+  abstract update(char: string, offset: number, parser: (src: string) => SyntaxNode): FeedbackPos;
+  abstract delete(offset: number, parser: (src: string) => SyntaxNode): FeedbackPos;
 
   abstract left(pos: Pos, active: Array<ActivePos>, offset: number): FeedbackPos | null;
   abstract right(pos: Pos, active: Array<ActivePos>, offset: number): FeedbackPos | null;
