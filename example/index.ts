@@ -14,10 +14,9 @@ e.init(
   // '**ab** c'
   // 'abcdefg'
   // 'a**b**c'
-  // '# hello *world*'
+  'foo\n*foo*\n**foo**\n# hello *world*\n**foo_bar_**_baz_'
   // 'a**b** __c__\n**b** **c**'
   // '**ab**\nhello world'
   // '**ab**\n**a\nb**aaa'
   // 'a\n\n\nb'
-  ''
 );
