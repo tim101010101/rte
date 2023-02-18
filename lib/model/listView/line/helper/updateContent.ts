@@ -1,4 +1,4 @@
-import { isTextNode, textContent } from 'lib/model';
+import { isEmptyNode, isTextNode, textContent } from 'lib/model';
 import { Snapshot, SyntaxNode, VirtualNode } from 'lib/types';
 import { min, panicAt } from 'lib/utils';
 import { initPatchBuffer } from './patchBuffer';
@@ -6,30 +6,42 @@ import { initPatchBuffer } from './patchBuffer';
 export const updateContent = (
   { block, cursor }: Snapshot,
   offset: number,
-  newVNode: VirtualNode
+  newVNode: SyntaxNode
 ): Snapshot => {
   const { addTarget, flushBuffer } = initPatchBuffer();
-  const oldVNode = block.vNode;
+  const oldVNode = block.vNode as SyntaxNode;
 
-  const maxUnchangeLength = diffNode(oldVNode, newVNode);
-  const ancestorIdxToBeActived =
-    (oldVNode as SyntaxNode).children.length ===
-    (newVNode as SyntaxNode).children.length
-      ? maxUnchangeLength
-      : maxUnchangeLength + 1;
+  if (newVNode.children.length) {
+    const maxUnchangeLength = diffNode(oldVNode, newVNode);
+    const ancestorIdxToBeActived =
+      oldVNode.children.length === newVNode.children.length
+        ? maxUnchangeLength
+        : maxUnchangeLength + 1;
 
-  addTarget(block, ancestorIdxToBeActived);
-  flushBuffer(true, newVNode);
+    addTarget(block, ancestorIdxToBeActived);
+    flushBuffer(true, newVNode);
 
-  return {
-    block,
-    vNode: newVNode,
-    fence: block.fence,
+    return {
+      block,
+      vNode: newVNode,
+      fence: block.fence,
 
-    cursor,
-    offset,
-    actived: [ancestorIdxToBeActived],
-  };
+      cursor,
+      offset,
+      actived: [ancestorIdxToBeActived],
+    };
+  } else {
+    block.patch(newVNode);
+    return {
+      block,
+      vNode: newVNode,
+      fence: block.fence,
+
+      cursor,
+      offset,
+      actived: [],
+    };
+  }
 };
 
 const diffAncestor = (
@@ -53,6 +65,10 @@ const diffAncestor = (
 const diffNode = (oldVNode: VirtualNode, newVNode: VirtualNode): number => {
   if (isTextNode(oldVNode) || isTextNode(newVNode)) {
     return panicAt('');
+  }
+
+  if (isEmptyNode(oldVNode)) {
+    return 0;
   }
 
   const { children: oldChildren } = oldVNode;

@@ -25,6 +25,14 @@ export const isMarkerNode = (vNode: VirtualNode): vNode is SyntaxNode =>
 export const isTextNode = (vNode: VirtualNode): vNode is TextNode =>
   vNode.type === PLAIN_TEXT;
 
+export const isEmptyNode = (vNode: VirtualNode) => {
+  if (isTextNode(vNode)) {
+    return vNode.text === '';
+  } else {
+    return vNode.children.length === 0;
+  }
+};
+
 export const isHitRect = (pos: Point, rect: Rect | ClientRect) => {
   const [x, y] = pos;
   const { width, height } = rect;

@@ -1,4 +1,5 @@
-import { Fence, FenceInfo, Pos, Snapshot } from 'lib/types';
+import { isEmptyNode } from 'lib/model';
+import { Fence, FenceInfo, Pos, Snapshot, SyntaxNode } from 'lib/types';
 import { lastItem, panicAt, applyStrategy, Strategy } from 'lib/utils';
 
 export const getFenceLength = (fence: Fence): number => {
@@ -20,7 +21,26 @@ export const getFenceInterval = (
   return [start, end];
 };
 
-export const getFenceInfo = (curPos: Pos, prevState?: Snapshot | null) => {
+export const getFenceInfo = (
+  curPos: Pos,
+  prevState?: Snapshot | null
+): FenceInfo => {
+  const { block } = curPos;
+  if (isEmptyNode(block.vNode)) {
+    return {
+      rect: block.rect,
+      textOffset: 0,
+      fenceInfoList: [
+        {
+          ancestorIdx: 0,
+          totalChange: 0,
+          totalLength: 0,
+          prefixChange: 0,
+        },
+      ],
+    };
+  }
+
   const [ancestorIdx, specificIdx] = findFenceTarget(
     curPos.block.fence,
     curPos.offset

@@ -107,11 +107,20 @@ export const calcFence = (
     prefixLength += fenceList.length;
   };
 
-  vNode.children.forEach(ancestor => {
-    calcAncestorFence(ancestor);
-    prevPrefixChange = 0;
-    curPrefixChange = 0;
-  });
+  if (vNode.children.length) {
+    vNode.children.forEach(ancestor => {
+      calcAncestorFence(ancestor);
+      prevPrefixChange = 0;
+      curPrefixChange = 0;
+    });
+  } else if (rectList.length) {
+    fence.push({
+      fenceList: [{ rect: rectList[0], textOffset: 0, prefixChange: 0 }],
+      prefixLength: 0,
+      totalLength: 0,
+      totalChange: 0,
+    });
+  }
 
   return fence;
 };

@@ -1,3 +1,4 @@
+import { isTextNode } from 'lib/model/virtualNode';
 import { ActivePos, FenceInfoItem, Pos, Snapshot } from 'lib/types';
 import { getFenceInfo } from './getFenceInfo';
 import { initPatchBuffer } from './patchBuffer';
@@ -65,14 +66,14 @@ const diffFence = (
   toBeActived: Array<ActivePos>;
   finalActive: Array<number>;
 } => {
+  const { block: curBlock, offset: curOffset } = curPos;
+
   const finalActive: Array<number> = [];
   const toBeDeactived: Array<ActivePos> = [];
   const toBeActived: Array<ActivePos> = [];
-
-  const { block: curBlock, offset: curOffset } = curPos;
-  const { fenceInfoList: curFenceInfo } = getFenceInfo(curPos, prevState);
-
   let finalOffset = curOffset;
+
+  const { fenceInfoList: curFenceInfo } = getFenceInfo(curPos, prevState);
 
   if (prevState) {
     const { block: prevBlock, offset: prevOffset } = prevState;
