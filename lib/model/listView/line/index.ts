@@ -45,10 +45,6 @@ export class Line extends OperableNode {
     return this._fence;
   }
 
-  snapshot(): Snapshot {
-    return panicAt('');
-  }
-
   patch(newVNode: VirtualNode): void {
     if (isTextNode(newVNode)) {
       return panicAt('try to patch a single textNode');

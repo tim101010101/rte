@@ -1,7 +1,56 @@
 import { ActivePos, FenceInfoItem, Pos, Snapshot } from 'lib/types';
-import { deepClone } from 'lib/utils';
 import { getFenceInfo } from './getFenceInfo';
 import { initPatchBuffer } from './patchBuffer';
+
+export function tryActiveAndDeactive(
+  curPos: Pos,
+  prevState: Snapshot | null
+): Snapshot;
+export function tryActiveAndDeactive(
+  curPos: null,
+  prevState: Snapshot | null
+): void;
+export function tryActiveAndDeactive(
+  curPos: Pos | null,
+  prevState: Snapshot | null
+): Snapshot | void {
+  const { addTarget, flushBuffer } = initPatchBuffer();
+
+  if (curPos) {
+    const { finalOffset, toBeDeactived, toBeActived, finalActive } = diffFence(
+      curPos,
+      prevState
+    );
+
+    toBeDeactived.forEach(({ block, ancestorIdx }) => {
+      addTarget(block, ancestorIdx);
+    });
+    flushBuffer(false);
+
+    toBeActived.forEach(({ block, ancestorIdx }) => {
+      addTarget(block, ancestorIdx);
+    });
+    flushBuffer(true);
+
+    const { block } = curPos;
+    const { rect } = getFenceInfo({ block, offset: finalOffset });
+
+    return {
+      block,
+      vNode: block.vNode,
+      fence: block.fence,
+
+      cursor: { ...prevState?.cursor, rect },
+      offset: finalOffset,
+      actived: finalActive,
+    };
+  } else if (prevState) {
+    snapshotToActived(prevState).forEach(({ block, ancestorIdx }) => {
+      addTarget(block, ancestorIdx);
+    });
+    flushBuffer(false);
+  }
+}
 
 const snapshotToActived = ({ block, actived }: Snapshot): Array<ActivePos> => {
   return actived.map(ancestorIdx => ({ block, ancestorIdx }));
@@ -27,7 +76,7 @@ const diffFence = (
 
   if (prevState) {
     const { block: prevBlock, offset: prevOffset } = prevState;
-    const { fenceInfoList: prevFenceInfo } = getFenceInfo(prevState, null);
+    const { fenceInfoList: prevFenceInfo } = getFenceInfo(prevState);
 
     prevFenceInfo.forEach(({ ancestorIdx: prevIdx, prefixChange }) => {
       const finder = ({ ancestorIdx: curIdx }: FenceInfoItem) => {
@@ -67,53 +116,3 @@ const diffFence = (
     finalActive,
   };
 };
-
-export function tryActiveAndDeactive(
-  curPos: Pos,
-  prevState: Snapshot | null
-): Snapshot;
-export function tryActiveAndDeactive(
-  curPos: null,
-  prevState: Snapshot | null
-): void;
-export function tryActiveAndDeactive(
-  curPos: Pos | null,
-  prevState: Snapshot | null
-): Snapshot | void {
-  const { addTarget, flushBuffer } = initPatchBuffer();
-
-  if (curPos) {
-    const { finalOffset, toBeDeactived, toBeActived, finalActive } = diffFence(
-      curPos,
-      prevState
-    );
-
-    toBeDeactived.forEach(({ block, ancestorIdx }) => {
-      addTarget(block, ancestorIdx);
-    });
-    flushBuffer(false);
-
-    toBeActived.forEach(({ block, ancestorIdx }) => {
-      addTarget(block, ancestorIdx);
-    });
-    flushBuffer(true);
-
-    const finalPos = { block: curPos.block, offset: finalOffset };
-    const { rect } = getFenceInfo(finalPos, null);
-
-    return {
-      block: curPos.block,
-      vNode: deepClone(curPos.block.vNode),
-      fence: deepClone(curPos.block.fence),
-
-      cursor: { rect },
-      offset: finalOffset,
-      actived: finalActive,
-    };
-  } else if (prevState) {
-    snapshotToActived(prevState).forEach(({ block, ancestorIdx }) => {
-      addTarget(block, ancestorIdx);
-    });
-    flushBuffer(false);
-  }
-}

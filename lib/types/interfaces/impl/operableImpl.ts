@@ -33,7 +33,6 @@ export abstract class OperableNode extends EventInteroperableObject implements O
   abstract get vNode(): VirtualNode;
   abstract get fence(): Fence
 
-  abstract snapshot(): Snapshot;
   abstract patch(newVNode: VirtualNode): void;
 
   abstract focusOn(prevState: Snapshot | null, curOffset: number): Snapshot;

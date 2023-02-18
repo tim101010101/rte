@@ -1,14 +1,36 @@
-import { isTextNode, textContent } from 'lib/model/virtualNode';
-import {
-  ActivePos,
-  Operable,
-  Pos,
-  Snapshot,
-  SyntaxNode,
-  VirtualNode,
-} from 'lib/types';
-import { deepClone, min, panicAt } from 'lib/utils';
+import { isTextNode, textContent } from 'lib/model';
+import { Snapshot, SyntaxNode, VirtualNode } from 'lib/types';
+import { min, panicAt } from 'lib/utils';
 import { initPatchBuffer } from './patchBuffer';
+
+export const updateContent = (
+  { block, cursor }: Snapshot,
+  offset: number,
+  newVNode: VirtualNode
+): Snapshot => {
+  const { addTarget, flushBuffer } = initPatchBuffer();
+  const oldVNode = block.vNode;
+
+  const maxUnchangeLength = diffNode(oldVNode, newVNode);
+  const ancestorIdxToBeActived =
+    (oldVNode as SyntaxNode).children.length ===
+    (newVNode as SyntaxNode).children.length
+      ? maxUnchangeLength
+      : maxUnchangeLength + 1;
+
+  addTarget(block, ancestorIdxToBeActived);
+  flushBuffer(true, newVNode);
+
+  return {
+    block,
+    vNode: newVNode,
+    fence: block.fence,
+
+    cursor,
+    offset,
+    actived: [ancestorIdxToBeActived],
+  };
+};
 
 const diffAncestor = (
   oldVNode: VirtualNode,
@@ -44,34 +66,5 @@ const diffNode = (oldVNode: VirtualNode, newVNode: VirtualNode): number => {
     }
   }
 
-  return panicAt('');
-};
-
-export const updateContent = (
-  { block, cursor }: Snapshot,
-  offset: number,
-  newVNode: VirtualNode
-): Snapshot => {
-  const { addTarget, flushBuffer } = initPatchBuffer();
-  const oldVNode = block.vNode;
-
-  const maxUnchangeLength = diffNode(oldVNode, newVNode);
-  const ancestorIdxToBeActived =
-    (oldVNode as SyntaxNode).children.length ===
-    (newVNode as SyntaxNode).children.length
-      ? maxUnchangeLength
-      : maxUnchangeLength + 1;
-
-  addTarget(block, ancestorIdxToBeActived);
-  flushBuffer(true, newVNode);
-
-  return {
-    block,
-    vNode: deepClone(block.vNode),
-    fence: deepClone(block.fence),
-
-    cursor,
-    offset,
-    actived: [ancestorIdxToBeActived],
-  };
+  return panicAt('try to diff two identical nodes');
 };

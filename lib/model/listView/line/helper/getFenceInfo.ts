@@ -20,14 +20,14 @@ export const getFenceInterval = (
   return [start, end];
 };
 
-export const getFenceInfo = (curPos: Pos, prevState: Snapshot | null) => {
+export const getFenceInfo = (curPos: Pos, prevState?: Snapshot | null) => {
   const [ancestorIdx, specificIdx] = findFenceTarget(
     curPos.block.fence,
     curPos.offset
   );
 
   return applyStrategy(
-    dispatchStrategies(curPos, prevState, ancestorIdx, specificIdx)
+    dispatchStrategies(curPos, ancestorIdx, specificIdx, prevState)
   );
 };
 
@@ -64,9 +64,9 @@ const findFenceTarget = (fence: Fence, offset: number): [number, number] => {
 
 const dispatchStrategies = (
   curPos: Pos,
-  prevState: Snapshot | null,
   ancestorIdx: number,
-  specificIdx: number
+  specificIdx: number,
+  prevState?: Snapshot | null
 ): Array<Strategy<FenceInfo>> => {
   const { block: curBlock, offset: curOffset } = curPos;
   const { fence } = curBlock;

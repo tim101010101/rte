@@ -12,8 +12,6 @@ export interface Operable extends ListNode {
   vNode: VirtualNode;
   rect: ClientRect;
 
-  snapshot(): Snapshot;
-
   patch(newVNode: VirtualNode): void;
 
   focusOn(prevState: Snapshot | null, curOffset: number): Snapshot;
