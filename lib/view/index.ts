@@ -36,12 +36,14 @@ export class Renderer {
   private pagePainter: Paint;
   private cursorPainter: Paint;
   private lines: Set<ClientRect>;
+  private config: EditorConfig;
 
   constructor(container: HTMLElement, config: EditorConfig) {
     this.pagePainter = new Paint(container, config);
     this.cursorPainter = new Paint(container, config);
 
     this.lines = new Set();
+    this.config = config;
 
     overlapNodes(this.pagePainter.el, this.cursorPainter.el);
     this.pagePainter.init();
@@ -91,14 +93,14 @@ export class Renderer {
           clientX: prevXOffset,
           clientY: prevYOffset,
           width: maxWidth - totalLength,
-          height: lineHeight,
+          height: lineHeight || this.config.font.size,
         });
 
         return {
           clientX,
           clientY,
           width: maxWidth,
-          height: lineHeight,
+          height: lineHeight || this.config.font.size,
         };
       },
       rect
