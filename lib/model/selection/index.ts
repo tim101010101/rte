@@ -1,11 +1,9 @@
 import {
   Operable,
-  ActivePos,
-  Pos,
   EventInteroperableObject,
   ClientRect,
   SyntaxNode,
-  VirtualNode,
+  Snapshot,
 } from 'lib/types';
 import { EventBus } from 'lib/model';
 import { Renderer } from 'lib/view';
@@ -15,7 +13,8 @@ import {
   ControlKey,
   ShowableKey,
 } from 'lib/static';
-import { panicAt } from 'lib/utils';
+import { lastItem, panicAt } from 'lib/utils';
+import { CursroInfo } from 'lib/types/cursor';
 
 const { KEYDOWN } = VNodeEventName;
 const { FOCUS_ON, UNFOCUS } = InnerEventName;
@@ -24,9 +23,8 @@ export class Selection extends EventInteroperableObject {
   rect: ClientRect | null;
 
   private renderer: Renderer;
-  private pos: Pos | null;
-  private active: Array<ActivePos>;
   private parser: (src: string) => SyntaxNode;
+  private states: Array<Snapshot>;
 
   constructor(
     renderer: Renderer,
@@ -37,13 +35,17 @@ export class Selection extends EventInteroperableObject {
 
     this.renderer = renderer;
     this.rect = null;
-    this.pos = null;
-    this.active = [];
     this.parser = parser;
+    this.states = [];
   }
 
-  private setPos(rect: ClientRect | null) {
-    if (rect) {
+  private get topState(): Snapshot | null {
+    return this.states.length ? lastItem(this.states) : null;
+  }
+
+  private setPos(cursorInfo: CursroInfo | null) {
+    if (cursorInfo) {
+      const { rect } = cursorInfo;
       const { height, clientX, clientY } = rect;
       this.renderer.renderCursor(
         { clientX, clientY, height, width: 2 },
@@ -91,112 +93,73 @@ export class Selection extends EventInteroperableObject {
   }
 
   focusOn(block: Operable, offset: number) {
-    const { rect, pos, active } = block.focusOn(this.pos, offset, this.active);
+    const prevState = this.topState;
+    const nextState = block.focusOn(prevState, offset);
 
-    // update position of cursor
-    this.setPos(rect);
+    this.states.push(nextState);
 
-    // update the pos and active
-    this.pos = pos;
-    this.active = active;
+    this.setPos(nextState.cursor);
   }
   unFocus() {
-    if (this.pos && this.rect) {
+    if (this.rect && this.topState) {
       this.renderer.clearCursor(this.rect);
       this.rect = null;
-
-      const { pos, active } = this.pos.block.unFocus(this.pos, this.active);
-      this.pos = pos;
-      this.active = active;
+      this.topState.block.unFocus(this.topState);
     }
   }
 
-  left(offset: number = 1) {
-    if (!this.pos) return;
-    const nextPos = this.pos.block.left(this.pos, this.active, offset);
-    if (nextPos) {
-      const { rect, pos, active } = nextPos;
-      this.setPos(rect);
-
-      this.pos = pos;
-      this.active = active;
+  left(step: number = 1) {
+    if (!this.rect || !this.topState) return;
+    const nextState = this.topState.block.left(this.topState, step);
+    if (nextState) {
+      this.setPos(nextState.cursor);
+      this.states.push(nextState);
     }
   }
-  right(offset: number = 1) {
-    if (!this.pos) return;
-    const nextPos = this.pos.block.right(this.pos, this.active, offset);
-    if (nextPos) {
-      const { rect, pos, active } = nextPos;
-      this.setPos(rect);
-
-      this.pos = pos;
-      this.active = active;
+  right(step: number = 1) {
+    if (!this.rect || !this.topState) return;
+    const nextState = this.topState.block.right(this.topState, step);
+    if (nextState) {
+      this.setPos(nextState.cursor);
+      this.states.push(nextState);
     }
   }
-  up(offset: number = 1) {
-    if (!this.pos) return;
-    const nextPos = this.pos.block.up(this.pos, this.active, offset);
-    if (nextPos) {
-      const { rect, pos, active } = nextPos;
-      this.setPos(rect);
-
-      this.pos = pos;
-      this.active = active;
+  up(step: number = 1) {
+    if (!this.rect || !this.topState) return;
+    const nextState = this.topState.block.up(this.topState, step);
+    if (nextState) {
+      this.setPos(nextState.cursor);
+      this.states.push(nextState);
     }
   }
-  down(offset: number = 1) {
-    if (!this.pos) return;
-    const nextPos = this.pos.block.down(this.pos, this.active, offset);
-    if (nextPos) {
-      const { rect, pos, active } = nextPos;
-      this.setPos(rect);
-
-      this.pos = pos;
-      this.active = active;
+  down(step: number = 1) {
+    if (!this.rect || !this.topState) return;
+    const nextState = this.topState.block.down(this.topState, step);
+    if (nextState) {
+      this.setPos(nextState.cursor);
+      this.states.push(nextState);
     }
   }
 
   newLine(parser: (src: string) => SyntaxNode) {
-    if (!this.pos) return;
+    if (!this.rect || !this.topState) return;
 
-    const { pos, active } = this.pos.block.newLine(this.pos.offset, parser);
-    this.active = active;
-    this.pos = pos;
-
-    if (pos) {
-      const { block, offset } = pos;
-      this.focusOn(block, offset);
-    }
+    const nextState = this.topState.block.newLine(this.topState, parser);
+    this.setPos(nextState.cursor);
+    this.states.push(nextState);
   }
 
   updateBlockContent(char: string, parser: (src: string) => SyntaxNode) {
-    if (!this.pos) return;
-
-    const { pos, active } = this.pos.block.update(
-      char,
-      this.pos.offset,
-      parser
-    );
-    this.active = active;
-    this.pos = pos;
-
-    // move cursor right
-    if (pos) {
-      const { block, offset } = pos;
-      this.focusOn(block, offset);
-    }
+    if (!this.rect || !this.topState) return;
+    const nextState = this.topState.block.update(this.topState, char, parser);
+    this.setPos(nextState.cursor);
+    this.states.push(nextState);
   }
 
   delete(parser: (src: string) => SyntaxNode) {
-    if (!this.pos) return;
-
-    const { pos, active } = this.pos.block.delete(this.pos.offset, parser);
-    this.active = active;
-    this.pos = pos;
-
-    if (pos) {
-      const { block, offset } = pos;
-      this.focusOn(block, offset);
-    }
+    if (!this.rect || !this.topState) return;
+    const nextState = this.topState.block.delete(this.topState, parser);
+    this.setPos(nextState.cursor);
+    this.states.push(nextState);
   }
 }

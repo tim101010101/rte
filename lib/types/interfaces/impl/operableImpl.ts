@@ -1,12 +1,9 @@
 import { EventBus } from 'lib/model';
 import {
-  ActivePos,
   ClientRect,
-  FeedbackPos,
   Fence,
-  FenceInfo,
   Operable,
-  Pos,
+  Snapshot,
   SyntaxNode,
   VirtualNode,
   // EventInteroperableObject,
@@ -36,19 +33,20 @@ export abstract class OperableNode extends EventInteroperableObject implements O
   abstract get vNode(): VirtualNode;
   abstract get fence(): Fence
 
-  abstract snapshot(): this;
-
+  abstract snapshot(): Snapshot;
   abstract patch(newVNode: VirtualNode): void;
 
-  abstract focusOn(prevPos: Pos | null, curOffset: number, curActive: Array<ActivePos>): FeedbackPos;
-  abstract unFocus(prevPos: Pos, curActive: Array<ActivePos>): FeedbackPos;
+  abstract focusOn(prevState: Snapshot | null, curOffset: number): Snapshot;
+  abstract unFocus(prevState: Snapshot): void;
 
-  abstract newLine(offset: number, parser: (src: string) => SyntaxNode): FeedbackPos;
-  abstract update(char: string, offset: number, parser: (src: string) => SyntaxNode): FeedbackPos;
-  abstract delete(offset: number, parser: (src: string) => SyntaxNode): FeedbackPos;
+  abstract left(prevState: Snapshot, step: number): Snapshot | null;
+  abstract right(prevState: Snapshot, step: number): Snapshot | null;
+  abstract up(prevState: Snapshot, step: number): Snapshot | null;
+  abstract down(prevState: Snapshot, step: number): Snapshot | null;
 
-  abstract left(pos: Pos, active: Array<ActivePos>, offset: number): FeedbackPos | null;
-  abstract right(pos: Pos, active: Array<ActivePos>, offset: number): FeedbackPos | null;
-  abstract up(pos: Pos, active: Array<ActivePos>, offset: number): FeedbackPos | null;
-  abstract down(pos: Pos, active: Array<ActivePos>, offset: number): FeedbackPos | null;
+  abstract newLine(prevState: Snapshot, parse: (src: string) => SyntaxNode): Snapshot;
+
+  abstract update(prevState: Snapshot, char: string, parse: (src: string) => SyntaxNode): Snapshot;
+
+  abstract delete(prevState: Snapshot, parse: (src: string) => SyntaxNode): Snapshot;
 }

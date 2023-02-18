@@ -1,4 +1,5 @@
-import { Operable } from 'lib/types';
+import { Operable, VirtualNode } from 'lib/types';
+import { CursroInfo } from './cursor';
 
 export interface Pos {
   block: Operable;
@@ -61,5 +62,11 @@ export interface FenceInfo {
 }
 
 export interface Snapshot {
-  // TODO
+  block: Operable;
+  vNode: VirtualNode;
+  fence: Fence;
+
+  offset: number;
+  cursor: CursroInfo;
+  actived: Array<number>;
 }

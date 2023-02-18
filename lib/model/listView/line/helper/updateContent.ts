@@ -1,6 +1,13 @@
 import { isTextNode, textContent } from 'lib/model/virtualNode';
-import { ActivePos, Operable, Pos, SyntaxNode, VirtualNode } from 'lib/types';
-import { min, panicAt } from 'lib/utils';
+import {
+  ActivePos,
+  Operable,
+  Pos,
+  Snapshot,
+  SyntaxNode,
+  VirtualNode,
+} from 'lib/types';
+import { deepClone, min, panicAt } from 'lib/utils';
 import { initPatchBuffer } from './patchBuffer';
 
 const diffAncestor = (
@@ -41,9 +48,10 @@ const diffNode = (oldVNode: VirtualNode, newVNode: VirtualNode): number => {
 };
 
 export const updateContent = (
-  { block, offset }: Pos,
+  { block, cursor }: Snapshot,
+  offset: number,
   newVNode: VirtualNode
-): { active: Array<ActivePos>; offset: number } => {
+): Snapshot => {
   const { addTarget, flushBuffer } = initPatchBuffer();
   const oldVNode = block.vNode;
 
@@ -58,44 +66,12 @@ export const updateContent = (
   flushBuffer(true, newVNode);
 
   return {
-    active: [{ block, ancestorIdx: ancestorIdxToBeActived }],
+    block,
+    vNode: deepClone(block.vNode),
+    fence: deepClone(block.fence),
+
+    cursor,
     offset,
-  };
-};
-
-export const updateContent1 = (
-  { block, offset }: Pos,
-  newVNode: VirtualNode
-): { active: Array<ActivePos>; offset: number } => {
-  const { addTarget, flushBuffer } = initPatchBuffer();
-  const oldVNode = block.vNode;
-
-  let finalOffset = offset + 1;
-  let finalAncestor = null;
-
-  // 2. 激活指定 ancestor
-  const a = diffNode(oldVNode, newVNode);
-  if (
-    (oldVNode as SyntaxNode).children.length ===
-    (newVNode as SyntaxNode).children.length
-  ) {
-    finalAncestor = a;
-  } else {
-    finalAncestor = a + 1;
-  }
-
-  if (finalAncestor) {
-    addTarget(block, finalAncestor);
-    flushBuffer(true, newVNode);
-  } else {
-    // 3. patch newVNode
-    block.patch(newVNode);
-  }
-
-  // 4. 将光标重新插入到正确的位置
-
-  return {
-    active: [{ block, ancestorIdx: finalAncestor }],
-    offset: finalOffset,
+    actived: [ancestorIdxToBeActived],
   };
 };
