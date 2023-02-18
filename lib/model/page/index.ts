@@ -9,15 +9,6 @@ import {
 } from 'lib/model';
 import { VNodeEventName, InnerEventName } from 'lib/static';
 import { Renderer } from 'lib/view';
-import {
-  activedLine,
-  activedSimpleLine,
-  activedWeirdLine,
-  heading,
-  line,
-  simpleLine,
-  weirdLine,
-} from 'lib/mock';
 import { getNearestIdx, throttle } from 'lib/utils';
 import { Schema } from 'lib/schema';
 

@@ -15,6 +15,7 @@ e.init(
   // 'abcdefg'
   // 'a**b**c'
   'foo\n*foo*\n**foo**\n# hello *world*\n**foo_bar_**_baz_'
+  // '# hello *world*'
   // 'a**b** __c__\n**b** **c**'
   // '**ab**\nhello world'
   // '**ab**\n**a\nb**aaa'

@@ -25,7 +25,7 @@ export const parseLine = (
     const matched = src.match(reg);
     const { groups } = matched!;
 
-    return line([render(groups!, parseInlineWithOverloadFont)]);
+    return render(groups!, parseInlineWithOverloadFont);
   } else {
     return line(parseInlineWithOverloadFont(src));
   }
