@@ -3,22 +3,19 @@ import {
   Fence,
   SyntaxNode,
   VirtualNode,
-  Pos,
-  ActivePos,
-  FeedbackPos,
   ClientRect,
   OperableNode,
-  Operable,
+  Snapshot,
 } from 'lib/types';
-import { deepClone, insertAt, min, panicAt, removeAt } from 'lib/utils';
+import { insertAt, min, panicAt, removeAt } from 'lib/utils';
 import { Renderer } from 'lib/view';
 import {
   calcFence,
   tryActiveAndDeactive,
   getFenceLength,
   getFenceInfo,
+  updateContent,
 } from './helper';
-import { updateContent } from './helper/updateContent';
 
 export class Line extends OperableNode {
   private _fence?: Fence;
@@ -48,10 +45,6 @@ export class Line extends OperableNode {
     return this._fence;
   }
 
-  snapshot(): this {
-    return deepClone(this);
-  }
-
   patch(newVNode: VirtualNode): void {
     if (isTextNode(newVNode)) {
       return panicAt('try to patch a single textNode');
@@ -68,78 +61,57 @@ export class Line extends OperableNode {
     this._fence = calcFence(newVNode, rectList);
   }
 
-  focusOn(
-    prevPos: Pos | null,
-    curOffset: number,
-    curActive: Array<ActivePos>
-  ): FeedbackPos {
-    return tryActiveAndDeactive(
-      prevPos,
-      { block: this, offset: curOffset },
-      curActive
-    );
+  focusOn(prevState: Snapshot | null, curOffset: number): Snapshot {
+    return tryActiveAndDeactive({ block: this, offset: curOffset }, prevState);
   }
-  unFocus(prevPos: Pos, curActive: Array<ActivePos>): FeedbackPos {
-    return tryActiveAndDeactive(prevPos, null, curActive);
+  unFocus(prevState: Snapshot): void {
+    return tryActiveAndDeactive(null, prevState);
   }
 
-  newLine(offset: number, parser: (src: string) => SyntaxNode): FeedbackPos {
-    throw new Error('Method not implemented.');
+  newLine(prevState: Snapshot, parse: (src: string) => SyntaxNode): Snapshot {
+    return panicAt('');
   }
 
   update(
+    prevState: Snapshot,
     char: string,
-    offset: number,
     parse: (src: string) => SyntaxNode
-  ): FeedbackPos {
-    const { textOffset } = getFenceInfo({ block: this, offset }, null);
+  ): Snapshot {
+    const { textOffset } = getFenceInfo(
+      { block: this, offset: prevState.offset },
+      null
+    );
     const newVNode = parse(insertAt(textContent(this.vNode), textOffset, char));
-    const { active, offset: nextOffset } = updateContent(
-      { block: this, offset: offset + 1 },
-      newVNode
-    );
-    return this.focusOn({ block: this, offset }, nextOffset, active);
+    const nextState = updateContent(prevState, prevState.offset + 1, newVNode);
+    return this.focusOn(nextState, nextState.offset);
   }
 
-  delete(offset: number, parse: (src: string) => SyntaxNode): FeedbackPos {
-    const snapshot = this.snapshot();
-    const { textOffset } = getFenceInfo({ block: this, offset }, null);
+  delete(prevState: Snapshot, parse: (src: string) => SyntaxNode): Snapshot {
+    const { textOffset } = getFenceInfo(
+      { block: this, offset: prevState.offset },
+      null
+    );
     const newVNode = parse(removeAt(textContent(this.vNode), textOffset - 1));
-    const { active, offset: nextOffset } = updateContent(
-      { block: this, offset: offset - 1 },
-      newVNode
-    );
-    return this.focusOn({ block: snapshot, offset }, nextOffset, active);
+    const nextState = updateContent(prevState, prevState.offset - 1, newVNode);
+    return this.focusOn(nextState, nextState.offset);
   }
 
-  left(
-    prevPos: Pos,
-    active: Array<ActivePos>,
-    offset: number
-  ): FeedbackPos | null {
-    const finalOffset = prevPos.offset - offset;
+  left(prevState: Snapshot, step: number): Snapshot | null {
+    const finalOffset = prevState.offset - step;
     if (finalOffset >= 0) {
-      return this.focusOn(prevPos, finalOffset, active);
+      return this.focusOn(prevState, finalOffset);
     } else {
       return null;
     }
   }
-  right(
-    prevPos: Pos,
-    active: Array<ActivePos>,
-    offset: number
-  ): FeedbackPos | null {
-    const finalOffset = prevPos.offset + offset;
+  right(prevState: Snapshot, step: number): Snapshot | null {
+    const finalOffset = prevState.offset + step;
     if (finalOffset > getFenceLength(this.fence)) return null;
-    return this.focusOn(prevPos, finalOffset, active);
+    return this.focusOn(prevState, finalOffset);
   }
-  up(
-    prevPos: Pos,
-    active: Array<ActivePos>,
-    offset: number
-  ): FeedbackPos | null {
-    let curBlock = prevPos.block;
-    while (offset--) {
+  up(prevState: Snapshot, step: number): Snapshot | null {
+    let curBlock = prevState.block;
+    while (step--) {
       if (curBlock.prev) {
         curBlock = curBlock.prev;
       } else {
@@ -147,18 +119,13 @@ export class Line extends OperableNode {
       }
     }
     return curBlock.focusOn(
-      prevPos,
-      min(prevPos.offset, getFenceLength(curBlock.fence) - 1),
-      active
+      prevState,
+      min(prevState.offset, getFenceLength(curBlock.fence) - 1)
     );
   }
-  down(
-    prevPos: Pos,
-    active: Array<ActivePos>,
-    offset: number
-  ): FeedbackPos | null {
-    let curBlock = prevPos.block;
-    while (offset--) {
+  down(prevState: Snapshot, step: number): Snapshot | null {
+    let curBlock = prevState.block;
+    while (step--) {
       if (curBlock.next) {
         curBlock = curBlock.next;
       } else {
@@ -166,9 +133,8 @@ export class Line extends OperableNode {
       }
     }
     return curBlock.focusOn(
-      prevPos,
-      min(prevPos.offset, getFenceLength(curBlock.fence) - 1),
-      active
+      prevState,
+      min(prevState.offset, getFenceLength(curBlock.fence) - 1)
     );
   }
 }

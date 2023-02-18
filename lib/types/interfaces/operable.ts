@@ -1,11 +1,7 @@
 import { ListNode } from 'lib/model';
 import {
-  ActivePos,
   ClientRect,
-  FeedbackPos,
   Fence,
-  FenceInfo,
-  Pos,
   Snapshot,
   SyntaxNode,
   VirtualNode,
@@ -16,29 +12,23 @@ export interface Operable extends ListNode {
   vNode: VirtualNode;
   rect: ClientRect;
 
-  snapshot(): Snapshot;
-
   patch(newVNode: VirtualNode): void;
 
-  focusOn(
-    prevPos: Pos | null,
-    curOffset: number,
-    active: Array<ActivePos>
-  ): FeedbackPos;
-  unFocus(prevPos: Pos, curActive: Array<ActivePos>): FeedbackPos;
+  focusOn(prevState: Snapshot | null, curOffset: number): Snapshot;
+  unFocus(prevState: Snapshot): void;
 
-  left(pos: Pos, active: Array<ActivePos>, offset: number): FeedbackPos | null;
-  right(pos: Pos, active: Array<ActivePos>, offset: number): FeedbackPos | null;
-  up(pos: Pos, active: Array<ActivePos>, offset: number): FeedbackPos | null;
-  down(pos: Pos, active: Array<ActivePos>, offset: number): FeedbackPos | null;
+  left(prevState: Snapshot, step: number): Snapshot | null;
+  right(prevState: Snapshot, step: number): Snapshot | null;
+  up(prevState: Snapshot, step: number): Snapshot | null;
+  down(prevState: Snapshot, step: number): Snapshot | null;
 
-  newLine(offset: number, parser: (src: string) => SyntaxNode): FeedbackPos;
+  newLine(prevState: Snapshot, parse: (src: string) => SyntaxNode): Snapshot;
 
   update(
+    prevState: Snapshot,
     char: string,
-    offset: number,
-    parser: (src: string) => SyntaxNode
-  ): FeedbackPos;
+    parse: (src: string) => SyntaxNode
+  ): Snapshot;
 
-  delete(offset: number, parser: (src: string) => SyntaxNode): FeedbackPos;
+  delete(prevState: Snapshot, parse: (src: string) => SyntaxNode): Snapshot;
 }

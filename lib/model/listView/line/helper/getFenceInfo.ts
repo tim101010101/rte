@@ -1,4 +1,4 @@
-import { Fence, FenceInfo, Pos } from 'lib/types';
+import { Fence, FenceInfo, Pos, Snapshot } from 'lib/types';
 import { lastItem, panicAt, applyStrategy, Strategy } from 'lib/utils';
 
 export const getFenceLength = (fence: Fence): number => {
@@ -20,14 +20,14 @@ export const getFenceInterval = (
   return [start, end];
 };
 
-export const getFenceInfo = (curPos: Pos, prevPos: Pos | null) => {
+export const getFenceInfo = (curPos: Pos, prevState?: Snapshot | null) => {
   const [ancestorIdx, specificIdx] = findFenceTarget(
     curPos.block.fence,
     curPos.offset
   );
 
   return applyStrategy(
-    dispatchStrategies(curPos, prevPos, ancestorIdx, specificIdx)
+    dispatchStrategies(curPos, ancestorIdx, specificIdx, prevState)
   );
 };
 
@@ -64,9 +64,9 @@ const findFenceTarget = (fence: Fence, offset: number): [number, number] => {
 
 const dispatchStrategies = (
   curPos: Pos,
-  prevPos: Pos | null,
   ancestorIdx: number,
-  specificIdx: number
+  specificIdx: number,
+  prevState?: Snapshot | null
 ): Array<Strategy<FenceInfo>> => {
   const { block: curBlock, offset: curOffset } = curPos;
   const { fence } = curBlock;
@@ -161,10 +161,10 @@ const dispatchStrategies = (
     },
   };
 
-  if (!prevPos || (prevPos && prevPos.block !== curBlock)) {
+  if (!prevState || (prevState && prevState.block !== curBlock)) {
     return [hitEmptyHead, hitOverlapHead, hitOverlapTail, hitBody];
   } else {
-    const { block: prevBlock, offset: prevOffset } = prevPos;
+    const { block: prevBlock, offset: prevOffset } = prevState;
     const step = curOffset - prevOffset;
     const [prevStart, prevEnd] = getFenceInterval(
       prevBlock.fence,

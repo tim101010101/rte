@@ -1,7 +1,36 @@
-import { isTextNode, textContent } from 'lib/model/virtualNode';
-import { ActivePos, Operable, Pos, SyntaxNode, VirtualNode } from 'lib/types';
+import { isTextNode, textContent } from 'lib/model';
+import { Snapshot, SyntaxNode, VirtualNode } from 'lib/types';
 import { min, panicAt } from 'lib/utils';
 import { initPatchBuffer } from './patchBuffer';
+
+export const updateContent = (
+  { block, cursor }: Snapshot,
+  offset: number,
+  newVNode: VirtualNode
+): Snapshot => {
+  const { addTarget, flushBuffer } = initPatchBuffer();
+  const oldVNode = block.vNode;
+
+  const maxUnchangeLength = diffNode(oldVNode, newVNode);
+  const ancestorIdxToBeActived =
+    (oldVNode as SyntaxNode).children.length ===
+    (newVNode as SyntaxNode).children.length
+      ? maxUnchangeLength
+      : maxUnchangeLength + 1;
+
+  addTarget(block, ancestorIdxToBeActived);
+  flushBuffer(true, newVNode);
+
+  return {
+    block,
+    vNode: newVNode,
+    fence: block.fence,
+
+    cursor,
+    offset,
+    actived: [ancestorIdxToBeActived],
+  };
+};
 
 const diffAncestor = (
   oldVNode: VirtualNode,
@@ -37,65 +66,5 @@ const diffNode = (oldVNode: VirtualNode, newVNode: VirtualNode): number => {
     }
   }
 
-  return panicAt('');
-};
-
-export const updateContent = (
-  { block, offset }: Pos,
-  newVNode: VirtualNode
-): { active: Array<ActivePos>; offset: number } => {
-  const { addTarget, flushBuffer } = initPatchBuffer();
-  const oldVNode = block.vNode;
-
-  const maxUnchangeLength = diffNode(oldVNode, newVNode);
-  const ancestorIdxToBeActived =
-    (oldVNode as SyntaxNode).children.length ===
-    (newVNode as SyntaxNode).children.length
-      ? maxUnchangeLength
-      : maxUnchangeLength + 1;
-
-  addTarget(block, ancestorIdxToBeActived);
-  flushBuffer(true, newVNode);
-
-  return {
-    active: [{ block, ancestorIdx: ancestorIdxToBeActived }],
-    offset,
-  };
-};
-
-export const updateContent1 = (
-  { block, offset }: Pos,
-  newVNode: VirtualNode
-): { active: Array<ActivePos>; offset: number } => {
-  const { addTarget, flushBuffer } = initPatchBuffer();
-  const oldVNode = block.vNode;
-
-  let finalOffset = offset + 1;
-  let finalAncestor = null;
-
-  // 2. 激活指定 ancestor
-  const a = diffNode(oldVNode, newVNode);
-  if (
-    (oldVNode as SyntaxNode).children.length ===
-    (newVNode as SyntaxNode).children.length
-  ) {
-    finalAncestor = a;
-  } else {
-    finalAncestor = a + 1;
-  }
-
-  if (finalAncestor) {
-    addTarget(block, finalAncestor);
-    flushBuffer(true, newVNode);
-  } else {
-    // 3. patch newVNode
-    block.patch(newVNode);
-  }
-
-  // 4. 将光标重新插入到正确的位置
-
-  return {
-    active: [{ block, ancestorIdx: finalAncestor }],
-    offset: finalOffset,
-  };
+  return panicAt('try to diff two identical nodes');
 };
