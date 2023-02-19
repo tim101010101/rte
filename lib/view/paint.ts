@@ -85,18 +85,18 @@ export class Paint {
     this._ctx.beginPath();
     return this._ctx;
   }
-
-  private get canvasRect(): ClientRect {
+  get canvasRect(): ClientRect {
     return (
       this._canvasRect || panicAt('try to get canvasRect before initialization')
     );
   }
-  private get editableRect(): ClientRect {
+  get editableRect(): ClientRect {
     return (
       this._editableRect ||
       panicAt('try to get editableRect before initialization')
     );
   }
+
   private get startPos(): ClientPos {
     return (
       this._startPos || panicAt('try to get startPos before initialization')

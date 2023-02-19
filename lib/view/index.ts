@@ -113,8 +113,9 @@ export class Renderer {
   }
 
   fullPatch(lines: Array<VirtualNode>) {
-    const res = lines.map(line => this.patch(line));
     this.pagePainter.resetLineDrawing();
+    this.pagePainter.clearRect(this.pagePainter.editableRect);
+    const res = lines.map(line => this.patch(line));
 
     return res;
   }
