@@ -1,57 +1,52 @@
-import { ClientRect, EditorConfig, Operable } from 'lib/types';
 import {
-  EventBus,
-  Line,
-  LinkedList,
-  textContent,
-  walkTextNode,
-  Selection,
-} from 'lib/model';
+  Context,
+  EditorConfig,
+  InnerEventListener,
+  Operable,
+  OperableNode,
+  VirtualNode,
+} from 'lib/types';
+import { EventBus, Line, LinkedList, Selection } from 'lib/model';
 import { VNodeEventName, InnerEventName } from 'lib/static';
 import { Renderer } from 'lib/view';
 import { getNearestIdx, throttle } from 'lib/utils';
 import { Schema } from 'lib/schema';
+import { proxyListView, proxySelection } from './helper';
 
 const { CLICK, MOUSE_DOWN, MOUSE_MOVE, MOUSE_UP } = VNodeEventName;
 const { KEYDOWN, KEYUP } = VNodeEventName;
 const { FOCUS_ON, FULL_PATCH, UNINSTALL_BLOCK, INSTALL_BLOCK } = InnerEventName;
 
-export class Page extends LinkedList<Operable> {
+export class Page implements Context {
   private container: HTMLElement;
   private config: EditorConfig;
 
   private renderer: Renderer;
   private eventBus: EventBus;
+  private schema: Schema;
 
-  schema: Schema;
-  selection: Selection;
+  private selection: Selection;
+  private listView: LinkedList<Operable>;
 
   constructor(container: HTMLElement, config: EditorConfig) {
-    super();
-
     this.container = container;
     this.config = config;
 
     this.renderer = new Renderer(this.container, config);
     this.eventBus = new EventBus();
-
     this.schema = new Schema(config);
-    this.selection = new Selection(
-      this.renderer,
-      this.eventBus,
-      this.schema.parse.bind(this.schema)
-    );
+
+    this.selection = proxySelection(this.renderer, this.eventBus, this.schema);
+    this.listView = proxyListView(this.renderer);
   }
 
   init(text: string) {
     const lineVNodes = text.split('\n').map(line => this.schema.parse(line));
-    // const lineVNodes = [heading, this.schema.parse(text.split('\n')[1])];
 
-    lineVNodes.forEach((vNode, i) => {
-      const line = new Line(this.renderer, this.eventBus);
-      this.appendTail(line);
+    lineVNodes.forEach(() => {
+      const line = new Line(this.eventBus);
+      this.listView.insert(line);
 
-      line.patch(vNode);
       line.addEventListener(VNodeEventName.CLICK, e => {
         const rectList = line.fence.reduce<Array<number>>((arr, cur) => {
           cur.fenceList.forEach(({ rect }) => {
@@ -62,30 +57,23 @@ export class Page extends LinkedList<Operable> {
         const offset = getNearestIdx(rectList, e.clientPos[0]);
         this.eventBus.emit(FOCUS_ON, { block: line, offset });
       });
-
-      // // dev only
-      // const rectList = line.fence.reduce<Array<ClientRect>>((res, cur) => {
-      //   const { fenceList } = cur;
-      //   fenceList.forEach(({ rect }) => {
-      //     res.push(rect);
-      //   });
-      //   return res;
-      // }, []);
-
-      // rectList.forEach(rect =>
-      //   this.renderer.renderRect(rect, { strokeStyle: 'red' })
-      // );
     });
 
     this.selection.initEventListener();
     this.selection.addEventListener(KEYDOWN, e => {
-      if (e.key === 'Tab' && !this.selection.rect && this.head) {
-        this.selection.focusOn(this.head, 0);
-      } else if (e.key === 'Escape' && this.selection.rect) {
+      if (
+        e.key === 'Tab' &&
+        !this.selection.state?.rect &&
+        this.listView.head
+      ) {
+        this.selection.focusOn(this.listView.head, 0);
+      } else if (e.key === 'Escape' && this.selection.state?.rect) {
         this.selection.unFocus();
       }
     });
     this.initEventListener();
+
+    this.eventBus.emit(FULL_PATCH, lineVNodes);
   }
 
   initEventListener() {
@@ -100,16 +88,36 @@ export class Page extends LinkedList<Operable> {
       }
     );
 
-    this.eventBus.attach(FULL_PATCH, () => {
-      this.renderer.fullPatch(this.map(({ vNode }) => vNode));
+    const innerEventDetail: Array<[InnerEventName, InnerEventListener<any>]> = [
+      [FULL_PATCH, this.fullPatch],
+      [UNINSTALL_BLOCK, this.uninstallBlock],
+      [INSTALL_BLOCK, this.installBlock],
+    ];
+
+    innerEventDetail.forEach(([eventName, listener]) => {
+      this.eventBus.attach(eventName, listener.bind(this));
     });
-    this.eventBus.attach(UNINSTALL_BLOCK, block => {
-      this.remove(block);
-      this.eventBus.emit(FULL_PATCH);
+  }
+
+  fullPatch(lineVNodes: Array<VirtualNode>) {
+    this.listView.forEach((block, i) => {
+      block.patch(lineVNodes[i]);
     });
-    this.eventBus.attach(INSTALL_BLOCK, (block, ancestorBlock) => {
-      this.insertBefore(block, ancestorBlock);
-      this.eventBus.emit(FULL_PATCH);
-    });
+  }
+
+  installBlock(newBlock: OperableNode, anchorBlock: OperableNode) {
+    this.listView.insert(newBlock, this.listView.offset(anchorBlock));
+    this.eventBus.emit(
+      FULL_PATCH,
+      this.listView.map(({ vNode }) => vNode)
+    );
+  }
+
+  uninstallBlock(block: OperableNode) {
+    this.listView.remove(block);
+    this.eventBus.emit(
+      FULL_PATCH,
+      this.listView.map(({ vNode }) => vNode)
+    );
   }
 }

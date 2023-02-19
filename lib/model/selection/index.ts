@@ -21,21 +21,15 @@ const { KEYDOWN } = VNodeEventName;
 const { FOCUS_ON, UNFOCUS, UNINSTALL_BLOCK, INSTALL_BLOCK } = InnerEventName;
 
 export class Selection extends EventInteroperableObject {
-  rect: ClientRect | null;
+  state: CursroInfo | null;
 
-  private renderer: Renderer;
   private parser: (src: string) => SyntaxNode;
   private states: Array<Snapshot>;
 
-  constructor(
-    renderer: Renderer,
-    eventBus: EventBus,
-    parser: (src: string) => SyntaxNode
-  ) {
+  constructor(eventBus: EventBus, parser: (src: string) => SyntaxNode) {
     super(eventBus);
 
-    this.renderer = renderer;
-    this.rect = null;
+    this.state = null;
     this.parser = parser;
     this.states = [];
   }
@@ -45,18 +39,7 @@ export class Selection extends EventInteroperableObject {
   }
 
   private setPos(cursorInfo: CursroInfo | null) {
-    if (cursorInfo) {
-      const { rect } = cursorInfo;
-      const { height, clientX, clientY } = rect;
-      this.renderer.renderCursor(
-        { clientX, clientY, height, width: 2 },
-        this.rect
-      );
-      this.rect = rect;
-    } else if (this.rect) {
-      this.renderer.clearCursor(this.rect);
-      this.rect = null;
-    }
+    this.state = cursorInfo;
   }
 
   initEventListener() {
@@ -105,15 +88,15 @@ export class Selection extends EventInteroperableObject {
     this.setPos(nextState.cursor);
   }
   unFocus() {
-    if (this.rect && this.topState) {
-      this.renderer.clearCursor(this.rect);
-      this.rect = null;
+    if (this.state && this.topState) {
+      // this.renderer.clearCursor(this.state);
+      this.setPos(null);
       this.topState.block.unFocus(this.topState);
     }
   }
 
   left(step: number = 1) {
-    if (!this.rect || !this.topState) return;
+    if (!this.state || !this.topState) return;
     const nextState = this.topState.block.left(this.topState, step);
     if (nextState) {
       this.setPos(nextState.cursor);
@@ -121,7 +104,7 @@ export class Selection extends EventInteroperableObject {
     }
   }
   right(step: number = 1) {
-    if (!this.rect || !this.topState) return;
+    if (!this.state || !this.topState) return;
     const nextState = this.topState.block.right(this.topState, step);
     if (nextState) {
       this.setPos(nextState.cursor);
@@ -129,7 +112,7 @@ export class Selection extends EventInteroperableObject {
     }
   }
   up(step: number = 1) {
-    if (!this.rect || !this.topState) return;
+    if (!this.state || !this.topState) return;
     const nextState = this.topState.block.up(this.topState, step);
     if (nextState) {
       this.setPos(nextState.cursor);
@@ -137,7 +120,7 @@ export class Selection extends EventInteroperableObject {
     }
   }
   down(step: number = 1) {
-    if (!this.rect || !this.topState) return;
+    if (!this.state || !this.topState) return;
     const nextState = this.topState.block.down(this.topState, step);
     if (nextState) {
       this.setPos(nextState.cursor);
@@ -146,7 +129,7 @@ export class Selection extends EventInteroperableObject {
   }
 
   newLine(parser: (src: string) => SyntaxNode) {
-    if (!this.rect || !this.topState) return;
+    if (!this.state || !this.topState) return;
 
     const nextState = this.topState.block.newLine(this.topState, parser);
     this.setPos(nextState.cursor);
@@ -154,14 +137,14 @@ export class Selection extends EventInteroperableObject {
   }
 
   updateBlockContent(char: string, parser: (src: string) => SyntaxNode) {
-    if (!this.rect || !this.topState) return;
+    if (!this.state || !this.topState) return;
     const nextState = this.topState.block.update(this.topState, char, parser);
     this.setPos(nextState.cursor);
     this.states.push(nextState);
   }
 
   delete(parser: (src: string) => SyntaxNode) {
-    if (!this.rect || !this.topState) return;
+    if (!this.state || !this.topState) return;
 
     const { block } = this.topState;
     if (isEmptyNode(block.vNode)) {

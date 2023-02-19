@@ -34,25 +34,16 @@ export class LinkedList<T extends ListNode> {
     return Array.from(this.iter()).includes(node);
   }
 
-  appendTail(...nodes: Array<T>) {
-    const append = (node: T) => {
-      if (this.tail) {
-        node.prev = this.tail;
-        this.tail.next = node;
-        this.tail = node;
-      } else {
-        this.head = node;
-        this.tail = node;
-      }
+  insert(node: T, offset: number = this.length): void {
+    if (offset < 0 || offset > this.length) {
+      return panicAt(
+        'offset out of bound',
+        `length: ${this.length}`,
+        `offset: ${offset}`
+      );
+    }
 
-      this.length++;
-    };
-
-    nodes.forEach(node => append(node));
-  }
-
-  appendHead(...nodes: Array<T>) {
-    const append = (node: T) => {
+    if (offset === 0) {
       if (this.head) {
         node.next = this.head;
         this.head.prev = node;
@@ -61,46 +52,18 @@ export class LinkedList<T extends ListNode> {
         this.head = node;
         this.tail = node;
       }
-
-      this.length++;
-    };
-
-    nodes.forEach(node => append(node));
-  }
-
-  insertBefore(node: T, anchor: T) {
-    if (!this.contains(anchor)) {
-      return panicAt('anchor does not exist in the linked list');
-    }
-
-    if (anchor.prev) {
-      node.next = anchor;
-      node.prev = anchor.prev;
-      anchor.prev.next = node;
-      anchor.prev = node;
     } else {
-      node.next = anchor;
-      anchor.prev = node;
-      this.head = node;
-    }
-
-    this.length++;
-  }
-
-  insertAfter(node: T, anchor: T) {
-    if (!this.contains(anchor)) {
-      return panicAt('anchor does not exist in the linked list');
-    }
-
-    if (anchor.next) {
-      node.prev = anchor;
-      node.next = anchor.next;
-      anchor.next.prev = node;
-      anchor.next = node;
-    } else {
-      node.prev = anchor;
-      anchor.next = node;
-      this.tail = node;
+      const anchor = this.find(offset - 1)!;
+      if (anchor.next) {
+        node.prev = anchor;
+        node.next = anchor.next;
+        anchor.next.prev = node;
+        anchor.next = node;
+      } else {
+        node.prev = anchor;
+        anchor.next = node;
+        this.tail = node;
+      }
     }
 
     this.length++;

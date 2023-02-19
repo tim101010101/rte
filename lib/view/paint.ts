@@ -294,6 +294,7 @@ export class Paint {
 
     switch (c.textAlign) {
       case 'left':
+      case 'start':
         return this.drawTextFloatLeft(text, rect, c, isFill);
       // case 'center':
       //   return this.drawTextCenter(text, rect, c);

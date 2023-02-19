@@ -9,9 +9,7 @@ import {
   Snapshot,
 } from 'lib/types';
 import { insertAt, min, panicAt, removeAt, splitAt } from 'lib/utils';
-import { Renderer } from 'lib/view';
 import {
-  calcFence,
   tryActiveAndDeactive,
   getFenceLength,
   getFenceInfo,
@@ -23,27 +21,50 @@ export class Line extends OperableNode {
   private _vNode?: VirtualNode;
   private _rect?: ClientRect;
 
-  constructor(renderer: Renderer, eventBus: EventBus) {
-    super(renderer, eventBus);
+  constructor(eventBus: EventBus) {
+    super(eventBus);
   }
 
   get rect(): ClientRect {
     if (!this._rect) {
       return panicAt('');
     }
-    return this._rect;
+    return this._rect!;
   }
+  set rect(newRect: ClientRect) {
+    this._rect = newRect;
+  }
+
   get vNode(): VirtualNode {
     if (!this._vNode) {
       return panicAt('');
     }
-    return this._vNode;
+    return this._vNode!;
   }
+  set vNode(newVNode: VirtualNode) {
+    this._vNode = newVNode;
+  }
+
   get fence(): Fence {
     if (!this._fence) {
       return panicAt('');
     }
     return this._fence;
+  }
+  set fence(newFence: Fence) {
+    this._fence = newFence;
+  }
+
+  dump(): {
+    rect?: ClientRect | undefined;
+    vNode?: VirtualNode | undefined;
+    fence?: Fence | undefined;
+  } {
+    return {
+      rect: this._rect,
+      vNode: this._vNode,
+      fence: this._fence,
+    };
   }
 
   patch(newVNode: VirtualNode): void {
@@ -51,15 +72,7 @@ export class Line extends OperableNode {
       return panicAt('try to patch a single textNode');
     }
 
-    const { lineRect: rect, rectList } = this.renderer.patch(
-      newVNode,
-      this._vNode,
-      this._rect
-    );
-
-    this._rect = rect;
-    this._vNode = newVNode;
-    this._fence = calcFence(newVNode, rectList);
+    this.vNode = newVNode;
   }
 
   focusOn(prevState: Snapshot | null, curOffset: number): Snapshot {
@@ -73,7 +86,7 @@ export class Line extends OperableNode {
     const { vNode, offset } = prevState;
     const [line1, line2] = splitAt(textContent(vNode), offset).map(parse);
 
-    const newLine = new Line(this.renderer, this.eventBus);
+    const newLine = new Line(this.eventBus);
 
     this.patch(line1);
     newLine.patch(line2);
