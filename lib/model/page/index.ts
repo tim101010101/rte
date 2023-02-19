@@ -14,7 +14,7 @@ import { Schema } from 'lib/schema';
 
 const { CLICK, MOUSE_DOWN, MOUSE_MOVE, MOUSE_UP } = VNodeEventName;
 const { KEYDOWN, KEYUP } = VNodeEventName;
-const { FOCUS_ON } = InnerEventName;
+const { FOCUS_ON, FULL_PATCH, UNINSTALL_BLOCK, INSTALL_BLOCK } = InnerEventName;
 
 export class Page extends LinkedList<Operable> {
   private container: HTMLElement;
@@ -99,5 +99,17 @@ export class Page extends LinkedList<Operable> {
         );
       }
     );
+
+    this.eventBus.attach(FULL_PATCH, () => {
+      this.renderer.fullPatch(this.map(({ vNode }) => vNode));
+    });
+    this.eventBus.attach(UNINSTALL_BLOCK, block => {
+      this.remove(block);
+      this.eventBus.emit(FULL_PATCH);
+    });
+    this.eventBus.attach(INSTALL_BLOCK, (block, ancestorBlock) => {
+      this.insertBefore(block, ancestorBlock);
+      this.eventBus.emit(FULL_PATCH);
+    });
   }
 }

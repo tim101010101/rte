@@ -5,7 +5,7 @@ import {
   SyntaxNode,
   Snapshot,
 } from 'lib/types';
-import { EventBus } from 'lib/model';
+import { EventBus, isEmptyNode } from 'lib/model';
 import { Renderer } from 'lib/view';
 import {
   InnerEventName,
@@ -15,9 +15,10 @@ import {
 } from 'lib/static';
 import { lastItem, panicAt } from 'lib/utils';
 import { CursroInfo } from 'lib/types/cursor';
+import { getFenceLength } from '../listView/line/helper';
 
 const { KEYDOWN } = VNodeEventName;
-const { FOCUS_ON, UNFOCUS } = InnerEventName;
+const { FOCUS_ON, UNFOCUS, UNINSTALL_BLOCK, INSTALL_BLOCK } = InnerEventName;
 
 export class Selection extends EventInteroperableObject {
   rect: ClientRect | null;
@@ -79,6 +80,9 @@ export class Selection extends EventInteroperableObject {
 
         case ControlKey.BACKSPACE:
           this.delete(this.parser);
+          break;
+        case ControlKey.ENTER:
+          this.newLine(this.parser);
           break;
 
         case 'a':
@@ -158,8 +162,17 @@ export class Selection extends EventInteroperableObject {
 
   delete(parser: (src: string) => SyntaxNode) {
     if (!this.rect || !this.topState) return;
-    const nextState = this.topState.block.delete(this.topState, parser);
-    this.setPos(nextState.cursor);
-    this.states.push(nextState);
+
+    const { block } = this.topState;
+    if (isEmptyNode(block.vNode)) {
+      if (block.prev) {
+        this.focusOn(block.prev, getFenceLength(block.prev.fence));
+        this.eventBus.emit(UNINSTALL_BLOCK, block);
+      }
+    } else {
+      const nextState = block.delete(this.topState, parser);
+      this.setPos(nextState.cursor);
+      this.states.push(nextState);
+    }
   }
 }

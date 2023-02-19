@@ -1,3 +1,4 @@
+import { InnerEventName } from 'lib/static';
 import { isTextNode, EventBus, textContent } from 'lib/model';
 import {
   Fence,
@@ -7,7 +8,7 @@ import {
   OperableNode,
   Snapshot,
 } from 'lib/types';
-import { insertAt, min, panicAt, removeAt } from 'lib/utils';
+import { insertAt, min, panicAt, removeAt, splitAt } from 'lib/utils';
 import { Renderer } from 'lib/view';
 import {
   calcFence,
@@ -69,7 +70,17 @@ export class Line extends OperableNode {
   }
 
   newLine(prevState: Snapshot, parse: (src: string) => SyntaxNode): Snapshot {
-    return panicAt('');
+    const { vNode, offset } = prevState;
+    const [line1, line2] = splitAt(textContent(vNode), offset).map(parse);
+
+    const newLine = new Line(this.renderer, this.eventBus);
+
+    this.patch(line1);
+    newLine.patch(line2);
+
+    this.eventBus.emit(InnerEventName.INSTALL_BLOCK, newLine, this);
+
+    return newLine.focusOn(prevState, 0);
   }
 
   update(
@@ -87,8 +98,6 @@ export class Line extends OperableNode {
   }
 
   delete(prevState: Snapshot, parse: (src: string) => SyntaxNode): Snapshot {
-    // TODO delete empty line
-
     const { textOffset } = getFenceInfo({
       block: this,
       offset: prevState.offset,
