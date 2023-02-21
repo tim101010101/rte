@@ -100,6 +100,7 @@ export class Page implements Context {
   }
 
   fullPatch(lineVNodes: Array<VirtualNode>) {
+    // this.renderer.fullPatch(lineVNodes);
     this.listView.forEach((block, i) => {
       block.patch(lineVNodes[i]);
     });
