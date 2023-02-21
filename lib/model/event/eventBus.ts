@@ -14,10 +14,12 @@ import {
   EventInteroperable,
   EventInteroperableObject,
   OperableNode,
+  VirtualNode,
+  Context,
 } from 'lib/types';
 import { VNodeEventName, InnerEventName, EventType } from 'lib/static';
 import { isArray, panicAt } from 'lib/utils';
-import { isHitRect } from 'lib/model';
+import { isHitRect, Page } from 'lib/model';
 
 const { MOUSE, KEYBOARD, INNER } = EventType;
 const { CLICK, MOUSE_DOWN, MOUSE_MOVE, MOUSE_UP } = VNodeEventName;
@@ -94,6 +96,18 @@ export class EventBus {
     listener: VNodeEventListener<VNodeKeyboardEvent>
   ): EventDetachHandler;
   attach(
+    eventName: InnerEventName.FULL_PATCH,
+    listener: InnerEventListener<Parameters<Context['fullPatch']>>
+  ): EventDetachHandler;
+  attach(
+    eventName: InnerEventName.UNINSTALL_BLOCK,
+    listener: InnerEventListener<Parameters<Context['uninstallBlock']>>
+  ): EventDetachHandler;
+  attach(
+    eventName: InnerEventName.INSTALL_BLOCK,
+    listener: InnerEventListener<Parameters<Context['installBlock']>>
+  ): EventDetachHandler;
+  attach(
     eventName: InnerEventName,
     listener: InnerEventListener
   ): EventDetachHandler;
@@ -123,6 +137,18 @@ export class EventBus {
 
   emit(eventName: VNodeMouseEventName, e: MouseEvent): void;
   emit(eventName: VNodeKeyboardEventName, e: KeyboardEvent): void;
+  emit(
+    eventName: InnerEventName.FULL_PATCH,
+    ...rest: Parameters<Context['fullPatch']>
+  ): void;
+  emit(
+    eventName: InnerEventName.UNINSTALL_BLOCK,
+    ...rest: Parameters<Context['uninstallBlock']>
+  ): void;
+  emit(
+    eventName: InnerEventName.INSTALL_BLOCK,
+    ...rest: Parameters<Context['installBlock']>
+  ): void;
   emit(eventName: InnerEventName, ...rest: Array<any>): void;
   emit(eventName: EventName, ...rest: Array<any>): void {
     if (this.has(eventName)) {

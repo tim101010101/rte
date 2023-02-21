@@ -8,3 +8,4 @@ export * from './string';
 export * from './canvas';
 export * from './funtional';
 export * from './strategy';
+export * from './proxy';

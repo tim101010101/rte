@@ -18,20 +18,24 @@ export abstract class OperableNode extends EventInteroperableObject implements O
   prev: this | null;
   next: this | null;
 
-  protected renderer: Renderer
 
-  constructor(renderer: Renderer, eventBus: EventBus) {
+  constructor(eventBus: EventBus) {
     super(eventBus)
 
     this.prev = null;
     this.next = null;
-
-    this.renderer = renderer
   }
 
   abstract get rect(): ClientRect;
+  abstract set rect(rect: ClientRect);
+
   abstract get vNode(): VirtualNode;
-  abstract get fence(): Fence
+  abstract set vNode(newVNode: VirtualNode);
+
+  abstract get fence(): Fence;
+  abstract set fence(newFence: Fence);
+
+  abstract dump(): { rect?: ClientRect, vNode?: VirtualNode, fence?: Fence }
 
   abstract patch(newVNode: VirtualNode): void;
 

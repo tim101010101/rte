@@ -5,7 +5,7 @@ import {
   SyntaxNode,
   Snapshot,
 } from 'lib/types';
-import { EventBus } from 'lib/model';
+import { EventBus, isEmptyNode, textContent } from 'lib/model';
 import { Renderer } from 'lib/view';
 import {
   InnerEventName,
@@ -15,26 +15,21 @@ import {
 } from 'lib/static';
 import { lastItem, panicAt } from 'lib/utils';
 import { CursroInfo } from 'lib/types/cursor';
+import { getFenceLength } from '../listView/line/helper';
 
 const { KEYDOWN } = VNodeEventName;
-const { FOCUS_ON, UNFOCUS } = InnerEventName;
+const { FOCUS_ON, UNFOCUS, UNINSTALL_BLOCK, INSTALL_BLOCK } = InnerEventName;
 
 export class Selection extends EventInteroperableObject {
-  rect: ClientRect | null;
+  state: CursroInfo | null;
 
-  private renderer: Renderer;
   private parser: (src: string) => SyntaxNode;
   private states: Array<Snapshot>;
 
-  constructor(
-    renderer: Renderer,
-    eventBus: EventBus,
-    parser: (src: string) => SyntaxNode
-  ) {
+  constructor(eventBus: EventBus, parser: (src: string) => SyntaxNode) {
     super(eventBus);
 
-    this.renderer = renderer;
-    this.rect = null;
+    this.state = null;
     this.parser = parser;
     this.states = [];
   }
@@ -44,18 +39,7 @@ export class Selection extends EventInteroperableObject {
   }
 
   private setPos(cursorInfo: CursroInfo | null) {
-    if (cursorInfo) {
-      const { rect } = cursorInfo;
-      const { height, clientX, clientY } = rect;
-      this.renderer.renderCursor(
-        { clientX, clientY, height, width: 2 },
-        this.rect
-      );
-      this.rect = rect;
-    } else if (this.rect) {
-      this.renderer.clearCursor(this.rect);
-      this.rect = null;
-    }
+    this.state = cursorInfo;
   }
 
   initEventListener() {
@@ -80,6 +64,9 @@ export class Selection extends EventInteroperableObject {
         case ControlKey.BACKSPACE:
           this.delete(this.parser);
           break;
+        case ControlKey.ENTER:
+          this.newLine(this.parser);
+          break;
 
         case 'a':
         case '*':
@@ -101,15 +88,15 @@ export class Selection extends EventInteroperableObject {
     this.setPos(nextState.cursor);
   }
   unFocus() {
-    if (this.rect && this.topState) {
-      this.renderer.clearCursor(this.rect);
-      this.rect = null;
+    if (this.state && this.topState) {
+      // this.renderer.clearCursor(this.state);
+      this.setPos(null);
       this.topState.block.unFocus(this.topState);
     }
   }
 
   left(step: number = 1) {
-    if (!this.rect || !this.topState) return;
+    if (!this.state || !this.topState) return;
     const nextState = this.topState.block.left(this.topState, step);
     if (nextState) {
       this.setPos(nextState.cursor);
@@ -117,7 +104,7 @@ export class Selection extends EventInteroperableObject {
     }
   }
   right(step: number = 1) {
-    if (!this.rect || !this.topState) return;
+    if (!this.state || !this.topState) return;
     const nextState = this.topState.block.right(this.topState, step);
     if (nextState) {
       this.setPos(nextState.cursor);
@@ -125,7 +112,7 @@ export class Selection extends EventInteroperableObject {
     }
   }
   up(step: number = 1) {
-    if (!this.rect || !this.topState) return;
+    if (!this.state || !this.topState) return;
     const nextState = this.topState.block.up(this.topState, step);
     if (nextState) {
       this.setPos(nextState.cursor);
@@ -133,7 +120,7 @@ export class Selection extends EventInteroperableObject {
     }
   }
   down(step: number = 1) {
-    if (!this.rect || !this.topState) return;
+    if (!this.state || !this.topState) return;
     const nextState = this.topState.block.down(this.topState, step);
     if (nextState) {
       this.setPos(nextState.cursor);
@@ -142,7 +129,7 @@ export class Selection extends EventInteroperableObject {
   }
 
   newLine(parser: (src: string) => SyntaxNode) {
-    if (!this.rect || !this.topState) return;
+    if (!this.state || !this.topState) return;
 
     const nextState = this.topState.block.newLine(this.topState, parser);
     this.setPos(nextState.cursor);
@@ -150,16 +137,31 @@ export class Selection extends EventInteroperableObject {
   }
 
   updateBlockContent(char: string, parser: (src: string) => SyntaxNode) {
-    if (!this.rect || !this.topState) return;
+    if (!this.state || !this.topState) return;
     const nextState = this.topState.block.update(this.topState, char, parser);
     this.setPos(nextState.cursor);
     this.states.push(nextState);
   }
 
-  delete(parser: (src: string) => SyntaxNode) {
-    if (!this.rect || !this.topState) return;
-    const nextState = this.topState.block.delete(this.topState, parser);
-    this.setPos(nextState.cursor);
-    this.states.push(nextState);
+  delete(parse: (src: string) => SyntaxNode) {
+    if (!this.state || !this.topState) return;
+
+    const { block, offset } = this.topState;
+    if (offset === 0 && block.prev) {
+      const { vNode: prevBlock } = block.prev;
+      const newVNode = parse(
+        `${textContent(prevBlock)}${textContent(block.vNode)}`
+      );
+
+      this.eventBus.emit(InnerEventName.UNINSTALL_BLOCK, block);
+
+      const finalOffset = getFenceLength(block.prev.fence);
+      block.prev.patch(newVNode);
+      this.focusOn(block.prev, finalOffset);
+    } else {
+      const nextState = this.topState.block.delete(this.topState, parse);
+      this.setPos(nextState.cursor);
+      this.states.push(nextState);
+    }
   }
 }
