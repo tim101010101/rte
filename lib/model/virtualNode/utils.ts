@@ -1,7 +1,14 @@
-import { FontInfo, SyntaxNode, TextNode, VirtualNode } from 'lib/types';
+import {
+  ClientRect,
+  FontInfo,
+  Point,
+  Rect,
+  SyntaxNode,
+  TextNode,
+  VirtualNode,
+} from 'lib/types';
 import { NodeType } from 'lib/static';
-import { set } from 'lib/utils';
-import { syntaxMarker } from 'lib/model';
+import { entries, get, has, panicAt, set } from 'lib/utils';
 
 const { PLAIN_TEXT, PREFIX, SUFFIX } = NodeType;
 
@@ -18,289 +25,191 @@ export const isMarkerNode = (vNode: VirtualNode): vNode is SyntaxNode =>
 export const isTextNode = (vNode: VirtualNode): vNode is TextNode =>
   vNode.type === PLAIN_TEXT;
 
-export const isPureTextAncestor = (root: VirtualNode, path: Array<number>) => {
-  if (isTextNode(root)) return true;
-  return !!(root.children[path[0]].type === PLAIN_TEXT);
+export const isEmptyNode = (vNode: VirtualNode) => {
+  if (isTextNode(vNode)) {
+    return vNode.text === '';
+  } else {
+    return vNode.children.length === 0;
+  }
 };
 
-export const deepCloneVNode = <T extends VirtualNode>(vNode: T): T => {
-  if (!vNode) return vNode;
-
-  const newVNode = { ...vNode };
-
-  set(
-    newVNode,
-    isTextNode(vNode) ? 'children' : 'text',
-    isTextNode(vNode)
-      ? vNode.text
-      : vNode.children.reduce<Array<T>>((res, child) => {
-          res.push(deepCloneVNode(child as T));
-          return res;
-        }, [])
-  );
-
-  return newVNode;
+export const isHitRect = (pos: Point, rect: Rect | ClientRect) => {
+  const [x, y] = pos;
+  const { width, height } = rect;
+  const xr = has(rect, 'x') ? get(rect, 'x') : get(rect, 'clientX');
+  const yr = has(rect, 'y') ? get(rect, 'y') : get(rect, 'clientY');
+  return x >= xr && y >= yr && x <= xr + width && y <= yr + height;
 };
 
-export const deepCloneWithTrackNode = (
+export function getAncestorByIdx(vNode: VirtualNode, idx: number): VirtualNode;
+export function getAncestorByIdx(
   vNode: VirtualNode,
-  target?: VirtualNode
-): [VirtualNode, Array<number>] => {
-  const path: Array<number> = [];
-  let hasFound = false;
+  ...indexes: Array<number>
+): Array<VirtualNode>;
+export function getAncestorByIdx(
+  vNode: VirtualNode,
+  ...indexes: Array<number>
+): VirtualNode | Array<VirtualNode> {
+  if (isTextNode(vNode)) {
+    return panicAt('try to get ancestor from a single textNode');
+  }
 
-  const dfs = (cur: VirtualNode) => {
-    if (!cur) return cur;
-    if (target && cur === target) hasFound = true;
+  const getAncestor = (vNode: SyntaxNode, idx: number) => {
+    const { children } = vNode;
+    const childrenLength = children.length;
 
-    const newVNode = { ...cur };
-
-    set(
-      newVNode,
-      isTextNode(cur) ? 'children' : 'text',
-      isTextNode(cur)
-        ? cur.text
-        : cur.children.reduce<Array<VirtualNode>>((res, child, i) => {
-            hasFound || path.push(i);
-            res.push(dfs(child));
-            hasFound || path.pop();
-            return res;
-          }, [])
-    );
-
-    return newVNode;
+    return idx >= childrenLength
+      ? panicAt(`index of ancestor is out of bound: ${idx}`)
+      : children[idx];
   };
 
-  return [dfs(vNode), path];
-};
-
-export const textContentWithMarker = (vNode: VirtualNode): string => {
-  if (!vNode) return '';
-
-  if (isTextNode(vNode)) {
-    return vNode.text;
+  if (indexes.length === 1) {
+    return getAncestor(vNode, indexes[0]);
   } else {
-    let subRes = '';
-    const { marker, children, isActive } = vNode;
-    const { prefix, suffix } = marker;
-    if (!isActive && prefix) subRes += prefix;
-    subRes += children.reduce((content, cur) => {
-      content += textContentWithMarker(cur);
-      return content;
-    }, '');
-    if (!isActive && suffix) subRes += suffix;
-
-    return subRes;
+    return indexes.map(idx => getAncestor(vNode, idx));
   }
-};
+}
 
-export const textContent = (vNode: VirtualNode): string => {
-  if (isTextNode(vNode)) {
-    return vNode.text;
-  } else {
-    return vNode.children.reduce((res, cur) => res + textContent(cur), '');
-  }
-};
-
-export const setTextContent = (
-  root: VirtualNode,
-  path: Array<number>,
-  newTextContent: string
-) => {
-  const target = getNode(root, path);
-  const parent = getParent(root, path);
-
-  if (isTextNode(parent) || !isTextNode(target)) return;
-
-  parent.children[path[path.length - 1]] = {
-    ...target,
-    text: newTextContent,
-  };
-};
-
-export const posNode = (vNode: VirtualNode) => {
-  const { el } = vNode;
-  if (!el) return null;
-
-  const range = document.createRange();
-  range.selectNode(el);
-  const res = Array.from(range.getClientRects());
-  range.detach();
-
-  return res.shift()!;
-};
-
-export const walkTextNode = (
+export function walkTextNode(
   vNode: VirtualNode,
   callback: (
     textNode: TextNode,
+    i: number,
     parent: SyntaxNode | null,
-    path: Array<number>
+    ancestor: VirtualNode | null
   ) => void
-) => {
-  const path: Array<number> = [];
-  const dfs = (cur: VirtualNode, parent: SyntaxNode | null) => {
+): void {
+  let idx = 0;
+  const dfs = (
+    cur: VirtualNode,
+    parent: SyntaxNode | null,
+    ancestor: VirtualNode | null
+  ) => {
     if (!cur) return;
 
     if (isTextNode(cur)) {
-      callback(cur, parent, [...path]);
+      if (parent && ancestor) {
+        callback(cur, idx, parent, ancestor);
+      } else {
+        callback(cur, idx, null, null);
+      }
     } else {
-      cur.children.forEach((child, i) => {
-        path.push(i);
-        dfs(child, cur);
-        path.pop();
+      const { children } = cur;
+      children.forEach((child, i) => {
+        dfs(child, cur, ancestor || child);
       });
     }
   };
 
-  dfs(vNode, null);
+  dfs(vNode, null, null);
+}
+
+export const walkTextNodeWithMoreInformation = (
+  vNode: VirtualNode,
+  callback: (
+    textNode: TextNode,
+    parent: SyntaxNode,
+    ancestor: VirtualNode,
+    idxInAncestor: number,
+    juncFlag: -1 | 0 | 1
+  ) => void
+) => {
+  let idx = 0;
+  let prevAncestor: VirtualNode | null = null;
+
+  const dfs = (
+    cur: VirtualNode,
+    parent: SyntaxNode | null,
+    ancestor: VirtualNode | null,
+    juncFlag: -1 | 0 | 1
+  ) => {
+    if (!cur) return;
+
+    if (ancestor !== prevAncestor) {
+      prevAncestor = ancestor;
+      idx = 0;
+    }
+
+    if (isTextNode(cur)) {
+      if (parent && ancestor) {
+        callback(cur, parent, ancestor, idx, juncFlag);
+        idx++;
+      } else {
+        panicAt('try to manipulate a naked text node');
+      }
+    } else {
+      const { children } = cur;
+      children.forEach(child => dfs(child, cur, ancestor || child, 1));
+    }
+  };
+
+  dfs(vNode, null, null, 1);
 };
 
-export const getTextList = (vNode: SyntaxNode) => {
-  const res: Array<string> = [];
-  walkTextNode(vNode, textNode => {
-    res.push(textNode.text);
-  });
+export const textContent = (vNode: VirtualNode): string => {
+  let res = '';
+  walkTextNode(vNode, ({ text }) => (res += text));
   return res;
 };
 
-export const getAncestorRectList = (vNode: SyntaxNode) => {
-  const rectList: Array<DOMRect> = [];
-  vNode.children.forEach(child => {
-    const rect = posNode(child);
-    rect && rectList.push(rect);
-  });
+export const deepCloneVNode = <T extends VirtualNode>(
+  vNode: T,
+  callback?: (vNode: VirtualNode, ancestorIdx: number) => VirtualNode
+): T => {
+  const dfs = (vNode: VirtualNode, ancestorIdx: number) => {
+    const newVNode = entries(vNode).reduce((newVNode, [k, v]) => {
+      switch (k) {
+        case 'children':
+          set(
+            newVNode,
+            k,
+            (v as Array<VirtualNode>).map(sub => dfs(sub, ancestorIdx))
+          );
+          break;
+        default:
+          set(newVNode, k, v);
+          break;
+      }
 
-  return rectList;
-};
+      return newVNode;
+    }, {} as VirtualNode);
 
-export const getNode = (root: VirtualNode, path: Array<number>) => {
-  let cur = root;
-  let idx = path.length - 1;
-  while (idx >= 0) {
-    if (!isTextNode(cur)) {
-      cur = cur.children[path[idx--]];
-    }
+    return callback ? callback(newVNode, ancestorIdx) : newVNode;
+  };
+
+  const newRoot = { ...vNode };
+  if (isTextNode(vNode)) {
+    return newRoot;
+  } else {
+    const { children } = vNode;
+    set(
+      newRoot,
+      'children',
+      children.map((cur, i) => dfs(cur, i))
+    );
   }
-  return cur;
+
+  return newRoot;
 };
 
-export const getParent = (root: VirtualNode, path: Array<number>) => {
-  let cur = root;
-  let idx = path.length - 1;
-  while (idx > 0) {
-    if (!isTextNode(cur)) {
-      cur = cur.children[path[idx--]];
-    }
+export const walkSubtreeWithEffect = (
+  vNode: VirtualNode,
+  ancestorIdx: number,
+  effectFn: (vNode: VirtualNode) => void
+): SyntaxNode => {
+  if (isTextNode(vNode)) {
+    return panicAt('try to walk a single textNode');
   }
-  return cur;
-};
 
-export const getAncestor = (root: VirtualNode, path: Array<number>) => {
-  if (isTextNode(root)) return root;
-  return root.children[path[0]] as SyntaxNode;
-};
-
-export const getMarkerLength = (root: VirtualNode) => {
-  let prefixLength = 0;
-  let suffixLength = 0;
-
-  const recur = (cur: VirtualNode) => {
+  const dfs = (cur: VirtualNode) => {
     if (isTextNode(cur)) return;
 
-    const { marker, children } = cur;
-    const { prefix, suffix } = marker;
+    effectFn(vNode);
 
-    if (prefix) prefixLength += prefix.length;
-    if (suffix) suffixLength += suffix.length;
-
-    children.forEach(child => recur(child));
+    cur.children.forEach(dfs);
   };
 
-  recur(root);
+  dfs(getAncestorByIdx(vNode, ancestorIdx));
 
-  return {
-    prefix: prefixLength,
-    suffix: suffixLength,
-  };
-};
-
-export const getFirstLeafNode = (root: VirtualNode): TextNode => {
-  let cur = root;
-  while (!isTextNode(cur)) {
-    cur = cur.children[0];
-  }
-  return cur;
-};
-
-export const activeSubTree = (root: SyntaxNode, offset: number) => {
-  let prefixLength = 0;
-  let suffixLnegth = 0;
-
-  const recur = (cur: VirtualNode) => {
-    if (isTextNode(cur)) return;
-
-    const { isActive, children, marker } = cur;
-    const { prefix, suffix } = marker;
-    if (!isActive) {
-      const { font } = getFirstLeafNode(cur);
-      if (prefix) {
-        cur.children.unshift(syntaxMarker(prefix, true, font));
-        prefixLength += prefix.length;
-      }
-
-      if (suffix) {
-        cur.children.push(syntaxMarker(suffix, false, font));
-        suffixLnegth += suffix.length;
-      }
-
-      cur.isActive = true;
-    }
-
-    children.forEach(child => recur(child));
-  };
-
-  const newRoot = deepCloneVNode(root);
-  recur(newRoot.children[offset]);
-
-  return {
-    root: newRoot,
-    prefix: prefixLength,
-    suffix: suffixLnegth,
-  };
-};
-
-export const cancelActiveSubTree = (root: SyntaxNode, offset: number) => {
-  let prefixLength = 0;
-  let suffixLength = 0;
-
-  const recur = (cur: VirtualNode) => {
-    if (isTextNode(cur)) return;
-
-    const { isActive, children, marker } = cur;
-    const { prefix, suffix } = marker;
-    if (isActive) {
-      if (prefix) {
-        cur.children.shift();
-        prefixLength += prefix.length;
-      }
-      if (suffix) {
-        cur.children.pop();
-        suffixLength += suffix.length;
-      }
-
-      cur.isActive = false;
-    }
-
-    children.forEach(child => recur(child));
-  };
-
-  const newRoot = deepCloneVNode(root);
-  recur(newRoot.children[offset]);
-
-  return {
-    root: newRoot,
-    prefix: prefixLength,
-    suffix: suffixLength,
-  };
+  return vNode;
 };

@@ -21,42 +21,38 @@ export const getKeydownHandler = (page: Page) => {
   const isShowableKey = (e: KeyboardEvent) => showableKeys.has(e.key);
 
   return (e: KeyboardEvent) => {
-    if (isControlKey(e)) {
-      switch (e.key) {
-        case ESC:
-          page.selection.unFocus();
-          break;
-
-        case ARROW_LEFT:
-          page.selection.left();
-          break;
-        case ARROW_RIGHT:
-          page.selection.right();
-          break;
-        case ARROW_UP:
-          page.selection.up();
-          break;
-        case ARROW_DOWN:
-          page.selection.down();
-          break;
-
-        case TAB:
-          page.focusOn(page.head!, 0);
-          break;
-
-        case BACKSPACE:
-          page.selection.delete(page.schema.parse.bind(page.schema));
-          break;
-
-        case ENTER:
-          page.selection.newLine(page.schema.parse.bind(page.schema));
-          break;
-      }
-    } else if (isShowableKey(e)) {
-      page.selection.updateBlockContent(
-        e.key,
-        page.schema.parse.bind(page.schema)
-      );
-    }
+    // if (isControlKey(e)) {
+    //   switch (e.key) {
+    //     case ESC:
+    //       page.selection.unFocus();
+    //       break;
+    //     case ARROW_LEFT:
+    //       page.selection.left();
+    //       break;
+    //     case ARROW_RIGHT:
+    //       page.selection.right();
+    //       break;
+    //     case ARROW_UP:
+    //       page.selection.up();
+    //       break;
+    //     case ARROW_DOWN:
+    //       page.selection.down();
+    //       break;
+    //     case TAB:
+    //       page.focusOn(page.head!, 0);
+    //       break;
+    //     case BACKSPACE:
+    //       page.selection.delete(page.schema.parse.bind(page.schema));
+    //       break;
+    //     case ENTER:
+    //       page.selection.newLine(page.schema.parse.bind(page.schema));
+    //       break;
+    //   }
+    // } else if (isShowableKey(e)) {
+    //   page.selection.updateBlockContent(
+    //     e.key,
+    //     page.schema.parse.bind(page.schema)
+    //   );
+    // }
   };
 };

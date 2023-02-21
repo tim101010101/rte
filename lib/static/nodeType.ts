@@ -10,6 +10,8 @@ export enum NodeType {
   SUFFIX,
 
   HEADING,
+  HEADING_MARKER,
+
   DIVIDE,
 
   // block

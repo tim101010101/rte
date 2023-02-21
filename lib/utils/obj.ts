@@ -1,11 +1,15 @@
 import { isArray, isFunction, isObject } from 'lib/utils';
 import { Values } from 'lib/types';
 
+export const is = (o1: object, o2: object) => Object.is(o1, o2);
+
 export const has = (o: object, k: PropertyKey) => Reflect.has(o, k);
 
-export const get = (o: object, k: PropertyKey) => Reflect.get(o, k);
+export const get = (o: object, k: PropertyKey, r: any = o) =>
+  Reflect.get(o, k, r);
 
-export const set = (o: object, k: PropertyKey, v: any) => Reflect.set(o, k, v);
+export const set = (o: object, k: PropertyKey, v: any, r: any = o) =>
+  Reflect.set(o, k, v, r);
 
 export const keys = <T extends object>(o: T) => Reflect.ownKeys(o);
 

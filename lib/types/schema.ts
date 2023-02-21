@@ -4,8 +4,10 @@ import {
   SyntaxNode,
   TextNode,
   VirtualNode,
+  VirtualNodeBehavior,
+  VirtualNodeEvents,
   VirtualNodeMetaData,
-  VirtualNodeProps,
+  VirtualNodeStyle,
 } from 'lib/types';
 
 export type FontConfig = Partial<FontInfo>;
@@ -27,15 +29,17 @@ export type SchemaConfigItem = Record<
 export type ExportedTextFunction = (
   text: string,
 
-  props?: VirtualNodeProps,
-  meta?: VirtualNodeMetaData,
+  font?: FontConfig,
+  behavior?: VirtualNodeBehavior,
 
-  font?: FontConfig
+  style?: VirtualNodeStyle,
+  events?: VirtualNodeEvents,
+  meta?: VirtualNodeMetaData
 ) => TextNode;
 
 type SchemaConfigFunction = (
-  syntax: SyntaxFunction,
-  text: ExportedTextFunction
+  text: ExportedTextFunction,
+  syntax: SyntaxFunction
 ) => SchemaConfigItem;
 
 export interface SchemaConfig {

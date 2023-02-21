@@ -1,147 +1,167 @@
-import { appendChild, createDomNode } from 'lib/utils';
-import { Operable, ActivePos, Pos, SyntaxNode } from 'lib/types';
-import { ClassName, TagName } from 'lib/static';
-import { EventBus } from 'lib/model';
+import {
+  Operable,
+  EventInteroperableObject,
+  ClientRect,
+  SyntaxNode,
+  Snapshot,
+} from 'lib/types';
+import { EventBus, isEmptyNode, textContent } from 'lib/model';
+import { Renderer } from 'lib/view';
+import {
+  InnerEventName,
+  VNodeEventName,
+  ControlKey,
+  ShowableKey,
+} from 'lib/static';
+import { lastItem, panicAt } from 'lib/utils';
+import { CursroInfo } from 'lib/types/cursor';
+import { getFenceLength } from '../listView/line/helper';
 
-export class Selection {
-  private el: HTMLElement;
-  private pos: Pos | null;
-  private active: ActivePos | null;
-  private eventBus: EventBus;
+const { KEYDOWN } = VNodeEventName;
+const { FOCUS_ON, UNFOCUS, UNINSTALL_BLOCK, INSTALL_BLOCK } = InnerEventName;
 
-  constructor(container: HTMLElement, eventBus: EventBus) {
-    this.el = createDomNode(TagName.SPAN, [ClassName.RTE_CURSOR]);
-    this.pos = null;
-    this.active = null;
-    this.eventBus = eventBus;
+export class Selection extends EventInteroperableObject {
+  state: CursroInfo | null;
 
-    appendChild(document.body, this.el);
+  private parser: (src: string) => SyntaxNode;
+  private states: Array<Snapshot>;
+
+  constructor(eventBus: EventBus, parser: (src: string) => SyntaxNode) {
+    super(eventBus);
+
+    this.state = null;
+    this.parser = parser;
+    this.states = [];
   }
 
-  private setShape(width: number, height: number, left: number, top: number) {
-    this.el.style.width = `${width}px`;
-    this.el.style.height = `${height}px`;
-    this.el.style.left = `${left}px`;
-    this.el.style.top = `${top}px`;
+  private get topState(): Snapshot | null {
+    return this.states.length ? lastItem(this.states) : null;
   }
 
-  private setPos({ block, offset }: Pos) {
-    const { rect, cursorOffset } = block.getFenceInfo(offset);
-    const { height, y } = rect;
+  private setPos(cursorInfo: CursroInfo | null) {
+    this.state = cursorInfo;
+  }
 
-    this.setShape(2, height, cursorOffset, y);
+  initEventListener() {
+    this.addEventListener(FOCUS_ON, ({ block, offset }) => {
+      this.focusOn(block, offset);
+    });
+    this.addEventListener(KEYDOWN, e => {
+      switch (e.key) {
+        case ControlKey.ARROW_UP:
+          this.up();
+          break;
+        case ControlKey.ARROW_DOWN:
+          this.down();
+          break;
+        case ControlKey.ARROW_LEFT:
+          this.left();
+          break;
+        case ControlKey.ARROW_RIGHT:
+          this.right();
+          break;
+
+        case ControlKey.BACKSPACE:
+          this.delete(this.parser);
+          break;
+        case ControlKey.ENTER:
+          this.newLine(this.parser);
+          break;
+
+        case 'a':
+        case '*':
+          this.updateBlockContent(e.key, this.parser);
+          break;
+
+        default:
+          break;
+      }
+    });
   }
 
   focusOn(block: Operable, offset: number) {
-    // show the cursor when the page focused for the first time
-    if (!this.pos) {
-      this.el.style.display = 'inline-block';
-    }
+    const prevState = this.topState;
+    const nextState = block.focusOn(prevState, offset);
 
-    const { pos, active } = block.focusOn(this.pos, offset, this.active);
+    this.states.push(nextState);
 
-    // update position of cursor
-    this.setPos(pos);
-
-    // update the pos and active
-    this.pos = pos;
-    this.active = active;
+    this.setPos(nextState.cursor);
   }
   unFocus() {
-    if (this.pos) {
-      this.el.style.display = 'none';
-
-      const { pos, active } = this.pos.block.unFocus();
-      this.pos = pos;
-      this.active = active;
+    if (this.state && this.topState) {
+      // this.renderer.clearCursor(this.state);
+      this.setPos(null);
+      this.topState.block.unFocus(this.topState);
     }
   }
 
-  left(offset: number = 1) {
-    if (!this.pos) return;
-    const nextPos = this.pos.block.left(this.pos, this.active, offset);
-    if (nextPos) {
-      const { pos, active } = nextPos;
-      this.setPos(pos);
-
-      this.pos = pos;
-      this.active = active;
+  left(step: number = 1) {
+    if (!this.state || !this.topState) return;
+    const nextState = this.topState.block.left(this.topState, step);
+    if (nextState) {
+      this.setPos(nextState.cursor);
+      this.states.push(nextState);
     }
   }
-  right(offset: number = 1) {
-    if (!this.pos) return;
-    const nextPos = this.pos.block.right(this.pos, this.active, offset);
-    if (nextPos) {
-      const { pos, active } = nextPos;
-      this.setPos(pos);
-
-      this.pos = pos;
-      this.active = active;
+  right(step: number = 1) {
+    if (!this.state || !this.topState) return;
+    const nextState = this.topState.block.right(this.topState, step);
+    if (nextState) {
+      this.setPos(nextState.cursor);
+      this.states.push(nextState);
     }
   }
-  up(offset: number = 1) {
-    if (!this.pos) return;
-    const nextPos = this.pos.block.up(this.pos, this.active, offset);
-    if (nextPos) {
-      const { pos, active } = nextPos;
-      this.setPos(pos);
-
-      this.pos = pos;
-      this.active = active;
+  up(step: number = 1) {
+    if (!this.state || !this.topState) return;
+    const nextState = this.topState.block.up(this.topState, step);
+    if (nextState) {
+      this.setPos(nextState.cursor);
+      this.states.push(nextState);
     }
   }
-  down(offset: number = 1) {
-    if (!this.pos) return;
-    const nextPos = this.pos.block.down(this.pos, this.active, offset);
-    if (nextPos) {
-      const { pos, active } = nextPos;
-      this.setPos(pos);
-
-      this.pos = pos;
-      this.active = active;
+  down(step: number = 1) {
+    if (!this.state || !this.topState) return;
+    const nextState = this.topState.block.down(this.topState, step);
+    if (nextState) {
+      this.setPos(nextState.cursor);
+      this.states.push(nextState);
     }
   }
 
   newLine(parser: (src: string) => SyntaxNode) {
-    if (!this.pos) return;
+    if (!this.state || !this.topState) return;
 
-    const { pos, active } = this.pos.block.newLine(this.pos.offset, parser);
-    this.active = active;
-    this.pos = pos;
-
-    const { block, offset } = pos;
-    this.focusOn(block, offset);
+    const nextState = this.topState.block.newLine(this.topState, parser);
+    this.setPos(nextState.cursor);
+    this.states.push(nextState);
   }
 
   updateBlockContent(char: string, parser: (src: string) => SyntaxNode) {
-    if (!this.pos) return;
-
-    const { pos, active } = this.pos.block.update(
-      char,
-      this.pos.offset,
-      this.active,
-      parser
-    );
-    this.active = active;
-    this.pos = pos;
-
-    // move cursor right
-    const { block, offset } = pos;
-    this.focusOn(block, offset);
+    if (!this.state || !this.topState) return;
+    const nextState = this.topState.block.update(this.topState, char, parser);
+    this.setPos(nextState.cursor);
+    this.states.push(nextState);
   }
 
-  delete(parser: (src: string) => SyntaxNode) {
-    if (!this.pos) return;
+  delete(parse: (src: string) => SyntaxNode) {
+    if (!this.state || !this.topState) return;
 
-    const { pos, active } = this.pos.block.delete(
-      this.pos.offset,
-      this.active,
-      parser
-    );
-    this.active = active;
-    this.pos = pos;
+    const { block, offset } = this.topState;
+    if (offset === 0 && block.prev) {
+      const { vNode: prevBlock } = block.prev;
+      const newVNode = parse(
+        `${textContent(prevBlock)}${textContent(block.vNode)}`
+      );
 
-    const { block, offset } = pos;
-    this.focusOn(block, offset);
+      this.eventBus.emit(InnerEventName.UNINSTALL_BLOCK, block);
+
+      const finalOffset = getFenceLength(block.prev.fence);
+      block.prev.patch(newVNode);
+      this.focusOn(block.prev, finalOffset);
+    } else {
+      const nextState = this.topState.block.delete(this.topState, parse);
+      this.setPos(nextState.cursor);
+      this.states.push(nextState);
+    }
   }
 }

@@ -1,47 +1,53 @@
 import { s, t } from 'lib/model';
-import { parseInline, parseLine } from 'lib/schema/parser';
 import {
   EditorConfig,
   ExportedTextFunction,
   FontConfig,
   FontInfo,
-  SchemaConfig,
   SchemaConfigItem,
   SyntaxNode,
 } from 'lib/types';
 import { mixin } from 'lib/utils';
+import { parseInline, parseLine } from './parser';
 
 export class Schema {
   private defaultFontInfo: FontInfo;
   private inline: SchemaConfigItem;
   private line: SchemaConfigItem;
 
-  constructor(schemaConfig: SchemaConfig, fontInfo: EditorConfig['font']) {
+  constructor(config: EditorConfig) {
+    const { schema, font } = config;
+
     this.defaultFontInfo = {
-      size: fontInfo.size,
-      family: fontInfo.family,
+      size: font.size,
+      family: font.family,
       bold: false,
       italic: false,
     };
 
-    const { inline, line } = schemaConfig;
+    const { inline, line } = schema;
     const exportedText: ExportedTextFunction = (
-      children,
-      props,
-      meta,
-      fontInfo
+      content,
+      fontInfo,
+      behavior,
+      style,
+      events,
+      meta
     ) => {
       return t(
         mixin(this.defaultFontInfo, fontInfo),
-        children,
-        props || { classList: [] },
-        [],
+        content,
+
+        behavior || {},
+
+        style || {},
+        events || [],
         meta || {}
       );
     };
 
-    this.inline = inline(s, exportedText);
-    this.line = line(s, exportedText);
+    this.inline = inline(exportedText, s);
+    this.line = line(exportedText, s);
   }
 
   parse(src: string): SyntaxNode {

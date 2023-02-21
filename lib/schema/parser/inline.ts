@@ -8,7 +8,6 @@ import {
   VirtualNode,
 } from 'lib/types';
 import { t } from 'lib/model';
-import { ClassName } from 'lib/static';
 
 const findFirstMatched = (
   src: string,
@@ -41,10 +40,7 @@ const maybeOverload = (
   return vNode;
 };
 
-const text = (content: string, fontInfo: FontInfo) =>
-  t(fontInfo, content, {
-    classList: [ClassName.RTE_PLAIN_TEXT],
-  });
+const text = (content: string, fontInfo: FontInfo) => t(fontInfo, content);
 
 export const parseInline = (
   src: string,
