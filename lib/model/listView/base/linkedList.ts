@@ -31,7 +31,8 @@ export class LinkedList<T extends ListNode> {
   }
 
   contains(node: T) {
-    return Array.from(this.iter()).includes(node);
+    const arr = Array.from(this.iter());
+    return arr.includes(node);
   }
 
   insert(node: T, offset: number = this.length): void {
