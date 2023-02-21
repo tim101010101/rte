@@ -1,16 +1,12 @@
 import { values } from 'lib/utils';
 import { s } from 'lib/model';
-import { NodeType, TagName, ClassName } from 'lib/static';
+import { NodeType } from 'lib/static';
 import { FontConfig, SchemaConfigItem, VirtualNode } from 'lib/types';
 
 const { LINE } = NodeType;
-const { DIV } = TagName;
-const { RTE_LINE } = ClassName;
 
 const line = (children: Array<VirtualNode> = []) => {
-  return s(LINE, DIV, children, {
-    classList: [RTE_LINE],
-  });
+  return s(LINE, children);
 };
 
 export const parseLine = (
@@ -29,7 +25,7 @@ export const parseLine = (
     const matched = src.match(reg);
     const { groups } = matched!;
 
-    return line([render(groups!, parseInlineWithOverloadFont)]);
+    return render(groups!, parseInlineWithOverloadFont);
   } else {
     return line(parseInlineWithOverloadFont(src));
   }

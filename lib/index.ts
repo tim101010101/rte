@@ -1,6 +1,5 @@
-import { Page } from './model';
 import { EditorConfig } from './types';
-import { Schema } from 'lib/schema';
+import { Page } from './model';
 
 export class Editor {
   private options: any;
@@ -11,11 +10,7 @@ export class Editor {
     const { container, font, schema: schemaConfig } = options;
     this.options = options;
     this.container = document.querySelector(container)!;
-    this.page = new Page(
-      this.container,
-      options,
-      new Schema(schemaConfig, font)
-    );
+    this.page = new Page(this.container, options);
   }
 
   init(text: string) {

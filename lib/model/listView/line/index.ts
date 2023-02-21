@@ -1,194 +1,164 @@
-import { EventBus, isTextNode, posNode, s } from 'lib/model';
+import { InnerEventName } from 'lib/static';
+import { isTextNode, EventBus, textContent } from 'lib/model';
 import {
-  ActivePos,
-  FeedbackPos,
   Fence,
-  FenceInfo,
-  Pos,
-  Rect,
   SyntaxNode,
   VirtualNode,
+  ClientRect,
+  OperableNode,
+  Snapshot,
 } from 'lib/types';
-import { patchBlock } from 'lib/render';
-import { abs, min, panicAt } from 'lib/utils';
-import { NodeType, ClassName, TagName } from 'lib/static';
+import { insertAt, min, panicAt, removeAt, splitAt } from 'lib/utils';
 import {
-  calcFence,
-  trySwitchActiveSyntaxNode,
-  updateLineContent,
-  deleteChar,
-  getLineFenceInfo,
-  deleteWholeLine,
-  insertNewLine,
+  tryActiveAndDeactive,
+  getFenceLength,
+  getFenceInfo,
+  updateContent,
 } from './helper';
 
-//! ERROR from jest
-//! ERROR Class extends value undefined is not a constructor or null
-import { OperableNode } from '../base/operableNode';
-
 export class Line extends OperableNode {
-  private _vNode: SyntaxNode | null;
-  private _rect: Rect | null;
-  private _fence: Fence | null;
-  private _fenceLength: number | null;
+  private _fence?: Fence;
+  private _vNode?: VirtualNode;
+  private _rect?: ClientRect;
 
-  constructor(container: HTMLElement, eventBus: EventBus) {
-    super(container, eventBus);
-
-    this._vNode = s(NodeType.LINE, TagName.DIV, []);
-    this._rect = null;
-    this._fence = null;
-    this._fenceLength = null;
+  constructor(eventBus: EventBus) {
+    super(eventBus);
   }
 
-  get vNode() {
-    return this._vNode ? this._vNode : panicAt('try to get vNode before patch');
-  }
-  get rect() {
+  get rect(): ClientRect {
     if (!this._rect) {
-      const rect = posNode(this.vNode);
-      if (rect) {
-        const { width, height, x, y } = rect;
-        this._rect = { width, height, x, y };
-      } else {
-        return panicAt('unable to locate node');
-      }
+      return panicAt('');
     }
-    return this._rect;
+    return this._rect!;
   }
-  get fence() {
-    return this._fence ? this._fence : panicAt('try to get fence before patch');
+  set rect(newRect: ClientRect) {
+    this._rect = newRect;
   }
-  get fenceLength() {
-    if (!this._fenceLength) {
-      const fence = this.fence;
-      const { prefixLength, fenceList } = fence[fence.length - 1];
-      const len = prefixLength + fenceList.length;
-      this._fenceLength = len;
+
+  get vNode(): VirtualNode {
+    if (!this._vNode) {
+      return panicAt('');
     }
-    return this._fenceLength;
+    return this._vNode!;
   }
-
-  // TODO It will be triggered three times repeatedly
-  // TODO needs to be reduced
-  getFenceInfo(offset: number): FenceInfo {
-    return getLineFenceInfo(this.fence, offset);
-  }
-
-  patch(newVNode: VirtualNode) {
-    if (isTextNode(newVNode)) return;
-
-    patchBlock(this._vNode, newVNode, this.container);
-
-    this._fence = calcFence(newVNode);
-    this._fenceLength = null;
+  set vNode(newVNode: VirtualNode) {
     this._vNode = newVNode;
-    this._rect = null;
   }
 
-  focusOn(
-    prevPos: Pos | null,
-    curOffset: number,
-    curActive: ActivePos | null
-  ): FeedbackPos {
-    // attempt to activate the node that is currently being edited
-    return trySwitchActiveSyntaxNode(
-      prevPos,
-      { block: this, offset: curOffset },
-      curActive,
-      prevPos?.block !== this,
-      prevPos ? abs(prevPos.offset - curOffset) !== 1 : true
-    );
+  get fence(): Fence {
+    if (!this._fence) {
+      return panicAt('');
+    }
+    return this._fence;
+  }
+  set fence(newFence: Fence) {
+    this._fence = newFence;
   }
 
-  unFocus(): { pos: Pos | null; active: ActivePos | null } {
+  dump(): {
+    rect?: ClientRect | undefined;
+    vNode?: VirtualNode | undefined;
+    fence?: Fence | undefined;
+  } {
     return {
-      pos: null,
-      active: null,
+      rect: this._rect,
+      vNode: this._vNode,
+      fence: this._fence,
     };
   }
 
-  newLine(offset: number, parser: (src: string) => SyntaxNode): FeedbackPos {
-    return insertNewLine(
-      { block: this, offset },
-      parser,
-      this.container,
-      this.eventBus
-    );
-  }
-
-  delete(
-    offset: number,
-    active: ActivePos | null,
-    parser: (src: string) => SyntaxNode
-  ): FeedbackPos {
-    if (offset > 0) {
-      return deleteChar({ block: this, offset }, active, parser);
-    } else if (offset === 0 && this.prev) {
-      return deleteWholeLine(this.prev, this, parser, this.eventBus);
+  patch(newVNode: VirtualNode): void {
+    if (isTextNode(newVNode)) {
+      return panicAt('try to patch a single textNode');
     }
 
-    return {
-      pos: {
-        block: this,
-        offset,
-      },
-      active,
-    };
+    this.vNode = newVNode;
+  }
+
+  focusOn(prevState: Snapshot | null, curOffset: number): Snapshot {
+    return tryActiveAndDeactive({ block: this, offset: curOffset }, prevState);
+  }
+  unFocus(prevState: Snapshot): void {
+    return tryActiveAndDeactive(null, prevState);
+  }
+
+  newLine(prevState: Snapshot, parse: (src: string) => SyntaxNode): Snapshot {
+    const { vNode, offset } = prevState;
+    const [line1, line2] = splitAt(textContent(vNode), offset).map(parse);
+
+    const newLine = new Line(this.eventBus);
+
+    this.patch(line1);
+    newLine.patch(line2);
+
+    this.eventBus.emit(InnerEventName.INSTALL_BLOCK, newLine, this);
+
+    return newLine.focusOn(prevState, 0);
   }
 
   update(
+    prevState: Snapshot,
     char: string,
-    offset: number,
-    active: ActivePos | null,
-    parser: (src: string) => SyntaxNode
-  ): FeedbackPos {
-    return updateLineContent({ block: this, offset }, active, char, parser);
+    parse: (src: string) => SyntaxNode
+  ): Snapshot {
+    const { textOffset } = getFenceInfo({
+      block: this,
+      offset: prevState.offset,
+    });
+    const newVNode = parse(insertAt(textContent(this.vNode), textOffset, char));
+    const nextState = updateContent(prevState, prevState.offset + 1, newVNode);
+    return this.focusOn(nextState, nextState.offset);
   }
 
-  left(pos: Pos, active: ActivePos | null, offset: number = 1) {
-    const { offset: curOffset } = pos;
-    if (curOffset !== 0) {
-      return this.focusOn(pos, curOffset - offset, active);
-    }
-    return null;
+  delete(prevState: Snapshot, parse: (src: string) => SyntaxNode): Snapshot {
+    const { textOffset } = getFenceInfo({
+      block: this,
+      offset: prevState.offset,
+    });
+    const newVNode = parse(removeAt(textContent(this.vNode), textOffset - 1));
+    const nextState = updateContent(prevState, prevState.offset - 1, newVNode);
+    return this.focusOn(nextState, nextState.offset);
   }
 
-  right(pos: Pos, active: ActivePos | null, offset: number = 1) {
-    const { offset: curOffset } = pos;
-    if (curOffset !== this.fenceLength - 1) {
-      return this.focusOn(pos, curOffset + offset, active);
+  left(prevState: Snapshot, step: number): Snapshot | null {
+    const finalOffset = prevState.offset - step;
+    if (finalOffset >= 0) {
+      return this.focusOn(prevState, finalOffset);
+    } else {
+      return null;
     }
-    return null;
   }
-
-  up(pos: Pos, active: ActivePos | null, offset: number = 1) {
-    let prevBlock = this;
-    while (offset--) {
-      if (prevBlock.prev) prevBlock = prevBlock.prev;
-      else return null;
+  right(prevState: Snapshot, step: number): Snapshot | null {
+    const finalOffset = prevState.offset + step;
+    if (finalOffset > getFenceLength(this.fence)) return null;
+    return this.focusOn(prevState, finalOffset);
+  }
+  up(prevState: Snapshot, step: number): Snapshot | null {
+    let curBlock = prevState.block;
+    while (step--) {
+      if (curBlock.prev) {
+        curBlock = curBlock.prev;
+      } else {
+        return null;
+      }
     }
-
-    const { offset: curOffset } = pos;
-    return prevBlock.focusOn(
-      pos,
-      min(curOffset, prevBlock.fenceLength - 1),
-      active
+    return curBlock.focusOn(
+      prevState,
+      min(prevState.offset, getFenceLength(curBlock.fence))
     );
   }
-
-  down(pos: Pos, active: ActivePos | null, offset: number = 1) {
-    let nextBlock = this;
-    while (offset--) {
-      if (nextBlock.next) nextBlock = nextBlock.next;
-      else return null;
+  down(prevState: Snapshot, step: number): Snapshot | null {
+    let curBlock = prevState.block;
+    while (step--) {
+      if (curBlock.next) {
+        curBlock = curBlock.next;
+      } else {
+        return null;
+      }
     }
-
-    const { offset: curOffset } = pos;
-    return nextBlock.focusOn(
-      pos,
-      min(curOffset, nextBlock.fenceLength - 1),
-      active
+    return curBlock.focusOn(
+      prevState,
+      min(prevState.offset, getFenceLength(curBlock.fence))
     );
   }
 }
