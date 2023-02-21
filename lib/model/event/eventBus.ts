@@ -17,8 +17,14 @@ import {
   VirtualNode,
   Context,
 } from 'lib/types';
-import { VNodeEventName, InnerEventName, EventType } from 'lib/static';
-import { isArray, panicAt } from 'lib/utils';
+import {
+  VNodeEventName,
+  InnerEventName,
+  EventType,
+  ShowableKey,
+  ControlKey,
+} from 'lib/static';
+import { isArray, panicAt, values } from 'lib/utils';
 import { isHitRect, Page } from 'lib/model';
 
 const { MOUSE, KEYBOARD, INNER } = EventType;
@@ -259,4 +265,12 @@ export const e2VNodeKeyboardEvent = (e: KeyboardEvent): VNodeKeyboardEvent => {
     isShift: shiftKey,
     isMeta: metaKey,
   };
+};
+
+export const isControlKey = (k: any): k is ControlKey => {
+  return values(ControlKey).includes(k);
+};
+
+export const isShowableKey = (k: any): k is ShowableKey => {
+  return values(ShowableKey).includes(k);
 };
