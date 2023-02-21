@@ -83,7 +83,7 @@ export class Page implements Context {
           eventName,
           throttle(e => {
             this.eventBus.emit(eventName as any, e);
-          }, 50)
+          }, 25)
         );
       }
     );
