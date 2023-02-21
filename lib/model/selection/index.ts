@@ -5,7 +5,7 @@ import {
   SyntaxNode,
   Snapshot,
 } from 'lib/types';
-import { EventBus, isEmptyNode } from 'lib/model';
+import { EventBus, isEmptyNode, textContent } from 'lib/model';
 import { Renderer } from 'lib/view';
 import {
   InnerEventName,
@@ -143,17 +143,23 @@ export class Selection extends EventInteroperableObject {
     this.states.push(nextState);
   }
 
-  delete(parser: (src: string) => SyntaxNode) {
+  delete(parse: (src: string) => SyntaxNode) {
     if (!this.state || !this.topState) return;
 
-    const { block } = this.topState;
-    if (isEmptyNode(block.vNode)) {
-      if (block.prev) {
-        this.focusOn(block.prev, getFenceLength(block.prev.fence));
-        this.eventBus.emit(UNINSTALL_BLOCK, block);
-      }
+    const { block, offset } = this.topState;
+    if (offset === 0 && block.prev) {
+      const { vNode: prevBlock } = block.prev;
+      const newVNode = parse(
+        `${textContent(prevBlock)}${textContent(block.vNode)}`
+      );
+
+      this.eventBus.emit(InnerEventName.UNINSTALL_BLOCK, block);
+
+      const finalOffset = getFenceLength(block.prev.fence);
+      block.prev.patch(newVNode);
+      this.focusOn(block.prev, finalOffset);
     } else {
-      const nextState = block.delete(this.topState, parser);
+      const nextState = this.topState.block.delete(this.topState, parse);
       this.setPos(nextState.cursor);
       this.states.push(nextState);
     }
