@@ -1,5 +1,7 @@
 # RTE
 
+<p  align="center"><img  src="./logo.gif"  alt="logo"  height="150"></p>
+
 A simple **WYSIWYG** rich text engine. According to classification, it belongs to **L2** level.
 
 > **This project is still under development and there are many bug**
