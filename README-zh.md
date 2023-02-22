@@ -21,9 +21,13 @@
 ## Current Progress
 
 - 聚焦/取消聚焦
+![focus:unfocus](https://user-images.githubusercontent.com/76992456/220648698-95711cb7-f0fc-4830-843f-3c4e62ca89be.gif)
 - 输入
+![input](https://user-images.githubusercontent.com/76992456/220648733-e04ded25-f803-4d45-bb8c-5ae3b783b321.gif)
 - 删除
+![delete](https://user-images.githubusercontent.com/76992456/220648780-cfe300c3-214f-4347-9922-32fb2188ab69.gif)
 - 新行
+![newline](https://user-images.githubusercontent.com/76992456/220648835-898e187e-717b-45ee-bb84-f58e3199d7a5.gif)
 
 ## Install
 
@@ -144,7 +148,7 @@ Fence 本质上是一个**森林, 由一些高度固定为 2 的树组成**, **�
 
 大概长这样
 
-![fence](https://user-images.githubusercontent.com/76992456/220551998-91b18b06-a938-464a-b30a-54e5060f556e.png)
+![fence](https://user-images.githubusercontent.com/76992456/220649002-b365cdc3-6436-4111-bc48-36a60a177918.png)
 
 ## Contact
 
