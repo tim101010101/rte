@@ -1,6 +1,6 @@
 # RTE
 
-<p  align="center"><img  src="./logo.gif"  alt="logo"  height="150"></p>
+<p  align="center"><img  src="./logo.gif"  alt="logo"  height="100"></p>
 
 A simple **WYSIWYG** rich text engine. According to classification, it belongs to **L2** level.
 
@@ -104,6 +104,8 @@ State-driven design is mainly reflected in cursor(Selection) and elements(Operab
 
 The global context(Page) captures the change in state through the proxy and then notify to the renderer to render.
 
+![state-derive](https://user-images.githubusercontent.com/76992456/220551869-001f657e-bf56-4e6c-b005-92159afc6250.png)
+
 > PS: Thanks to this, the state stack can be extracted directly into the history stack at a later stage, which can naturally support the undo operation.
 
 ### Virtual Node
@@ -120,6 +122,8 @@ Virtual nodes are divided into the following two categories:
   - style, font
   - the behavior of this node when it is activated and not activated
 
+![vNode](https://user-images.githubusercontent.com/76992456/220551943-d68ab366-2c50-4250-b6de-6de9affd6f8b.png)
+
 ### Fence
 
 However, the tree structure is very troublesome to deal with, so in the actual implementation, **a special data structure is introduced to flatten the virtual node**, it called **fence**.
@@ -127,3 +131,5 @@ However, the tree structure is very troublesome to deal with, so in the actual i
 Fence is essentially **a forest with a height fixed at 2**, each of these **leaf nodes represents a location where the cursor can be inserted** and it carries the required information.
 
 Just like this
+
+![fence](https://user-images.githubusercontent.com/76992456/220551998-91b18b06-a938-464a-b30a-54e5060f556e.png)
