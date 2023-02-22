@@ -21,9 +21,13 @@ A simple **WYSIWYG** rich text engine. According to classification, it belongs t
 ## Current Progress
 
 - Focus/Unfocus
+![focus:unfocus](https://user-images.githubusercontent.com/76992456/220647800-2200c929-91c0-4d4c-a217-a3f52539c284.gif)
 - Input
+![input](https://user-images.githubusercontent.com/76992456/220648010-59f4e7b9-3200-48c0-bf77-f63639085b85.gif)
 - Delete
+![delete](https://user-images.githubusercontent.com/76992456/220648068-03a204a3-fd26-46b4-993f-679b603210e9.gif)
 - NewLine
+![newline](https://user-images.githubusercontent.com/76992456/220648145-8f1bf689-2a8a-4d4c-9f2e-b958b1901505.gif)
 
 ## Install
 
@@ -144,7 +148,7 @@ Fence is essentially **a forest, made up of trees with a fixed height of 2**, ea
 
 Just like this
 
-![fence](https://user-images.githubusercontent.com/76992456/220551998-91b18b06-a938-464a-b30a-54e5060f556e.png)
+![fence](https://user-images.githubusercontent.com/76992456/220647683-df6df14c-4277-45e0-8f66-5671aa5918fd.png)
 
 ## Contact
 
