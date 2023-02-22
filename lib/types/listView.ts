@@ -67,6 +67,7 @@ export interface Snapshot {
   fence: Fence;
 
   offset: number;
+  textOffset: number;
   cursor: CursroInfo;
   actived: Array<number>;
 }

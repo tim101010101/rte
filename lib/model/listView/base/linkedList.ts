@@ -35,7 +35,7 @@ export class LinkedList<T extends ListNode> {
     return arr.includes(node);
   }
 
-  insert(node: T, offset: number = this.length): void {
+  insert(node: T, offset: number = this.length): T {
     if (offset < 0 || offset > this.length) {
       return panicAt(
         'offset out of bound',
@@ -68,6 +68,8 @@ export class LinkedList<T extends ListNode> {
     }
 
     this.length++;
+
+    return node;
   }
 
   remove(node: T) {

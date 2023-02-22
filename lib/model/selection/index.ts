@@ -5,7 +5,7 @@ import {
   SyntaxNode,
   Snapshot,
 } from 'lib/types';
-import { EventBus, isEmptyNode, textContent } from 'lib/model';
+import { EventBus, isEmptyNode, isShowableKey, textContent } from 'lib/model';
 import { Renderer } from 'lib/view';
 import {
   InnerEventName,
@@ -47,6 +47,11 @@ export class Selection extends EventInteroperableObject {
       this.focusOn(block, offset);
     });
     this.addEventListener(KEYDOWN, e => {
+      if (isShowableKey(e.key)) {
+        this.updateBlockContent(e.key, this.parser);
+        return;
+      }
+
       switch (e.key) {
         case ControlKey.ARROW_UP:
           this.up();
@@ -68,10 +73,10 @@ export class Selection extends EventInteroperableObject {
           this.newLine(this.parser);
           break;
 
-        case 'a':
-        case '*':
-          this.updateBlockContent(e.key, this.parser);
-          break;
+        // case 'a':
+        // case '*':
+        //   this.updateBlockContent(e.key, this.parser);
+        //   break;
 
         default:
           break;
@@ -128,10 +133,10 @@ export class Selection extends EventInteroperableObject {
     }
   }
 
-  newLine(parser: (src: string) => SyntaxNode) {
+  newLine(parse: (src: string) => SyntaxNode) {
     if (!this.state || !this.topState) return;
 
-    const nextState = this.topState.block.newLine(this.topState, parser);
+    const nextState = this.topState.block.newLine(this.topState, parse);
     this.setPos(nextState.cursor);
     this.states.push(nextState);
   }
