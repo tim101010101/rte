@@ -1,6 +1,7 @@
 # RTE
 
-<p  align="center"><img  src="./logo.gif"  alt="logo"  height="100"></p>
+<p align="center"><img src="./logo.gif" alt="logo" height="100"></p>
+<p align="center"><a href="./README.md">English</a> | <a href="./README-zh.md">中文</a></p>
 
 A simple **WYSIWYG** rich text engine. According to classification, it belongs to **L2** level.
 
@@ -94,7 +95,7 @@ This configuration means that **RTE does not care whether the syntax conforms to
 
 ## Architecture
 
-This project adopts a state-driven architecture and introduces a virtual-node system to better abstract the business model.
+RTE adopts a state-driven architecture and introduces a virtual-node system to better abstract the business model.
 
 ### State Driven
 
@@ -114,7 +115,7 @@ As can be seen here, each operation of the cursor generates a snapshot, which is
 
 ### Virtual Node
 
-This project uses a tree-like virtual node system to abstract page elements.
+RTE uses a tree-like virtual node system to abstract page elements.
 
 Virtual nodes are divided into the following two categories:
 
@@ -132,7 +133,7 @@ Virtual nodes are divided into the following two categories:
 
 However, the tree structure is very troublesome to deal with, so in the actual implementation, **a special data structure is introduced to flatten the virtual node**, it called **fence**.
 
-Fence is essentially **a forest with a height fixed at 2**, each of these **leaf nodes represents a location where the cursor can be inserted** and it carries the required information.
+Fence is essentially **a forest, made up of trees with a fixed height of 2**, each of these **leaf nodes represents a location where the cursor can be inserted** and it carries the required information.
 
 Just like this
 
