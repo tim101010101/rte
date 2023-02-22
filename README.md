@@ -102,9 +102,13 @@ State-driven design is mainly reflected in cursor(Selection) and elements(Operab
 
 **Only need to change the internal state to map to the page in real time**
 
+When the state of a node changes, a special data structure is generated to save the node state, called **Snapshot**.
+
 The global context(Page) captures the change in state through the proxy and then notify to the renderer to render.
 
 ![state-derive](https://user-images.githubusercontent.com/76992456/220551869-001f657e-bf56-4e6c-b005-92159afc6250.png)
+
+As can be seen here, each operation of the cursor generates a snapshot, which is centrally maintained by the state stack.
 
 > PS: Thanks to this, the state stack can be extracted directly into the history stack at a later stage, which can naturally support the undo operation.
 
