@@ -83,8 +83,8 @@ export class Line extends OperableNode {
   }
 
   newLine(prevState: Snapshot, parse: (src: string) => SyntaxNode): Snapshot {
-    const { vNode, offset } = prevState;
-    const [line1, line2] = splitAt(textContent(vNode), offset).map(parse);
+    const { vNode, textOffset } = prevState;
+    const [line1, line2] = splitAt(textContent(vNode), textOffset).map(parse);
 
     const newLine = new Line(this.eventBus);
 

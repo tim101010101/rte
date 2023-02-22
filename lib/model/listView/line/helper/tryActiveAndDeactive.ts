@@ -1,4 +1,3 @@
-import { isTextNode } from 'lib/model/virtualNode';
 import { ActivePos, FenceInfoItem, Pos, Snapshot } from 'lib/types';
 import { getFenceInfo } from './getFenceInfo';
 import { initPatchBuffer } from './patchBuffer';
@@ -34,7 +33,7 @@ export function tryActiveAndDeactive(
     flushBuffer(true);
 
     const { block } = curPos;
-    const { rect } = getFenceInfo({ block, offset: finalOffset });
+    const { rect, textOffset } = getFenceInfo({ block, offset: finalOffset });
 
     return {
       block,
@@ -43,6 +42,7 @@ export function tryActiveAndDeactive(
 
       cursor: { ...prevState?.cursor, rect },
       offset: finalOffset,
+      textOffset,
       actived: finalActive,
     };
   } else if (prevState) {
