@@ -91,9 +91,13 @@ export class Line extends OperableNode {
     this.patch(line1);
     newLine.patch(line2);
 
-    this.eventBus.emit(InnerEventName.INSTALL_BLOCK, newLine, this);
+    const proxiedNewLine = this.eventBus.emit(
+      InnerEventName.INSTALL_BLOCK,
+      newLine,
+      this
+    );
 
-    return newLine.focusOn(prevState, 0);
+    return proxiedNewLine.focusOn(prevState, 0);
   }
 
   update(
@@ -101,10 +105,7 @@ export class Line extends OperableNode {
     char: string,
     parse: (src: string) => SyntaxNode
   ): Snapshot {
-    const { textOffset } = getFenceInfo({
-      block: this,
-      offset: prevState.offset,
-    });
+    const { textOffset } = prevState;
     const newVNode = parse(insertAt(textContent(this.vNode), textOffset, char));
     const nextState = updateContent(prevState, prevState.offset + 1, newVNode);
     return this.focusOn(nextState, nextState.offset);

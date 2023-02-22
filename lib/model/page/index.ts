@@ -9,7 +9,7 @@ import {
 import { EventBus, Line, LinkedList, Selection } from 'lib/model';
 import { VNodeEventName, InnerEventName } from 'lib/static';
 import { Renderer } from 'lib/view';
-import { getNearestIdx, throttle } from 'lib/utils';
+import { getNearestIdx, set, throttle } from 'lib/utils';
 import { Schema } from 'lib/schema';
 import { proxyListView, proxySelection } from './helper';
 
@@ -100,18 +100,22 @@ export class Page implements Context {
   }
 
   fullPatch(lineVNodes: Array<VirtualNode>) {
-    // this.renderer.fullPatch(lineVNodes);
     this.listView.forEach((block, i) => {
       block.patch(lineVNodes[i]);
     });
+    this.renderer.fullPatch(lineVNodes);
   }
 
   installBlock(newBlock: OperableNode, anchorBlock: OperableNode) {
-    this.listView.insert(newBlock, this.listView.offset(anchorBlock));
+    const proxiedNode = this.listView.insert(
+      newBlock,
+      this.listView.offset(anchorBlock) + 1
+    );
     this.eventBus.emit(
       FULL_PATCH,
       this.listView.map(({ vNode }) => vNode)
     );
+    return proxiedNode;
   }
 
   uninstallBlock(block: OperableNode) {

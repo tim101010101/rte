@@ -17,11 +17,15 @@ export const updateContent = (
     let finalOffset = offset;
     const maxUnchangeLength = diffNode(oldVNode, newVNode);
     const ancestorIdxToBeActived =
+      oldVNode.children.length === 0 ||
       oldVNode.children.length === newVNode.children.length
         ? maxUnchangeLength
         : maxUnchangeLength + 1;
 
-    const { fenceInfoList } = getFenceInfo({ block, offset: prevState.offset });
+    const { fenceInfoList } = getFenceInfo({
+      block,
+      offset: prevState.offset,
+    });
     const prevFenceInfo = fenceInfoList.find(
       ({ ancestorIdx }) => ancestorIdx !== ancestorIdxToBeActived
     );
@@ -32,6 +36,8 @@ export const updateContent = (
     addTarget(block, ancestorIdxToBeActived);
     flushBuffer(true, newVNode);
 
+    const { textOffset } = getFenceInfo({ block, offset: finalOffset });
+
     return {
       block,
       vNode: block.vNode,
@@ -39,6 +45,7 @@ export const updateContent = (
 
       cursor,
       offset: finalOffset,
+      textOffset,
       actived: [ancestorIdxToBeActived],
     };
   } else {
@@ -50,6 +57,7 @@ export const updateContent = (
 
       cursor,
       offset,
+      textOffset: 0,
       actived: [],
     };
   }
