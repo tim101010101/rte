@@ -133,10 +133,10 @@ export class Selection extends EventInteroperableObject {
     }
   }
 
-  newLine(parser: (src: string) => SyntaxNode) {
+  newLine(parse: (src: string) => SyntaxNode) {
     if (!this.state || !this.topState) return;
 
-    const nextState = this.topState.block.newLine(this.topState, parser);
+    const nextState = this.topState.block.newLine(this.topState, parse);
     this.setPos(nextState.cursor);
     this.states.push(nextState);
   }

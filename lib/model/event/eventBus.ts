@@ -154,12 +154,14 @@ export class EventBus {
   emit(
     eventName: InnerEventName.INSTALL_BLOCK,
     ...rest: Parameters<Context['installBlock']>
-  ): void;
+  ): OperableNode;
   emit(eventName: InnerEventName, ...rest: Array<any>): void;
-  emit(eventName: EventName, ...rest: Array<any>): void {
+  emit(eventName: EventName, ...rest: Array<any>): any {
+    let res = null;
     if (this.has(eventName)) {
-      this.get(eventName).forEach(l => l.apply(this, rest));
+      this.get(eventName).forEach(l => (res = l.apply(this, rest)));
     }
+    return res;
   }
 
   once(
