@@ -18,6 +18,13 @@ A simple **WYSIWYG** rich text engine. According to classification, it belongs t
    - Behavior of cursor
 3. State-driven architecture
 
+## Current Progress
+
+- Focus/Unfocus
+- Input
+- Delete
+- NewLine
+
 ## Install
 
 Still in development process, can not be intalled by npm.
@@ -138,3 +145,10 @@ Fence is essentially **a forest, made up of trees with a fixed height of 2**, ea
 Just like this
 
 ![fence](https://user-images.githubusercontent.com/76992456/220551998-91b18b06-a938-464a-b30a-54e5060f556e.png)
+
+## Contact
+
+- Wechat: D1345118870
+- Mailbox:
+  - ethanteng1212@qq.com
+  - ethanteng1212@gmail.com
