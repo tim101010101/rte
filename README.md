@@ -21,13 +21,13 @@ A simple **WYSIWYG** rich text engine. According to classification, it belongs t
 ## Current Progress
 
 - Focus/Unfocus
-![focus:unfocus](https://user-images.githubusercontent.com/76992456/220647800-2200c929-91c0-4d4c-a217-a3f52539c284.gif)
+  ![focus:unfocus](https://user-images.githubusercontent.com/76992456/220647800-2200c929-91c0-4d4c-a217-a3f52539c284.gif)
 - Input
-![input](https://user-images.githubusercontent.com/76992456/220648010-59f4e7b9-3200-48c0-bf77-f63639085b85.gif)
+  ![input](https://user-images.githubusercontent.com/76992456/220648010-59f4e7b9-3200-48c0-bf77-f63639085b85.gif)
 - Delete
-![delete](https://user-images.githubusercontent.com/76992456/220648068-03a204a3-fd26-46b4-993f-679b603210e9.gif)
+  ![delete](https://user-images.githubusercontent.com/76992456/220648068-03a204a3-fd26-46b4-993f-679b603210e9.gif)
 - NewLine
-![newline](https://user-images.githubusercontent.com/76992456/220648145-8f1bf689-2a8a-4d4c-9f2e-b958b1901505.gif)
+  ![newline](https://user-images.githubusercontent.com/76992456/220648145-8f1bf689-2a8a-4d4c-9f2e-b958b1901505.gif)
 
 ## Install
 
@@ -108,6 +108,46 @@ This configuration means that **RTE does not care whether the syntax conforms to
 
 RTE adopts a state-driven architecture and introduces a virtual-node system to better abstract the business model.
 
+### OperableNode
+
+Before introducing the architecture, you need to know what **OperableNode** is.
+
+**OperableNode is a interface that carries the ability to interact with the cursor**, which means that all page elements need to implement it, that is, as long as it is implemented, it can interact with the cursor.
+
+Let's look at the main part of it
+
+```typescript
+export abstract class OperableNode {
+  abstract focusOn(prevState: Snapshot | null, curOffset: number): Snapshot;
+  abstract unFocus(prevState: Snapshot): void;
+
+  abstract left(prevState: Snapshot, step: number): Snapshot | null;
+  abstract right(prevState: Snapshot, step: number): Snapshot | null;
+  abstract up(prevState: Snapshot, step: number): Snapshot | null;
+  abstract down(prevState: Snapshot, step: number): Snapshot | null;
+
+  abstract newLine(
+    prevState: Snapshot,
+    parse: (src: string) => SyntaxNode
+  ): Snapshot;
+
+  abstract update(
+    prevState: Snapshot,
+    char: string,
+    parse: (src: string) => SyntaxNode
+  ): Snapshot;
+
+  abstract delete(
+    prevState: Snapshot,
+    parse: (src: string) => SyntaxNode
+  ): Snapshot;
+}
+```
+
+These methods will be called by the cursor, and the user does not need to care about unnecessary problems.
+
+So you only need to implement this interface, and you can freely expand the runtime model you want.
+
 ### State Driven
 
 State-driven design is mainly reflected in cursor(Selection) and elements(OperableNode).
@@ -122,7 +162,7 @@ The global context(Page) captures the change in state through the proxy and then
 
 As can be seen here, each operation of the cursor generates a snapshot, which is centrally maintained by the state stack.
 
-> PS: Thanks to this, the state stack can be extracted directly into the history stack at a later stage, which can naturally support the undo operation.
+> PS: Thanks to this, the state stack can be extracted directly into the history stack at a later stage, which can support the undo operation easily.
 
 ### Virtual Node
 

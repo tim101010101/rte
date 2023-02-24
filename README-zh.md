@@ -21,13 +21,13 @@
 ## Current Progress
 
 - 聚焦/取消聚焦
-![focus:unfocus](https://user-images.githubusercontent.com/76992456/220648698-95711cb7-f0fc-4830-843f-3c4e62ca89be.gif)
+  ![focus:unfocus](https://user-images.githubusercontent.com/76992456/220648698-95711cb7-f0fc-4830-843f-3c4e62ca89be.gif)
 - 输入
-![input](https://user-images.githubusercontent.com/76992456/220648733-e04ded25-f803-4d45-bb8c-5ae3b783b321.gif)
+  ![input](https://user-images.githubusercontent.com/76992456/220648733-e04ded25-f803-4d45-bb8c-5ae3b783b321.gif)
 - 删除
-![delete](https://user-images.githubusercontent.com/76992456/220648780-cfe300c3-214f-4347-9922-32fb2188ab69.gif)
+  ![delete](https://user-images.githubusercontent.com/76992456/220648780-cfe300c3-214f-4347-9922-32fb2188ab69.gif)
 - 新行
-![newline](https://user-images.githubusercontent.com/76992456/220648835-898e187e-717b-45ee-bb84-f58e3199d7a5.gif)
+  ![newline](https://user-images.githubusercontent.com/76992456/220648835-898e187e-717b-45ee-bb84-f58e3199d7a5.gif)
 
 ## Install
 
@@ -107,6 +107,46 @@ export const inline: SchemaConfig['inline'] = (text, syntax) => {
 ## Architecture
 
 RTE 采用状态驱动架构, 并引入虚拟 node 系统, 以此来更好的抽象业务模型
+
+### OperableNode
+
+在正式介绍架构之前, 先来看看 **OperableNode** 是什么
+
+**OperableNode 是一个承载了与光标交互的能力的接口**, 这意味着所有页面元素都需要实现这个接口, 或者说, 只要实现了这个接口, 就能与光标进行交互
+
+来看看它的主要部分
+
+```typescript
+export abstract class OperableNode {
+  abstract focusOn(prevState: Snapshot | null, curOffset: number): Snapshot;
+  abstract unFocus(prevState: Snapshot): void;
+
+  abstract left(prevState: Snapshot, step: number): Snapshot | null;
+  abstract right(prevState: Snapshot, step: number): Snapshot | null;
+  abstract up(prevState: Snapshot, step: number): Snapshot | null;
+  abstract down(prevState: Snapshot, step: number): Snapshot | null;
+
+  abstract newLine(
+    prevState: Snapshot,
+    parse: (src: string) => SyntaxNode
+  ): Snapshot;
+
+  abstract update(
+    prevState: Snapshot,
+    char: string,
+    parse: (src: string) => SyntaxNode
+  ): Snapshot;
+
+  abstract delete(
+    prevState: Snapshot,
+    parse: (src: string) => SyntaxNode
+  ): Snapshot;
+}
+```
+
+这些方法会由光标在触发时进行调用, 拓展时不需要考虑额外的问题
+
+因此你只需要实现这个接口, 就可以自由地拓展出自己想要的运行时模型
 
 ### State Driven
 
