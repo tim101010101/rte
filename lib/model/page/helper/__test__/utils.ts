@@ -2,7 +2,7 @@ import { s, t } from 'lib/model';
 import { NodeType } from 'lib/static';
 import { FenceLeaf, FenceRoot, ClientRect, VirtualNode } from 'lib/types';
 import { get, has } from 'lib/utils';
-import { calcFence } from '../line/helper/calcFence';
+import { calcFence } from '../calcFence';
 
 export const sa = (type: NodeType, children: Array<VirtualNode>) => {
   const n = s(type, children);
