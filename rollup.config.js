@@ -1,13 +1,23 @@
-import dts from 'rollup-plugin-dts';
 import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import json from '@rollup/plugin-json';
 import alias from '@rollup/plugin-alias';
-import esbuild from 'rollup-plugin-esbuild';
 import typescript from 'rollup-plugin-typescript2';
 import babel from '@rollup/plugin-babel';
-
 import { terser } from 'rollup-plugin-terser';
+
+/**
+ * There is a TypeError occur when import directly.
+ *
+ * Fix it according to this issue: https://github.com/egoist/rollup-plugin-esbuild/issues/361
+ */
+// import dts from 'rollup-plugin-dts';
+// import esbuild from 'rollup-plugin-esbuild';
+import _dts from 'rollup-plugin-dts';
+import _esbuild from 'rollup-plugin-esbuild';
+
+const dts = _dts.default ?? _dts;
+const esbuild = _esbuild.default ?? _esbuild;
 
 import { join } from 'path';
 
@@ -30,7 +40,7 @@ const plugins = [
   typescript(),
   commonjs(),
   esbuild(),
-  terser(),
+  // terser(),
 ];
 
 export default [
