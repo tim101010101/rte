@@ -5,25 +5,33 @@ import alias from '@rollup/plugin-alias';
 import typescript from 'rollup-plugin-typescript2';
 import babel from '@rollup/plugin-babel';
 import { terser } from 'rollup-plugin-terser';
+import { join } from 'path';
 
 /**
  * There is a TypeError occur when import directly.
  *
  * Fix it according to this issue: https://github.com/egoist/rollup-plugin-esbuild/issues/361
+ *
+ * ```javascript
+ * import dts from 'rollup-plugin-dts';          // TypeError: dts is not a function
+ * import esbuild from 'rollup-plugin-esbuild';  // TypeError: esbuild is not a function
+ * ```
  */
-// import dts from 'rollup-plugin-dts';
-// import esbuild from 'rollup-plugin-esbuild';
 import _dts from 'rollup-plugin-dts';
 import _esbuild from 'rollup-plugin-esbuild';
-
 const dts = _dts.default ?? _dts;
 const esbuild = _esbuild.default ?? _esbuild;
 
-import { join } from 'path';
+const resolveDir = dir => join(__dirname, dir);
 
+/**
+ * Entry file of the whole project
+ */
 const entries = ['lib/index.ts'];
 
-const resolveDir = dir => join(__dirname, dir);
+/**
+ * List of basic plugin
+ */
 const plugins = [
   babel({
     babelrc: false,
@@ -40,10 +48,13 @@ const plugins = [
   typescript(),
   commonjs(),
   esbuild(),
-  // terser(),
+  terser(),
 ];
 
 export default [
+  /**
+   * Configuration of the construction of the project subject.
+   */
   ...entries.map(input => ({
     input,
     output: [
@@ -59,6 +70,10 @@ export default [
     external: [],
     plugins,
   })),
+
+  /**
+   * Configuration of the construction of the declaration file.
+   */
   ...entries.map(input => ({
     input,
     output: {
