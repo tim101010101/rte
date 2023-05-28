@@ -23,7 +23,7 @@
     "*.d.ts"
   ],
   "scripts": {
-    "build": "rollup -c",
+    "build": "rollup -c --bundleConfigAsCjs",
     "dev": "vite serve ./example",
     "dbg": "vite serve ./example --port 8080",
     "test": "jest --no-cache",
