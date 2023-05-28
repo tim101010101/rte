@@ -1,6 +1,7 @@
+import { DoubleLinkedList, DoubleLinkedListNode } from 'lib/types';
 import { panicAt } from 'lib/utils';
 
-export class ListNode {
+export class ListNode implements DoubleLinkedListNode {
   prev: this | null;
   next: this | null;
 
@@ -10,7 +11,7 @@ export class ListNode {
   }
 }
 
-export class LinkedList<T extends ListNode> {
+export class LinkedList<T extends ListNode> implements DoubleLinkedList<T> {
   head: T | null;
   tail: T | null;
   length: number;
@@ -35,7 +36,7 @@ export class LinkedList<T extends ListNode> {
     return arr.includes(node);
   }
 
-  insert(node: T, offset: number = this.length): T {
+  insert(node: T, offset: number = this.length) {
     if (offset < 0 || offset > this.length) {
       return panicAt(
         'offset out of bound',
@@ -73,7 +74,7 @@ export class LinkedList<T extends ListNode> {
   }
 
   remove(node: T) {
-    if (!this.contains(node)) return;
+    if (!this.contains(node)) return false;
 
     if (node.prev) {
       node.prev.next = node.next;
@@ -92,6 +93,8 @@ export class LinkedList<T extends ListNode> {
     }
 
     this.length--;
+
+    return true;
   }
 
   offset(node: T) {

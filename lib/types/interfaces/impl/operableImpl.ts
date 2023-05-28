@@ -8,16 +8,19 @@ import {
   VirtualNode,
   // EventInteroperableObject,
 } from 'lib/types';
-import { Renderer } from 'lib/view';
 
 //! ERROR cann't access EventInteroperable before initialization
 import { EventInteroperableObject } from './eventInteroperableImpl';
 
 // prettier-ignore
+/**
+ * An interface that carries the ability to interact with the cursor.
+ *
+ * It is same as the `Operable`, but abstract class is used here to further improve constraint capabilities.
+ */
 export abstract class OperableNode extends EventInteroperableObject implements Operable {
   prev: this | null;
   next: this | null;
-
 
   constructor(eventBus: EventBus) {
     super(eventBus)
@@ -35,6 +38,11 @@ export abstract class OperableNode extends EventInteroperableObject implements O
   abstract get fence(): Fence;
   abstract set fence(newFence: Fence);
 
+  /**
+   * Fully export the current internal state.
+   * 
+   * @returns Current internal state
+   */
   abstract dump(): { rect?: ClientRect, vNode?: VirtualNode, fence?: Fence }
 
   abstract patch(newVNode: VirtualNode): void;

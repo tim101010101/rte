@@ -14,8 +14,21 @@ import {
 import { panicAt } from 'lib/utils';
 
 // prettier-ignore
+/**
+ * Interfaces that carry event interaction capabilities.
+ *
+ * It is same as the `EventInteroperable`, but abstract class is used here to further improve constraint capabilities.
+ */
 export abstract class EventInteroperableObject implements EventInteroperable {
+  /**
+   * The instance of `EventBus`.
+   * 
+   * Events are uniformly managed by the `EventBus`.
+   */
   protected eventBus: EventBus;
+  /**
+   * Maintain the mapping of event listeners and its detachers.
+   */
   protected events: Map<EventListener, () => void>;
 
   constructor(eventBus: EventBus) {

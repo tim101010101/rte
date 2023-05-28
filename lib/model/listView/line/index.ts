@@ -16,6 +16,11 @@ import {
   updateContent,
 } from './helper';
 
+/**
+ * The abstraction of row-like elements in a page.
+ *
+ * Can also be understood as the runtime model of row-like elements.
+ */
 export class Line extends OperableNode {
   private _fence?: Fence;
   private _vNode?: VirtualNode;

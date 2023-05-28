@@ -1,4 +1,4 @@
-import { Operable, VirtualNode } from 'lib/types';
+import { Fence, Operable, VirtualNode } from 'lib/types';
 import { CursroInfo } from './cursor';
 
 export interface Pos {
@@ -30,44 +30,32 @@ export interface FeedbackPos {
   active: Array<ActivePos>;
 }
 
-export interface FenceLeaf {
-  rect: ClientRect;
-  prefixChange: number;
-  textOffset: number;
-}
-
-export interface FenceRoot {
-  fenceList: Array<FenceLeaf>;
-
-  prefixLength: number;
-
-  totalLength: number;
-  totalChange: number;
-}
-
-export type Fence = Array<FenceRoot>;
-
-export interface FenceInfoItem {
-  ancestorIdx: number;
-  totalLength: number;
-  totalChange: number;
-  prefixChange: number;
-}
-
-export interface FenceInfo {
-  rect: ClientRect;
-  textOffset: number;
-
-  fenceInfoList: Array<FenceInfoItem>;
-}
-
+/**
+ * The full internal state of the current cursor location.
+ */
 export interface Snapshot {
   block: Operable;
   vNode: VirtualNode;
   fence: Fence;
 
+  /**
+   * The offset of the position of the current cursor, it is based on all positions that can be inserted by the cursor.
+   *
+   * It is different from textOffset in meaning, but in numerical terms, it's the same as textOffset...
+   *
+   * TODO Merge offset and textOffset
+   */
   offset: number;
+  /**
+   * The offset of the position of the current cursor, it is based on the position between text characters.
+   */
   textOffset: number;
+  /**
+   * Current cursor information.
+   */
   cursor: CursroInfo;
+  /**
+   * Index of all activated nodes.
+   */
   actived: Array<number>;
 }

@@ -10,7 +10,16 @@ import {
   VNodeMouseEventName,
 } from 'lib/types';
 
+/**
+ * Interfaces that carry event interaction capabilities.
+ */
 export interface EventInteroperable {
+  /**
+   * Listen for a event and call the listener function when triggered.
+   *
+   * @param eventName Name of the event.
+   * @param listener The listener of this event.
+   */
   addEventListener(
     eventName: VNodeMouseEventName,
     listener: VNodeEventListener<VNodeMouseEvent>
@@ -25,6 +34,14 @@ export interface EventInteroperable {
   ): void;
   addEventListener(eventName: EventName, listener: EventListener): void;
 
+  /**
+   * Removed a listener.
+   *
+   * @param listener The listener to be detached.
+   */
   removeEventListener(listener: EventListener): void;
+  /**
+   * Removed all listeners.
+   */
   removeAllEventListeners(): void;
 }
