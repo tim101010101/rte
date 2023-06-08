@@ -8,6 +8,3 @@ localDemo/
 
 # test
 coverage/
-
-# package manager
-*-lock.*
