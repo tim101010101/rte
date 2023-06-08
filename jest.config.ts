@@ -8,6 +8,7 @@ export default async (): Promise<Config> => {
     verbose: true,
     testEnvironment: 'jsdom',
     setupFiles: ['jest-canvas-mock'],
+    setupFilesAfterEnv: ['<rootDir>/test/setupTests.ts'],
     moduleFileExtensions: ['ts', 'js', 'json'],
     moduleNameMapper: pathsToModuleNameMapper(compilerOptions.paths, {
       prefix: '<rootDir>/',
