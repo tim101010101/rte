@@ -1,8 +1,8 @@
 import { NodeType } from 'lib/static';
 import { SyntaxNode, TextNode, VirtualNode } from 'lib/types';
 import { get } from 'lib/utils';
-import { s, t } from '../h';
-import { walkTextNodeWithMoreInformation } from '../utils';
+import { s, t } from 'lib/model/virtualNode/h';
+import { walkTextNodeWithMoreInformation } from 'lib/model/virtualNode/utils';
 
 const mockFontInfo = {
   size: 0,

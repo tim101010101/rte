@@ -2,7 +2,7 @@ import { s, t } from 'lib/model';
 import { NodeType } from 'lib/static';
 import { FenceLeaf, FenceRoot, ClientRect, VirtualNode } from 'lib/types';
 import { get, has } from 'lib/utils';
-import { calcFence } from '../calcFence';
+import { calcFence } from 'lib/model/page/helper/calcFence';
 
 export const sa = (type: NodeType, children: Array<VirtualNode>) => {
   const n = s(type, children);
@@ -10,7 +10,7 @@ export const sa = (type: NodeType, children: Array<VirtualNode>) => {
   return n;
 };
 
-export const mockRectList = (length: number = 20): Array<ClientRect> => {
+export const mockRectList = (length = 20): Array<ClientRect> => {
   return Array.from({ length }, (_, i) => ({
     clientX: i,
     clientY: i,
@@ -109,7 +109,7 @@ export function getFenceAndExtract<T extends keyof FenceRoot>(
   rectList: Array<ClientRect>,
   key: T
 ): Array<FenceRoot[T]>;
-export function getFenceAndExtract<T extends keyof FenceRoot | keyof FenceLeaf>(
+export function getFenceAndExtract<T extends keyof FenceRoot | keyof FenceLeaf> (
   vNode: VirtualNode,
   rectList: Array<ClientRect>,
   key: T

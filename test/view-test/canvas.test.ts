@@ -1,13 +1,13 @@
-import { Paint } from '../paint';
+// import { Paint } from 'lib/view/paint';
 
 describe('canvas test', () => {
-  let canvas: HTMLCanvasElement;
-  let ctx: CanvasRenderingContext2D;
-  let painter: Paint;
+  // let canvas: HTMLCanvasElement;
+  // let ctx: CanvasRenderingContext2D;
+  // let painter: Paint;
 
   beforeEach(() => {
-    canvas = document.createElement('canvas');
-    ctx = canvas.getContext('2d')!;
+    // canvas = document.createElement('canvas');
+    // ctx = canvas.getContext('2d')!;
     // painter = new Paint(document as any, {
     //   font: {
     //     size: 20,
@@ -23,7 +23,6 @@ describe('canvas test', () => {
     //     rowSpacing: 4,
     //   },
     //   container: '#editor',
-
     //   schema: '',
     // });
   });
