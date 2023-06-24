@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      div {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+      }
+
+      div + div {
+        margin-top: 20px;
+      }
+
+      #box1 {
+        background-color: red;
+      }
+
+      #box2 {
+        background-color: green;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="box1"></div>
+    <div id="box2"></div>
+
+    <script>
+      const box1 = document.querySelector('#box1');
+      const box2 = document.querySelector('#box2');
+
+      let step = 0;
+
+      window.addEventListener('click', () => {
+        // box1
+        requestAnimationFrame(function move() {
+          box1.style.transform = `translateX(${step++}px)`;
+          step < 400 && requestAnimationFrame(move);
+        });
+
+        // box2
+        setTimeout(function move() {
+          box2.style.transform = `translateX(${step++}px)`;
+          step < 400 && setTimeout(move, 17);
+        }, 17);
+      });
+    </script>
+  </body>
+</html>

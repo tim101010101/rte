@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <canvas id="app"></canvas>
+
+    <script>
+      const drawRect = ctx => {
+        let start = 50;
+        Array.from({ length: 20 }).forEach(() => {
+          ctx.strokeRect(50, start, 50, 50);
+          start += 50;
+        });
+      };
+
+      const correctedPixel = (canvas, ctx, width = 500, height = 500) => {
+        const ratio = window.devicePixelRatio;
+        canvas.style.width = canvas.width + 'px';
+        canvas.style.height = canvas.height + 'px';
+        canvas.width = ratio * width;
+        canvas.height = ratio * height;
+        ctx.scale(ratio, ratio);
+      };
+
+      const initMainCanvas = () => {
+        const container = document.querySelector('#app');
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = 500;
+        canvas.height = 500;
+
+        container.style.width = '500px';
+        container.style.height = '500px';
+        container.style.margin = '20px';
+        container.style.border = '1px solid #ccc';
+
+        container.appendChild(canvas);
+        correctedPixel(canvas, ctx);
+
+        ctx.save();
+        drawRect(ctx);
+        ctx.restore();
+
+        return {
+          canvas,
+          ctx,
+        };
+      };
+
+      const initOffscreenCanvas = () => {
+        const offscreenCanvas = document.createElement('canvas');
+        const ctx = offscreenCanvas.getContext('2d');
+
+        offscreenCanvas.width = 500;
+        offscreenCanvas.height = 500;
+
+        correctedPixel(offscreenCanvas, ctx);
+
+        return {
+          offscreenCanvas,
+          ctx,
+        };
+      };
+
+      const clear = (canvas, ctx) => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      };
+
+      const getScrollHandler = (
+        canvas,
+        ctx,
+        offscreenCanvas,
+        offscreenCanvasCtx
+      ) => {
+        const ratio = window.devicePixelRatio;
+
+        let cur = 15;
+
+        return () => {
+          console.log('click');
+
+          // offscreenCanvasCtx.drawImage(canvas, 0, 0, 500 * ratio, 500 * ratio);
+          offscreenCanvasCtx.drawImage(canvas, 0, 0, 500, 500);
+
+          clear(canvas, ctx);
+
+          ctx.drawImage(
+            offscreenCanvas,
+            0,
+            cur,
+            offscreenCanvas.width / ratio,
+            offscreenCanvas.height / ratio
+          );
+
+          clear(offscreenCanvas, offscreenCanvasCtx);
+
+          cur += 15;
+        };
+      };
+
+      const { canvas, ctx } = initMainCanvas();
+      const { offscreenCanvas, ctx: offscreenCanvasCtx } =
+        initOffscreenCanvas();
+
+      window.addEventListener(
+        'click',
+        getScrollHandler(canvas, ctx, offscreenCanvas, offscreenCanvasCtx)
+      );
+    </script>
+  </body>
+</html>
