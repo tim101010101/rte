@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      #container {
+        width: 500px;
+        height: 500px;
+        border: 1px solid #ccc;
+      }
+
+      #box {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background-color: red;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="container">
+      <div id="box"></div>
+    </div>
+
+    <script>
+      const container = document.querySelector('#container');
+      const box = document.querySelector('#box');
+
+      let step = 0;
+      const s = 6;
+      const render = (t = false) => {
+        box.style.transform = `translateY(${t ? step + s : step - s}px)`;
+        if (t) {
+          step += s;
+        } else {
+          step -= s;
+        }
+      };
+
+      const throttle = (fn, duration) => {
+        let timer = null;
+        return (...args) => {
+          if (timer) return;
+
+          timer = setTimeout(() => {
+            fn(...args);
+            clearInterval(timer);
+            timer = null;
+          }, duration);
+        };
+      };
+
+      container.addEventListener('wheel', e => {
+        requestAnimationFrame(() => {
+          if (e.wheelDeltaY > 0) render();
+          else render(true);
+        });
+      });
+    </script>
+  </body>
+</html>
