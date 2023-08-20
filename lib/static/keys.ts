@@ -71,7 +71,7 @@ export enum ShowableKey {
   OR = '|',
   SEMI = ';',
   COLON = ':',
-  SINGLE_QUOTE = "'",
+  SINGLE_QUOTE = '\'',
   DOUBLE_QUOTE = '"',
   COMMA = ',',
   LT = '<',

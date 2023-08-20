@@ -17,7 +17,7 @@ export const line: SchemaConfig['line'] = (text, syntax) => {
       render(groups, parseInlineWithRewiteFont) {
         const { prefix, content } = groups;
         const level = prefix.length - 1;
-        let fontSize = 30;
+        const fontSize = 30;
         switch (level) {
           case 1:
             break;

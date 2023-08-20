@@ -221,72 +221,12 @@ export class Paint {
       charRectList,
     };
   }
-  // // TODO transform rect to clientRect
-  // private drawTextCenter(
-  //   text: string,
-  //   { x, y, width: maxWidth, height }: Rect,
-  //   ctx: CanvasRenderingContext2D
-  // ): WithCLientRect<{ charRectList: Array<Rect> }> {
-  //   ctx.textAlign = 'left';
-  //   const charRectList: Array<Rect> = [];
-  //   const { width: textWidth } = ctx.measureText(text);
-
-  //   const startX = (maxWidth - textWidth) / 2 + x;
-  //   let prevXOffset = startX;
-
-  //   Array.from(text).forEach(char => {
-  //     ctx.fillText(char, prevXOffset, y + height, maxWidth);
-  //     const { width } = ctx.measureText(char);
-  //     charRectList.push({
-  //       x: prevXOffset,
-  //       y,
-  //       width,
-  //       height,
-  //     });
-  //     prevXOffset += width;
-  //   });
-
-  //   return {
-  //     rect: { x: startX, y, width: textWidth, height },
-  //     charRectList,
-  //   };
-  // }
-  // // TODO transform rect to clientRect
-  // private drawTextFloatRight(
-  //   text: string,
-  //   { x, y, width: maxWidth, height }: Rect,
-  //   ctx: CanvasRenderingContext2D
-  // ): WithCLientRect<{ charRectList: Array<ClientRect> }> {
-  //   ctx.textAlign = 'left';
-  //   const charRectList: Array<ClientRect> = [];
-  //   const { width: textWidth } = ctx.measureText(text);
-
-  //   const startX = maxWidth - textWidth + x;
-  //   let prevXOffset = startX;
-
-  //   Array.from(text).forEach(char => {
-  //     ctx.fillText(char, prevXOffset, y + height, maxWidth);
-  //     const { width } = ctx.measureText(char);
-  //     charRectList.push({
-  //       x: prevXOffset,
-  //       y,
-  //       width,
-  //       height,
-  //     });
-  //     prevXOffset += width;
-  //   });
-
-  //   return {
-  //     rect: { x: startX, y, width: textWidth, height },
-  //     charRectList,
-  //   };
-  // }
 
   drawText(
     text: string,
     { clientX, clientY, maxWidth: width }: ClientPos & { maxWidth: number },
     fontOptions: Partial<FontRenderOptions> = {},
-    isFill: boolean = true
+    isFill = true
   ): WithCLientRect<{ charRectList: Array<ClientRect> }> {
     const c = this.getDisposableContext(fontOptions);
     const fontSize = fontOptions?.font?.size || this.renderOptions.font.size;
@@ -320,7 +260,7 @@ export class Paint {
   drawRect(
     clientRect: ClientRect,
     renderOptions: RenderConfig = {},
-    isFill: boolean = false
+    isFill = false
   ) {
     const c = this.getDisposableContext(renderOptions);
     const { x, y, width, height } = this.clientRect2Rect(clientRect);

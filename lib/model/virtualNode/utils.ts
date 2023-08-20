@@ -79,7 +79,7 @@ export function walkTextNode(
     ancestor: VirtualNode | null
   ) => void
 ): void {
-  let idx = 0;
+  const idx = 0;
   const dfs = (
     cur: VirtualNode,
     parent: SyntaxNode | null,

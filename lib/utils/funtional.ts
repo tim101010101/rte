@@ -1,9 +1,6 @@
 import { NoopFunction } from 'lib/types';
 
-export const throttle = <T extends NoopFunction>(
-  fn: T,
-  duration: number = 100
-) => {
+export const throttle = <T extends NoopFunction>(fn: T, duration = 100) => {
   let timer: NodeJS.Timeout | undefined = undefined;
   return (...rest: Parameters<T>) => {
     if (!timer) {
@@ -16,10 +13,7 @@ export const throttle = <T extends NoopFunction>(
   };
 };
 
-export const debounce = <T extends NoopFunction>(
-  fn: T,
-  duration: number = 100
-) => {
+export const debounce = <T extends NoopFunction>(fn: T, duration = 100) => {
   let timer: NodeJS.Timeout | undefined = undefined;
   return (...rest: Parameters<T>) => {
     timer && clearTimeout(timer);

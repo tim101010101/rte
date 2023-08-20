@@ -1,4 +1,4 @@
-export const decimal = (num: number, digits: number = 3): number => {
+export const decimal = (num: number, digits = 3): number => {
   const temp = Math.pow(10, digits);
   return Math.round(num * temp) / temp;
 };
@@ -64,6 +64,6 @@ export const getTargetInterval = (arr: Array<number>, target: number) => {
 
 export const sum = (arr: Array<number>) => arr.reduce((res, cur) => res + cur);
 
-export const round = (x: number, precision: number = 2) => {
+export const round = (x: number, precision = 2) => {
   return Number(Math.round(Number(`${+x}e${precision}`)) + 'e-' + precision);
 };

@@ -18,7 +18,7 @@ export function applyStrategy<T>(
 ): T;
 export function applyStrategy<T>(
   strategies: Array<Strategy<T>>,
-  isMutex: boolean = true
+  isMutex = true
 ): Array<T> | T {
   const res: Array<T> = [];
 

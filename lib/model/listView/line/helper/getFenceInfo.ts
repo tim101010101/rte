@@ -67,7 +67,7 @@ const findFenceTarget = (fence: Fence, offset: number): [number, number] => {
       right = mid - 1;
     } else {
       let ancestorIdx = mid;
-      let idx = offset - start;
+      const idx = offset - start;
       while (
         idx === 0 &&
         ancestorIdx - 1 >= 0 &&

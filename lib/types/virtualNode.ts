@@ -49,7 +49,7 @@ interface BasicSyntaxNode extends BasicNode {
 
   children: Array<VirtualNode>;
 }
-export interface SyntaxNode extends BasicSyntaxNode {}
+export type SyntaxNode = BasicSyntaxNode;
 
 export type VirtualNode = SyntaxNode | TextNode;
 

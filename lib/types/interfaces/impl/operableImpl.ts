@@ -23,7 +23,7 @@ export abstract class OperableNode extends EventInteroperableObject implements O
   next: this | null;
 
   constructor(eventBus: EventBus) {
-    super(eventBus)
+    super(eventBus);
 
     this.prev = null;
     this.next = null;

@@ -40,7 +40,7 @@ export abstract class EventInteroperableObject implements EventInteroperable {
   addEventListener(eventName: VNodeKeyboardEventName, listener: VNodeEventListener<VNodeKeyboardEvent>): void;
   addEventListener(eventName: InnerEventName, listener: InnerEventListener<any>): void;
   addEventListener(eventName: EventName, listener: EventListener): void {
-    const detacher = this.eventBus.attach(eventName as any, listener, this)
+    const detacher = this.eventBus.attach(eventName as any, listener, this);
     this.events.set(listener, detacher);
   }
 

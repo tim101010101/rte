@@ -60,7 +60,7 @@ export class Renderer {
     const lineRect = this.pagePainter.drawLine(
       ({ clientX, clientY, maxWidth }) => {
         let prevXOffset = clientX;
-        let prevYOffset = clientY;
+        const prevYOffset = clientY;
         let lineHeight = 0;
         let totalLength = 0;
 

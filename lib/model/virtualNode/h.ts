@@ -39,7 +39,7 @@ export function t(
 ): TextNode;
 export function t(
   font: FontInfo,
-  text: string = '',
+  text = '',
   behavior: VirtualNodeBehavior = {},
   style: VirtualNodeStyle = {},
   events: VirtualNodeEvents = [],

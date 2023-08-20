@@ -100,7 +100,7 @@ export class Selection extends EventInteroperableObject {
     }
   }
 
-  left(step: number = 1) {
+  left(step = 1) {
     if (!this.state || !this.topState) return;
     const nextState = this.topState.block.left(this.topState, step);
     if (nextState) {
@@ -108,7 +108,7 @@ export class Selection extends EventInteroperableObject {
       this.states.push(nextState);
     }
   }
-  right(step: number = 1) {
+  right(step = 1) {
     if (!this.state || !this.topState) return;
     const nextState = this.topState.block.right(this.topState, step);
     if (nextState) {
@@ -116,7 +116,7 @@ export class Selection extends EventInteroperableObject {
       this.states.push(nextState);
     }
   }
-  up(step: number = 1) {
+  up(step = 1) {
     if (!this.state || !this.topState) return;
     const nextState = this.topState.block.up(this.topState, step);
     if (nextState) {
@@ -124,7 +124,7 @@ export class Selection extends EventInteroperableObject {
       this.states.push(nextState);
     }
   }
-  down(step: number = 1) {
+  down(step = 1) {
     if (!this.state || !this.topState) return;
     const nextState = this.topState.block.down(this.topState, step);
     if (nextState) {

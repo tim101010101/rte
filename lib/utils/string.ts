@@ -4,7 +4,7 @@ export const insertAt = (source: string, pos: number, newStr: string) => {
     : newStr;
 };
 
-export const removeAt = (source: string, pos: number, count: number = 1) => {
+export const removeAt = (source: string, pos: number, count = 1) => {
   return `${source.slice(0, pos)}${source.slice(pos + count)}`;
 };
 

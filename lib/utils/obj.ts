@@ -100,7 +100,7 @@ export function enumToMap<K = string, V = any>(
 ): Map<V, K>;
 export function enumToMap(
   e: object,
-  reverseKeyAndValue: boolean = false
+  reverseKeyAndValue = false
 ): Map<any, any> {
   return reverseKeyAndValue
     ? entries(e).reduce<Map<any, any>>((m, [k, v]) => {

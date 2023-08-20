@@ -11,12 +11,22 @@ export interface ActivePos {
   ancestorIdx: number;
 }
 
+/**
+ * Relative to the canvas element.
+ *
+ * The coordinate origin is the upper-left corner of the canvas element.
+ */
 export interface Rect {
   width: number;
   height: number;
   x: number;
   y: number;
 }
+/**
+ * Relative to the document.body.
+ *
+ * The coordinate origin is the upper-left corner of the document.body.
+ */
 export interface ClientRect {
   width: number;
   height: number;

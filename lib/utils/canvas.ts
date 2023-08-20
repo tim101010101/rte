@@ -1,4 +1,5 @@
 import { panicAt } from './errorCature';
+import { isObject } from './typeJudgument';
 
 export function createCanvasAndContext(
   contextId: '2d',
@@ -27,6 +28,30 @@ export function createCanvasAndContext(
     ? [canvas, ctx]
     : panicAt('unable to get context of 2D canvas rendering context');
 }
+
+export const releaseCanvas = (...canvases: Array<HTMLCanvasElement>) => {
+  canvases.forEach(canvas => {
+    canvas.width = 0;
+    canvas.height = 0;
+  });
+};
+
+export const getPixelRatio = () => {
+  const [canvas, ctx] = createCanvasAndContext('2d');
+  const context = ctx as any;
+
+  const devicePixelRatio = (isObject(window) && window.devicePixelRatio) || 1;
+  const backingStoreRatio =
+    context.webkitBackingStorePixelRatio ||
+    context.mozBackingStorePixelRatio ||
+    context.msBackingStorePixelRatio ||
+    context.backingStorePixelRatio ||
+    1;
+
+  releaseCanvas(canvas);
+
+  return devicePixelRatio || devicePixelRatio / backingStoreRatio;
+};
 
 export const correctedPixel = (
   canvas: HTMLCanvasElement,
