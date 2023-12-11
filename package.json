@@ -47,7 +47,7 @@
     "babel": "link:@rollup/plugin/babel",
     "esbuild": "^0.15.17",
     "eslint": "^8.29.0",
-    "husky": "4.2.3",
+    "husky": "8.0.3",
     "jest": "^29.3.1",
     "jest-canvas-mock": "^2.4.0",
     "jest-environment-jsdom": "^29.3.1",
