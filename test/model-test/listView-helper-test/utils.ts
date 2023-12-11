@@ -109,12 +109,13 @@ export function getFenceAndExtract<T extends keyof FenceRoot>(
   rectList: Array<ClientRect>,
   key: T
 ): Array<FenceRoot[T]>;
-export function getFenceAndExtract<T extends keyof FenceRoot | keyof FenceLeaf> (
+export function getFenceAndExtract<T extends keyof FenceRoot | keyof FenceLeaf>(
   vNode: VirtualNode,
   rectList: Array<ClientRect>,
   key: T
 ): Array<any> {
-  const fence = calcFence(vNode, rectList);
+  // const fence = calcFence(vNode, rectList);
+  const fence = calcFence(vNode);
   if (has(fence[0], key)) {
     return fence.map(root => get(root, key));
   } else {

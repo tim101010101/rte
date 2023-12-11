@@ -1,6 +1,14 @@
 import { isEmptyNode } from 'lib/model';
-import { Fence, FenceInfo, Pos, Snapshot, SyntaxNode } from 'lib/types';
+import { ClientRect, Fence, FenceInfo, Pos, Snapshot } from 'lib/types';
 import { lastItem, panicAt, applyStrategy, Strategy } from 'lib/utils';
+
+// TODO
+const rect: ClientRect = {
+  width: 0,
+  height: 0,
+  clientX: 0,
+  clientY: 0,
+};
 
 export const getFenceLength = (fence: Fence): number => {
   if (fence.length) {
@@ -28,7 +36,8 @@ export const getFenceInfo = (
   const { block } = curPos;
   if (isEmptyNode(block.vNode)) {
     return {
-      rect: block.rect,
+      // rect: block.rect,
+      rect,
       textOffset: 0,
       fenceInfoList: [
         {
@@ -98,7 +107,10 @@ const dispatchStrategies = (
       fence[ancestorIdx].fenceList.length === 1,
     callback: () => {
       const { totalChange, totalLength, fenceList } = fence[ancestorIdx];
-      const { rect, textOffset } = fenceList[0];
+      const {
+        //  rect,
+        textOffset,
+      } = fenceList[0];
       return {
         rect,
         textOffset,
@@ -113,7 +125,10 @@ const dispatchStrategies = (
     callback: () => {
       const prev = fence[ancestorIdx - 1];
       const cur = fence[ancestorIdx];
-      const { rect, textOffset } = cur.fenceList[specificIdx];
+      const {
+        // rect,
+        textOffset,
+      } = cur.fenceList[specificIdx];
 
       return {
         rect,
@@ -142,7 +157,10 @@ const dispatchStrategies = (
     callback: () => {
       const cur = fence[ancestorIdx];
       const next = fence[ancestorIdx + 1];
-      const { rect, textOffset } = cur.fenceList[specificIdx];
+      const {
+        // rect,
+        textOffset,
+      } = cur.fenceList[specificIdx];
 
       return {
         rect,
@@ -169,7 +187,11 @@ const dispatchStrategies = (
     callback: () => {
       const cur = fence[ancestorIdx];
       const { totalLength, totalChange, fenceList } = cur;
-      const { rect, textOffset, prefixChange } = fenceList[specificIdx];
+      const {
+        //  rect,
+        textOffset,
+        prefixChange,
+      } = fenceList[specificIdx];
 
       return {
         rect,
@@ -200,7 +222,11 @@ const dispatchStrategies = (
       callback: () => {
         const prev = fence[ancestorIdx - 1];
         const cur = fence[ancestorIdx];
-        const { rect, textOffset, prefixChange } = cur.fenceList[0];
+        const {
+          // rect,
+          textOffset,
+          prefixChange,
+        } = cur.fenceList[0];
 
         return {
           rect,
@@ -231,7 +257,11 @@ const dispatchStrategies = (
       callback: () => {
         const cur = fence[ancestorIdx];
         const next = fence[ancestorIdx + 1];
-        const { rect, textOffset, prefixChange } = cur.fenceList[0];
+        const {
+          // rect,
+          textOffset,
+          prefixChange,
+        } = cur.fenceList[0];
 
         return {
           rect,

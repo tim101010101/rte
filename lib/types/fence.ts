@@ -65,7 +65,7 @@ export interface FenceLeaf {
   /**
    * The amount of space occupied by the characters of the current position.
    */
-  rect: ClientRect;
+  // rect: ClientRect;
   /**
    * The number of characters that may change in front of this position.
    *

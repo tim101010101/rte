@@ -47,16 +47,16 @@ export class Page implements Context {
       const line = new Line(this.eventBus);
       this.listView.insert(line);
 
-      line.addEventListener(VNodeEventName.CLICK, e => {
-        const rectList = line.fence.reduce<Array<number>>((arr, cur) => {
-          cur.fenceList.forEach(({ rect }) => {
-            arr.push(rect.clientX);
-          });
-          return arr;
-        }, []);
-        const offset = getNearestIdx(rectList, e.clientPos[0]);
-        this.eventBus.emit(FOCUS_ON, { block: line, offset });
-      });
+      // line.addEventListener(VNodeEventName.CLICK, e => {
+      //   const rectList = line.fence.reduce<Array<number>>((arr, cur) => {
+      //     cur.fenceList.forEach(({ rect }) => {
+      //       arr.push(rect.clientX);
+      //     });
+      //     return arr;
+      //   }, []);
+      //   const offset = getNearestIdx(rectList, e.clientPos[0]);
+      //   this.eventBus.emit(FOCUS_ON, { block: line, offset });
+      // });
     });
 
     this.selection.initEventListener();

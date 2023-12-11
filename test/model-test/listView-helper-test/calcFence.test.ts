@@ -612,99 +612,99 @@ describe('calcFence', () => {
       });
     });
 
-    describe('rect', () => {
-      const getRect = (vNode: VirtualNode) => {
-        return getFenceAndExtract(vNode, mockRectList(), 'rect').map(
-          ({ clientX }) => clientX
-        );
-      };
+    // describe('rect', () => {
+    //   const getRect = (vNode: VirtualNode) => {
+    //     return getFenceAndExtract(vNode, mockRectList(), 'rect').map(
+    //       ({ clientX }) => clientX
+    //     );
+    //   };
 
-      describe('before active', () => {
-        // `foo*bar*`
-        // `foobar`
-        test('tail', () => {
-          expect(
-            getRect(anyLine([anyText('foo'), anyEm('bar')]))
-          ).toStrictEqual([0, 1, 2, 3, 3, 4, 5, 6]);
-        });
+    //   describe('before active', () => {
+    //     // `foo*bar*`
+    //     // `foobar`
+    //     test('tail', () => {
+    //       expect(
+    //         getRect(anyLine([anyText('foo'), anyEm('bar')]))
+    //       ).toStrictEqual([0, 1, 2, 3, 3, 4, 5, 6]);
+    //     });
 
-        // `*foo*bar`
-        // `foobar`
-        test('head', () => {
-          expect(
-            getRect(anyLine([anyEm('foo'), anyText('bar')]))
-          ).toStrictEqual([0, 1, 2, 3, 3, 4, 5, 6]);
-        });
+    //     // `*foo*bar`
+    //     // `foobar`
+    //     test('head', () => {
+    //       expect(
+    //         getRect(anyLine([anyEm('foo'), anyText('bar')]))
+    //       ).toStrictEqual([0, 1, 2, 3, 3, 4, 5, 6]);
+    //     });
 
-        // `*foo*~bar`
-        // `foobar`
-        test('include empty node', () => {
-          expect(
-            getRect(anyLine([anyEm('foo'), emptyNode(), anyText('bar')]))
-          ).toStrictEqual([0, 1, 2, 3, 3, 3, 4, 5, 6]);
-        });
-      });
+    //     // `*foo*~bar`
+    //     // `foobar`
+    //     test('include empty node', () => {
+    //       expect(
+    //         getRect(anyLine([anyEm('foo'), emptyNode(), anyText('bar')]))
+    //       ).toStrictEqual([0, 1, 2, 3, 3, 3, 4, 5, 6]);
+    //     });
+    //   });
 
-      describe('actived', () => {
-        // `foo*bar*`
-        // `foo*bar*`
-        test('tail', () => {
-          expect(
-            getRect(anyLine([anyText('foo'), anyEm('bar', true)]))
-          ).toStrictEqual([0, 1, 2, 3, 3, 4, 5, 6, 7, 8]);
-        });
+    //   describe('actived', () => {
+    //     // `foo*bar*`
+    //     // `foo*bar*`
+    //     test('tail', () => {
+    //       expect(
+    //         getRect(anyLine([anyText('foo'), anyEm('bar', true)]))
+    //       ).toStrictEqual([0, 1, 2, 3, 3, 4, 5, 6, 7, 8]);
+    //     });
 
-        // `*foo*bar`
-        // `*foo*bar`
-        test('head', () => {
-          expect(
-            getRect(anyLine([anyEm('foo', true), anyText('bar')]))
-          ).toStrictEqual([0, 1, 2, 3, 4, 5, 5, 6, 7, 8]);
-        });
+    //     // `*foo*bar`
+    //     // `*foo*bar`
+    //     test('head', () => {
+    //       expect(
+    //         getRect(anyLine([anyEm('foo', true), anyText('bar')]))
+    //       ).toStrictEqual([0, 1, 2, 3, 4, 5, 5, 6, 7, 8]);
+    //     });
 
-        // `*foo*~bar`
-        // `*foo*~bar`
-        test('include empty node', () => {
-          expect(
-            getRect(
-              anyLine([anyEm('foo', true), emptyNode(true), anyText('bar')])
-            )
-          ).toStrictEqual([0, 1, 2, 3, 4, 5, 5, 6, 6, 7, 8, 9]);
-        });
-      });
+    //     // `*foo*~bar`
+    //     // `*foo*~bar`
+    //     test('include empty node', () => {
+    //       expect(
+    //         getRect(
+    //           anyLine([anyEm('foo', true), emptyNode(true), anyText('bar')])
+    //         )
+    //       ).toStrictEqual([0, 1, 2, 3, 4, 5, 5, 6, 6, 7, 8, 9]);
+    //     });
+    //   });
 
-      describe('patical actived', () => {
-        test('exclude empty node', () => {
-          // `**foo**_bar_`
-          // `**foo**bar`
-          expect(
-            getRect(anyLine([anyBold('foo', true), anyEm('bar')]))
-          ).toStrictEqual([0, 1, 2, 3, 4, 5, 6, 7, 7, 8, 9, 10]);
+    //   describe('patical actived', () => {
+    //     test('exclude empty node', () => {
+    //       // `**foo**_bar_`
+    //       // `**foo**bar`
+    //       expect(
+    //         getRect(anyLine([anyBold('foo', true), anyEm('bar')]))
+    //       ).toStrictEqual([0, 1, 2, 3, 4, 5, 6, 7, 7, 8, 9, 10]);
 
-          // `**foo**_bar_`
-          // `foo_bar_`
-          expect(
-            getRect(anyLine([anyBold('foo'), anyEm('bar', true)]))
-          ).toStrictEqual([0, 1, 2, 3, 3, 4, 5, 6, 7, 8]);
-        });
+    //       // `**foo**_bar_`
+    //       // `foo_bar_`
+    //       expect(
+    //         getRect(anyLine([anyBold('foo'), anyEm('bar', true)]))
+    //       ).toStrictEqual([0, 1, 2, 3, 3, 4, 5, 6, 7, 8]);
+    //     });
 
-        test('include empty node', () => {
-          // `**foo**~_bar_`
-          // `**foo**bar`
-          expect(
-            getRect(anyLine([anyBold('foo', true), emptyNode(), anyEm('bar')]))
-          ).toStrictEqual([0, 1, 2, 3, 4, 5, 6, 7, 7, 7, 8, 9, 10]);
+    //     test('include empty node', () => {
+    //       // `**foo**~_bar_`
+    //       // `**foo**bar`
+    //       expect(
+    //         getRect(anyLine([anyBold('foo', true), emptyNode(), anyEm('bar')]))
+    //       ).toStrictEqual([0, 1, 2, 3, 4, 5, 6, 7, 7, 7, 8, 9, 10]);
 
-          // `**foo**~_bar_`
-          // `**foo**~bar`
-          expect(
-            getRect(
-              anyLine([anyBold('foo', true), emptyNode(true), anyEm('bar')])
-            )
-          ).toStrictEqual([0, 1, 2, 3, 4, 5, 6, 7, 7, 8, 8, 9, 10, 11]);
-        });
-      });
-    });
+    //       // `**foo**~_bar_`
+    //       // `**foo**~bar`
+    //       expect(
+    //         getRect(
+    //           anyLine([anyBold('foo', true), emptyNode(true), anyEm('bar')])
+    //         )
+    //       ).toStrictEqual([0, 1, 2, 3, 4, 5, 6, 7, 7, 8, 8, 9, 10, 11]);
+    //     });
+    //   });
+    // });
 
     describe('prefixLength', () => {
       const getPrefixLength = (vNode: VirtualNode) => {

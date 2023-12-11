@@ -9,8 +9,8 @@ import {
 import { panicAt, lastItem } from 'lib/utils';
 
 export const calcFence = (
-  vNode: VirtualNode,
-  rectList: Array<ClientRect>
+  vNode: VirtualNode
+  // rectList: Array<ClientRect>
 ): Fence => {
   if (isTextNode(vNode)) {
     return panicAt('try to calculate the fence of a text node');
@@ -28,16 +28,16 @@ export const calcFence = (
     const fenceList: Array<FenceLeaf> = [];
     let totalLength = 0;
 
-    const getRect = () => {
-      if (
-        fence.length &&
-        !fenceList.length &&
-        lastItem(fence).fenceList.length
-      ) {
-        return lastItem(lastItem(fence).fenceList).rect;
-      }
-      return rectList.shift()!;
-    };
+    // const getRect = () => {
+    //   if (
+    //     fence.length &&
+    //     !fenceList.length &&
+    //     lastItem(fence).fenceList.length
+    //   ) {
+    //     return lastItem(lastItem(fence).fenceList).rect;
+    //   }
+    //   return rectList.shift()!;
+    // };
 
     walkTextNode(ancestor, textNode => {
       const { text, behavior } = textNode;
@@ -49,7 +49,7 @@ export const calcFence = (
         Array.from(text).forEach(() => {
           const prefixChange = curPrefixChange;
           const textOffset = textLength;
-          const rect = getRect();
+          // const rect = getRect();
 
           if (isHidden(behavior)) {
             prevPrefixChange = curPrefixChange;
@@ -57,7 +57,7 @@ export const calcFence = (
           }
 
           fenceList.push({
-            rect,
+            // rect,
             textOffset,
             prefixChange,
           });
@@ -73,10 +73,10 @@ export const calcFence = (
           Array.from(text).forEach(() => {
             const prefixChange = prevPrefixChange;
             const textOffset = textLength + prefixChange;
-            const rect = getRect();
+            // const rect = getRect();
 
             fenceList.push({
-              rect,
+              // rect,
               textOffset,
               prefixChange,
             });
@@ -90,7 +90,7 @@ export const calcFence = (
     });
 
     fenceList.push({
-      rect: getRect(),
+      // rect: getRect(),
       prefixChange: curPrefixChange,
       textOffset: textLength,
     });
@@ -113,13 +113,19 @@ export const calcFence = (
       prevPrefixChange = 0;
       curPrefixChange = 0;
     });
-  } else if (rectList.length) {
-    fence.push({
-      fenceList: [{ rect: rectList[0], textOffset: 0, prefixChange: 0 }],
-      prefixLength: 0,
-      totalLength: 0,
-      totalChange: 0,
-    });
+    // } else if (rectList.length) {
+    //   fence.push({
+    //     fenceList: [
+    //       {
+    //         // rect: rectList[0],
+    //         textOffset: 0,
+    //         prefixChange: 0,
+    //       },
+    //     ],
+    //     prefixLength: 0,
+    //     totalLength: 0,
+    //     totalChange: 0,
+    //   });
   }
 
   return fence;

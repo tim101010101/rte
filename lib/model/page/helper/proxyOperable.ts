@@ -13,8 +13,9 @@ export const proxyOperable = (
         const { rect, vNode } = target.dump();
         const { lineRect, rectList } = renderer.patch(newValue, vNode, rect);
 
-        set(target, 'rect', lineRect, receiver);
-        set(target, 'fence', calcFence(newValue, rectList), receiver);
+        // set(target, 'rect', lineRect, receiver);
+        // set(target, 'fence', calcFence(newValue, rectList), receiver);
+        set(target, 'fence', calcFence(newValue), receiver);
       }
 
       return set(target, k, newValue, receiver);
