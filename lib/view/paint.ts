@@ -21,11 +21,11 @@ import {
 
 type ClientPos = { clientX: number; clientY: number };
 type WithCLientRect<T> = T & { rect: ClientRect };
-type DrawContentFunction = ({
+type DrawContentFunction<T> = ({
   clientX,
   clientY,
   maxWidth,
-}: ClientPos & { maxWidth: number }) => ClientRect;
+}: ClientPos & { maxWidth: number }) => T;
 
 const initCanvas2D = (container: HTMLElement, config: EditorConfig) => {
   const [canvas, ctx] = createCanvasAndContext('2d');
@@ -33,7 +33,7 @@ const initCanvas2D = (container: HTMLElement, config: EditorConfig) => {
   appendChild(container, canvas);
   correctedPixel(canvas, ctx);
 
-  const { font, page } = config;
+  const { font, page } = config.render;
   const { padding, rowSpacing } = page;
 
   const { color, textBaseline, textAlign } = font;
@@ -164,7 +164,10 @@ export class Paint {
     return c;
   }
 
-  drawLine(drawContent: DrawContentFunction, rect?: ClientRect): ClientRect {
+  drawLine<T extends DrawContentFunction<ClientRect | void>>(
+    drawContent: T,
+    rect?: ClientRect
+  ): ReturnType<T> {
     const { width } = this.editableRect;
     const lineRect = drawContent(
       rect
@@ -172,9 +175,9 @@ export class Paint {
         : { ...this.startPos, maxWidth: width }
     );
 
-    rect || this.newLine(lineRect.height);
+    rect || (lineRect && this.newLine(lineRect.height));
 
-    return lineRect;
+    return lineRect as ReturnType<T>;
   }
 
   resetLineDrawing() {

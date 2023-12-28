@@ -3,7 +3,7 @@ import {
   ClientRect,
   Fence,
   Operable,
-  Snapshot,
+  State,
   SyntaxNode,
   VirtualNode,
   // EventInteroperableObject,
@@ -47,17 +47,17 @@ export abstract class OperableNode extends EventInteroperableObject implements O
 
   abstract patch(newVNode: VirtualNode): void;
 
-  abstract focusOn(prevState: Snapshot | null, curOffset: number): Snapshot;
-  abstract unFocus(prevState: Snapshot): void;
+  abstract focusOn(prevState: State | null, curOffset: number): State;
+  abstract unFocus(prevState: State): void;
 
-  abstract left(prevState: Snapshot, step: number): Snapshot | null;
-  abstract right(prevState: Snapshot, step: number): Snapshot | null;
-  abstract up(prevState: Snapshot, step: number): Snapshot | null;
-  abstract down(prevState: Snapshot, step: number): Snapshot | null;
+  abstract left(prevState: State, step: number): State | null;
+  abstract right(prevState: State, step: number): State | null;
+  abstract up(prevState: State, step: number): State | null;
+  abstract down(prevState: State, step: number): State | null;
 
-  abstract newLine(prevState: Snapshot, parse: (src: string) => SyntaxNode): Snapshot;
+  abstract newLine(prevState: State, parse: (src: string) => SyntaxNode): State;
 
-  abstract update(prevState: Snapshot, char: string, parse: (src: string) => SyntaxNode): Snapshot;
+  abstract update(prevState: State, char: string, parse: (src: string) => SyntaxNode): State;
 
-  abstract delete(prevState: Snapshot, parse: (src: string) => SyntaxNode): Snapshot;
+  abstract delete(prevState: State, parse: (src: string) => SyntaxNode): State;
 }

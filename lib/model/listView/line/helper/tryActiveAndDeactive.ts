@@ -1,19 +1,19 @@
-import { ActivePos, FenceInfoItem, Pos, Snapshot } from 'lib/types';
+import { ActivePos, FenceInfoItem, Pos, State } from 'lib/types';
 import { getFenceInfo } from './getFenceInfo';
 import { initPatchBuffer } from './patchBuffer';
 
 export function tryActiveAndDeactive(
   curPos: Pos,
-  prevState: Snapshot | null
-): Snapshot;
+  prevState: State | null
+): State;
 export function tryActiveAndDeactive(
   curPos: null,
-  prevState: Snapshot | null
+  prevState: State | null
 ): void;
 export function tryActiveAndDeactive(
   curPos: Pos | null,
-  prevState: Snapshot | null
-): Snapshot | void {
+  prevState: State | null
+): State | void {
   const { addTarget, flushBuffer } = initPatchBuffer();
 
   if (curPos) {
@@ -53,13 +53,13 @@ export function tryActiveAndDeactive(
   }
 }
 
-const snapshotToActived = ({ block, actived }: Snapshot): Array<ActivePos> => {
+const snapshotToActived = ({ block, actived }: State): Array<ActivePos> => {
   return actived.map(ancestorIdx => ({ block, ancestorIdx }));
 };
 
 const diffFence = (
   curPos: Pos,
-  prevState: Snapshot | null
+  prevState: State | null
 ): {
   finalOffset: number;
   toBeDeactived: Array<ActivePos>;

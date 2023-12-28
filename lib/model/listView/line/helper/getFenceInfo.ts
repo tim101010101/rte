@@ -1,5 +1,5 @@
 import { isEmptyNode } from 'lib/model';
-import { ClientRect, Fence, FenceInfo, Pos, Snapshot } from 'lib/types';
+import { ClientRect, Fence, FenceInfo, Pos, State } from 'lib/types';
 import { lastItem, panicAt, applyStrategy, Strategy } from 'lib/utils';
 
 // TODO
@@ -31,7 +31,7 @@ export const getFenceInterval = (
 
 export const getFenceInfo = (
   curPos: Pos,
-  prevState?: Snapshot | null
+  prevState?: State | null
 ): FenceInfo => {
   const { block } = curPos;
   if (isEmptyNode(block.vNode)) {
@@ -95,7 +95,7 @@ const dispatchStrategies = (
   curPos: Pos,
   ancestorIdx: number,
   specificIdx: number,
-  prevState?: Snapshot | null
+  prevState?: State | null
 ): Array<Strategy<FenceInfo>> => {
   const { block: curBlock, offset: curOffset } = curPos;
   const { fence } = curBlock;

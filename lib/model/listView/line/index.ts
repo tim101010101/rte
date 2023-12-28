@@ -6,7 +6,7 @@ import {
   VirtualNode,
   ClientRect,
   OperableNode,
-  Snapshot,
+  State,
 } from 'lib/types';
 import { insertAt, min, panicAt, removeAt, splitAt } from 'lib/utils';
 import {
@@ -76,18 +76,17 @@ export class Line extends OperableNode {
     if (isTextNode(newVNode)) {
       return panicAt('try to patch a single textNode');
     }
-
     this.vNode = newVNode;
   }
 
-  focusOn(prevState: Snapshot | null, curOffset: number): Snapshot {
+  focusOn(prevState: State | null, curOffset: number): State {
     return tryActiveAndDeactive({ block: this, offset: curOffset }, prevState);
   }
-  unFocus(prevState: Snapshot): void {
+  unFocus(prevState: State): void {
     return tryActiveAndDeactive(null, prevState);
   }
 
-  newLine(prevState: Snapshot, parse: (src: string) => SyntaxNode): Snapshot {
+  newLine(prevState: State, parse: (src: string) => SyntaxNode): State {
     const { vNode, textOffset } = prevState;
     const [line1, line2] = splitAt(textContent(vNode), textOffset).map(parse);
 
@@ -106,17 +105,17 @@ export class Line extends OperableNode {
   }
 
   update(
-    prevState: Snapshot,
+    prevState: State,
     char: string,
     parse: (src: string) => SyntaxNode
-  ): Snapshot {
+  ): State {
     const { textOffset } = prevState;
     const newVNode = parse(insertAt(textContent(this.vNode), textOffset, char));
     const nextState = updateContent(prevState, prevState.offset + 1, newVNode);
     return this.focusOn(nextState, nextState.offset);
   }
 
-  delete(prevState: Snapshot, parse: (src: string) => SyntaxNode): Snapshot {
+  delete(prevState: State, parse: (src: string) => SyntaxNode): State {
     const { textOffset } = getFenceInfo({
       block: this,
       offset: prevState.offset,
@@ -126,7 +125,7 @@ export class Line extends OperableNode {
     return this.focusOn(nextState, nextState.offset);
   }
 
-  left(prevState: Snapshot, step: number): Snapshot | null {
+  left(prevState: State, step: number): State | null {
     const finalOffset = prevState.offset - step;
     if (finalOffset >= 0) {
       return this.focusOn(prevState, finalOffset);
@@ -134,12 +133,12 @@ export class Line extends OperableNode {
       return null;
     }
   }
-  right(prevState: Snapshot, step: number): Snapshot | null {
+  right(prevState: State, step: number): State | null {
     const finalOffset = prevState.offset + step;
     if (finalOffset > getFenceLength(this.fence)) return null;
     return this.focusOn(prevState, finalOffset);
   }
-  up(prevState: Snapshot, step: number): Snapshot | null {
+  up(prevState: State, step: number): State | null {
     let curBlock = prevState.block;
     while (step--) {
       if (curBlock.prev) {
@@ -153,7 +152,7 @@ export class Line extends OperableNode {
       min(prevState.offset, getFenceLength(curBlock.fence))
     );
   }
-  down(prevState: Snapshot, step: number): Snapshot | null {
+  down(prevState: State, step: number): State | null {
     let curBlock = prevState.block;
     while (step--) {
       if (curBlock.next) {

@@ -1,8 +1,9 @@
-import { walkTextNode } from 'lib/model';
+import { EventBus, walkTextNode } from 'lib/model';
 import {
   ClientRect,
   EditorConfig,
   FontInfo,
+  ListView,
   Rect,
   RenderConfig,
   VirtualNode,
@@ -35,14 +36,20 @@ const getRenderInfo = (
 export class Renderer {
   private pagePainter: Paint;
   private cursorPainter: Paint;
-  private lines: Set<ClientRect>;
+
   private config: EditorConfig;
 
-  constructor(container: HTMLElement, config: EditorConfig) {
+  private eventBus: EventBus;
+
+  constructor(
+    container: HTMLElement,
+    eventBus: EventBus,
+    config: EditorConfig
+  ) {
     this.pagePainter = new Paint(container, config);
     this.cursorPainter = new Paint(container, config);
 
-    this.lines = new Set();
+    this.eventBus = eventBus;
     this.config = config;
 
     overlapNodes(this.pagePainter.el, this.cursorPainter.el);
@@ -50,12 +57,11 @@ export class Renderer {
     this.cursorPainter.init();
   }
 
-  private getPageContext(options?: RenderConfig) {
-    return this.pagePainter.getDisposableContext(options);
+  get viewportRect(): ClientRect {
+    return this.pagePainter.editableRect;
   }
 
-  //! ERROR bug dev dairy 2023-1-15
-  private drawLineWithVNode(vNode: VirtualNode, rect?: ClientRect) {
+  renderVNode(vNode: VirtualNode) {
     const rectList: Array<ClientRect> = [];
     const lineRect = this.pagePainter.drawLine(
       ({ clientX, clientY, maxWidth }) => {
@@ -93,17 +99,16 @@ export class Renderer {
           clientX: prevXOffset,
           clientY: prevYOffset,
           width: maxWidth - totalLength,
-          height: lineHeight || this.config.font.size,
+          height: lineHeight || this.config.render.font.size,
         });
 
         return {
           clientX,
           clientY,
           width: maxWidth,
-          height: lineHeight || this.config.font.size,
+          height: lineHeight || this.config.render.font.size,
         };
-      },
-      rect
+      }
     );
 
     return {
@@ -112,35 +117,66 @@ export class Renderer {
     };
   }
 
-  fullPatch(lines: Array<VirtualNode>) {
-    this.pagePainter.resetLineDrawing();
-    this.pagePainter.clearRect(this.pagePainter.editableRect);
-    const res = lines.map(line => this.patch(line));
+  renderVNodeInto(vNode: VirtualNode, startPos: [number, number]) {
+    const rectList: Array<ClientRect> = [];
 
-    return res;
-  }
+    const width = this.pagePainter.editableRect.width;
+    let prevXOffset = startPos[0];
+    const prevYOffset = startPos[1];
+    let lineHeight = 0;
+    let totalLength = 0;
 
-  patch(newVNode: VirtualNode, oldVNode?: VirtualNode, oldRect?: ClientRect) {
-    if (oldRect && oldVNode && this.lines.has(oldRect)) {
-      this.pagePainter.clearRect(oldRect);
-      this.lines.delete(oldRect);
-    }
+    walkTextNode(vNode, (textNode, _, parent) => {
+      const { text, font, behavior } = textNode;
+      const fontSize = font.size;
 
-    const { lineRect, rectList } = this.drawLineWithVNode(newVNode, oldRect);
+      const renderInfo = getRenderInfo(
+        parent ? parent.isActive : false,
+        font,
+        behavior
+      );
 
-    // rectList.forEach(rect => this.renderRect(rect, { strokeStyle: 'red' }));
+      if (renderInfo) {
+        lineHeight = max(fontSize, lineHeight);
 
-    this.lines.add(lineRect);
+        const { rect, charRectList } = this.pagePainter.drawText(
+          text,
+          { clientX: prevXOffset, clientY: prevYOffset, maxWidth: width },
+          renderInfo
+        );
+
+        prevXOffset += rect.width;
+        totalLength += rect.width;
+        rectList.push(...charRectList);
+      }
+    });
+
+    rectList.push({
+      clientX: prevXOffset,
+      clientY: prevYOffset,
+      width: width - totalLength,
+      height: lineHeight || this.config.render.font.size,
+    });
 
     return {
-      lineRect,
       rectList,
+      lineRect: {
+        clientX: startPos[0],
+        clientY: startPos[1],
+        width,
+        height: lineHeight || this.config.render.font.size,
+      },
     };
   }
 
-  // dev only
-  renderRect(rect: ClientRect, options?: RenderConfig) {
-    this.pagePainter.drawRect(rect, options);
+  fillRect(rect: ClientRect) {
+    this.pagePainter.drawRect(rect, { fillStyle: 'blue' }, true);
+  }
+  renderRect(rect: ClientRect) {
+    this.pagePainter.drawRect(rect);
+  }
+  clearRect(rect: ClientRect) {
+    this.pagePainter.clearRect(rect);
   }
 
   renderCursor(rect: ClientRect, oldRect?: ClientRect | null) {
@@ -151,5 +187,12 @@ export class Renderer {
   }
   clearCursor(rect: ClientRect) {
     this.cursorPainter.clearRect(rect);
+  }
+
+  clearCanvasRect() {
+    this.pagePainter.clearRect(this.pagePainter.canvasRect);
+  }
+  clearEditableRect() {
+    this.pagePainter.clearRect(this.pagePainter.editableRect);
   }
 }

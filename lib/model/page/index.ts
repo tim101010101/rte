@@ -2,8 +2,10 @@ import {
   Context,
   EditorConfig,
   InnerEventListener,
+  ListView,
   Operable,
   OperableNode,
+  Snapshot,
   VirtualNode,
 } from 'lib/types';
 import { EventBus, Line, LinkedList, Selection } from 'lib/model';
@@ -12,39 +14,47 @@ import { Renderer } from 'lib/view';
 import { getNearestIdx, set, throttle } from 'lib/utils';
 import { Schema } from 'lib/schema';
 import { proxyListView, proxySelection } from './helper';
+import { Viewport } from '../viewport';
 
 const { CLICK, MOUSE_DOWN, MOUSE_MOVE, MOUSE_UP } = VNodeEventName;
 const { KEYDOWN, KEYUP } = VNodeEventName;
 const { FOCUS_ON, FULL_PATCH, UNINSTALL_BLOCK, INSTALL_BLOCK } = InnerEventName;
 
 export class Page implements Context {
-  private container: HTMLElement;
-  private config: EditorConfig;
-
-  private renderer: Renderer;
   private eventBus: EventBus;
   private schema: Schema;
 
   private selection: Selection;
-  private listView: LinkedList<Operable>;
+  private listView: ListView;
+
+  private viewport: Viewport;
+
+  private history: Array<Snapshot>;
 
   constructor(container: HTMLElement, config: EditorConfig) {
-    this.container = container;
-    this.config = config;
-
-    this.renderer = new Renderer(this.container, config);
     this.eventBus = new EventBus();
     this.schema = new Schema(config);
 
-    this.selection = proxySelection(this.renderer, this.eventBus, this.schema);
-    this.listView = proxyListView(this.renderer);
+    this.selection = new Selection(this.eventBus, this.schema.parse);
+    this.listView = new LinkedList();
+
+    this.viewport = new Viewport(
+      container,
+      config,
+      this.eventBus,
+      this.listView,
+      this.selection
+    );
+
+    this.history = [];
   }
 
   init(text: string) {
     const lineVNodes = text.split('\n').map(line => this.schema.parse(line));
 
-    lineVNodes.forEach(() => {
+    lineVNodes.forEach(vNode => {
       const line = new Line(this.eventBus);
+      line.vNode = vNode;
       this.listView.insert(line);
 
       // line.addEventListener(VNodeEventName.CLICK, e => {
@@ -58,22 +68,23 @@ export class Page implements Context {
       //   this.eventBus.emit(FOCUS_ON, { block: line, offset });
       // });
     });
+    this.viewport.top = this.listView.head;
 
     this.selection.initEventListener();
     this.selection.addEventListener(KEYDOWN, e => {
-      if (
-        e.key === 'Tab' &&
-        !this.selection.state?.rect &&
-        this.listView.head
-      ) {
+      if (e.key === 'Tab' && !this.selection.state && this.listView.head) {
         this.selection.focusOn(this.listView.head, 0);
-      } else if (e.key === 'Escape' && this.selection.state?.rect) {
+        // TODO render
+        this.viewport.render();
+      } else if (e.key === 'Escape' && this.selection.state) {
         this.selection.unFocus();
       }
     });
     this.initEventListener();
 
-    this.eventBus.emit(FULL_PATCH, lineVNodes);
+    // this.eventBus.emit(FULL_PATCH, lineVNodes);
+    // TODO debug
+    this.viewport.render();
   }
 
   initEventListener() {
@@ -103,7 +114,7 @@ export class Page implements Context {
     this.listView.forEach((block, i) => {
       block.patch(lineVNodes[i]);
     });
-    this.renderer.fullPatch(lineVNodes);
+    // this.renderer.fullPatch(lineVNodes);
   }
 
   installBlock(newBlock: OperableNode, anchorBlock: OperableNode) {

@@ -1,5 +1,8 @@
 import { Fence, Operable, VirtualNode } from 'lib/types';
-import { CursroInfo } from './cursor';
+import { CursorInfo } from './cursor';
+import { LinkedList } from 'lib/model';
+
+export type ListView = LinkedList<Operable>;
 
 export interface Pos {
   block: Operable;
@@ -43,7 +46,7 @@ export interface FeedbackPos {
 /**
  * The full internal state of the current cursor location.
  */
-export interface Snapshot {
+export interface State {
   block: Operable;
   vNode: VirtualNode;
   fence: Fence;
@@ -63,9 +66,13 @@ export interface Snapshot {
   /**
    * Current cursor information.
    */
-  cursor: CursroInfo;
+  cursor: CursorInfo;
   /**
    * Index of all activated nodes.
    */
   actived: Array<number>;
+}
+
+export interface Snapshot {
+  cursor: CursorInfo;
 }

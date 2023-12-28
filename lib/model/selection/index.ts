@@ -3,7 +3,7 @@ import {
   EventInteroperableObject,
   ClientRect,
   SyntaxNode,
-  Snapshot,
+  State,
 } from 'lib/types';
 import { EventBus, isEmptyNode, isShowableKey, textContent } from 'lib/model';
 import { Renderer } from 'lib/view';
@@ -14,32 +14,32 @@ import {
   ShowableKey,
 } from 'lib/static';
 import { lastItem, panicAt } from 'lib/utils';
-import { CursroInfo } from 'lib/types/cursor';
+import { CursorInfo } from 'lib/types/cursor';
 import { getFenceLength } from '../listView/line/helper';
 
 const { KEYDOWN } = VNodeEventName;
 const { FOCUS_ON, UNFOCUS, UNINSTALL_BLOCK, INSTALL_BLOCK } = InnerEventName;
 
 export class Selection extends EventInteroperableObject {
-  state: CursroInfo | null;
+  state: State | null;
 
   private parser: (src: string) => SyntaxNode;
-  private states: Array<Snapshot>;
+  private stateStack: Array<State>;
 
   constructor(eventBus: EventBus, parser: (src: string) => SyntaxNode) {
     super(eventBus);
 
     this.state = null;
     this.parser = parser;
-    this.states = [];
+    this.stateStack = [];
   }
 
-  private get topState(): Snapshot | null {
-    return this.states.length ? lastItem(this.states) : null;
+  private get topState(): State | null {
+    return this.stateStack.length ? lastItem(this.stateStack) : null;
   }
 
-  private setPos(cursorInfo: CursroInfo | null) {
-    this.state = cursorInfo;
+  private updateState(snapshot: State | null) {
+    this.state = snapshot;
   }
 
   initEventListener() {
@@ -88,14 +88,13 @@ export class Selection extends EventInteroperableObject {
     const prevState = this.topState;
     const nextState = block.focusOn(prevState, offset);
 
-    this.states.push(nextState);
+    this.stateStack.push(nextState);
 
-    this.setPos(nextState.cursor);
+    this.updateState(nextState);
   }
   unFocus() {
     if (this.state && this.topState) {
-      // this.renderer.clearCursor(this.state);
-      this.setPos(null);
+      this.updateState(null);
       this.topState.block.unFocus(this.topState);
     }
   }
@@ -104,32 +103,32 @@ export class Selection extends EventInteroperableObject {
     if (!this.state || !this.topState) return;
     const nextState = this.topState.block.left(this.topState, step);
     if (nextState) {
-      this.setPos(nextState.cursor);
-      this.states.push(nextState);
+      this.updateState(nextState);
+      this.stateStack.push(nextState);
     }
   }
   right(step = 1) {
     if (!this.state || !this.topState) return;
     const nextState = this.topState.block.right(this.topState, step);
     if (nextState) {
-      this.setPos(nextState.cursor);
-      this.states.push(nextState);
+      this.updateState(nextState);
+      this.stateStack.push(nextState);
     }
   }
   up(step = 1) {
     if (!this.state || !this.topState) return;
     const nextState = this.topState.block.up(this.topState, step);
     if (nextState) {
-      this.setPos(nextState.cursor);
-      this.states.push(nextState);
+      this.updateState(nextState);
+      this.stateStack.push(nextState);
     }
   }
   down(step = 1) {
     if (!this.state || !this.topState) return;
     const nextState = this.topState.block.down(this.topState, step);
     if (nextState) {
-      this.setPos(nextState.cursor);
-      this.states.push(nextState);
+      this.updateState(nextState);
+      this.stateStack.push(nextState);
     }
   }
 
@@ -137,15 +136,15 @@ export class Selection extends EventInteroperableObject {
     if (!this.state || !this.topState) return;
 
     const nextState = this.topState.block.newLine(this.topState, parse);
-    this.setPos(nextState.cursor);
-    this.states.push(nextState);
+    this.updateState(nextState);
+    this.stateStack.push(nextState);
   }
 
   updateBlockContent(char: string, parser: (src: string) => SyntaxNode) {
     if (!this.state || !this.topState) return;
     const nextState = this.topState.block.update(this.topState, char, parser);
-    this.setPos(nextState.cursor);
-    this.states.push(nextState);
+    this.updateState(nextState);
+    this.stateStack.push(nextState);
   }
 
   delete(parse: (src: string) => SyntaxNode) {
@@ -165,8 +164,8 @@ export class Selection extends EventInteroperableObject {
       this.focusOn(block.prev, finalOffset);
     } else {
       const nextState = this.topState.block.delete(this.topState, parse);
-      this.setPos(nextState.cursor);
-      this.states.push(nextState);
+      this.updateState(nextState);
+      this.stateStack.push(nextState);
     }
   }
 }

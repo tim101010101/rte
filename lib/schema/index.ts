@@ -16,7 +16,10 @@ export class Schema {
   private line: SchemaConfigItem;
 
   constructor(config: EditorConfig) {
-    const { schema, font } = config;
+    const {
+      schema,
+      render: { font },
+    } = config;
 
     this.defaultFontInfo = {
       size: font.size,

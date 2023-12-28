@@ -1,14 +1,14 @@
 import { isEmptyNode, isTextNode, textContent } from 'lib/model';
-import { Snapshot, SyntaxNode, VirtualNode } from 'lib/types';
+import { State, SyntaxNode, VirtualNode } from 'lib/types';
 import { min, panicAt } from 'lib/utils';
 import { getFenceInfo } from './getFenceInfo';
 import { initPatchBuffer } from './patchBuffer';
 
 export const updateContent = (
-  prevState: Snapshot,
+  prevState: State,
   offset: number,
   newVNode: SyntaxNode
-): Snapshot => {
+): State => {
   const { addTarget, flushBuffer } = initPatchBuffer();
   const { block, cursor } = prevState;
   const oldVNode = block.vNode as SyntaxNode;

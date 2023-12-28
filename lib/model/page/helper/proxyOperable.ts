@@ -10,11 +10,14 @@ export const proxyOperable = (
   return proxy(block, {
     set(target, k, newValue, receiver) {
       if (k === 'vNode') {
-        const { rect, vNode } = target.dump();
-        const { lineRect, rectList } = renderer.patch(newValue, vNode, rect);
+        const { vNode } = target.dump();
+        // const { lineRect, rectList } = renderer.patch(newValue, vNode, rect);
 
         // set(target, 'rect', lineRect, receiver);
         // set(target, 'fence', calcFence(newValue, rectList), receiver);
+
+        // TODO render vNode
+
         set(target, 'fence', calcFence(newValue), receiver);
       }
 

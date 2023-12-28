@@ -2,7 +2,7 @@ import {
   ClientRect,
   DoubleLinkedListNode,
   Fence,
-  Snapshot,
+  State,
   SyntaxNode,
   VirtualNode,
 } from 'lib/types';
@@ -48,13 +48,13 @@ export interface Operable extends DoubleLinkedListNode {
    * @param curOffset Target offset
    * @returns The state after the cursor is focused
    */
-  focusOn(prevState: Snapshot | null, curOffset: number): Snapshot;
+  focusOn(prevState: State | null, curOffset: number): State;
   /**
    * Hide the cursor and deactivate the current activation.
    *
    * @param prevState The state before the cursor moves
    */
-  unFocus(prevState: Snapshot): void;
+  unFocus(prevState: State): void;
 
   /**
    * Move cursor left with a specify step.
@@ -63,7 +63,7 @@ export interface Operable extends DoubleLinkedListNode {
    * @param step The moving step of the cursor
    * @returns Return the state after the move when the operation is successful, otherwise return null.
    */
-  left(prevState: Snapshot, step: number): Snapshot | null;
+  left(prevState: State, step: number): State | null;
   /**
    * Move cursor right with a specify step.
    *
@@ -71,7 +71,7 @@ export interface Operable extends DoubleLinkedListNode {
    * @param step The moving step of the cursor
    * @returns Return the state after the move when the operation is successful, otherwise return null.
    */
-  right(prevState: Snapshot, step: number): Snapshot | null;
+  right(prevState: State, step: number): State | null;
   /**
    * Move cursor up with a specify step.
    *
@@ -81,7 +81,7 @@ export interface Operable extends DoubleLinkedListNode {
    * @param step The moving step of the cursor
    * @returns Return the state after the move when the operation is successful, otherwise return null.
    */
-  up(prevState: Snapshot, step: number): Snapshot | null;
+  up(prevState: State, step: number): State | null;
   /**
    * Move cursor down with a specify step.
    *
@@ -91,7 +91,7 @@ export interface Operable extends DoubleLinkedListNode {
    * @param step The moving step of the cursor
    * @returns Return the state after the move when the operation is successful, otherwise return null.
    */
-  down(prevState: Snapshot, step: number): Snapshot | null;
+  down(prevState: State, step: number): State | null;
 
   /**
    * Insert a new line at the position of the current cursor.
@@ -102,7 +102,7 @@ export interface Operable extends DoubleLinkedListNode {
    * @param parse Full parser
    * @returns The state after this operation
    */
-  newLine(prevState: Snapshot, parse: (src: string) => SyntaxNode): Snapshot;
+  newLine(prevState: State, parse: (src: string) => SyntaxNode): State;
 
   /**
    * Insert a char at the position of the current cursor.
@@ -117,10 +117,10 @@ export interface Operable extends DoubleLinkedListNode {
    * @returns The state after this operation
    */
   update(
-    prevState: Snapshot,
+    prevState: State,
     char: string,
     parse: (src: string) => SyntaxNode
-  ): Snapshot;
+  ): State;
 
   /**
    * Delete a char at the position of the current cursor.
@@ -133,5 +133,5 @@ export interface Operable extends DoubleLinkedListNode {
    * @param parse Full parser
    * @returns The state after this operation
    */
-  delete(prevState: Snapshot, parse: (src: string) => SyntaxNode): Snapshot;
+  delete(prevState: State, parse: (src: string) => SyntaxNode): State;
 }
