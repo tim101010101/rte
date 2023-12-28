@@ -1,14 +1,14 @@
-import { EditorConfig } from 'lib/types';
+import { EditorConfig } from '../../lib/types';
 import { schema } from './schema';
 
-export const defaultConfig: EditorConfig = {
+export const debugConfig: EditorConfig = {
   container: '#editor',
 
   render: {
     isLazy: true,
 
     font: {
-      size: 20,
+      size: 40,
       family: 'Arial, Helvetica, sans-serif',
       bold: false,
       italic: false,
@@ -17,7 +17,7 @@ export const defaultConfig: EditorConfig = {
       textAlign: 'left',
     },
     page: {
-      padding: 20,
+      padding: 60,
       rowSpacing: 4,
     },
   },

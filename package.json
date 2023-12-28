@@ -24,8 +24,9 @@
   ],
   "scripts": {
     "build": "rollup -c --bundleConfigAsCjs",
-    "dev": "vite serve ./example",
-    "dbg": "vite serve ./example --port 8080",
+    "dev": "vite serve ./debug",
+    "dbg": "vite serve ./debug --port 8080",
+    "example": "vite serve ./example",
     "test": "jest --no-cache",
     "test:cover": "jest --coverage",
     "lint": "eslint --fix --ext .js,.ts lib",
