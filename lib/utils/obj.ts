@@ -18,13 +18,19 @@ export const entries = <T extends object>(o: T) => Object.entries(o);
 export const values = <T extends object>(o: T): Values<T> => Object.values(o);
 
 export const deepClone = <T extends Object | Function | Array<any>>(
-  source: T
+  source: T,
+  visited = new WeakMap()
 ): T => {
   if (!source || !isObject(source) || source instanceof HTMLElement)
     return source;
+  if (visited.has(source)) return visited.get(source);
+
+  // FIXME
+  visited.set(source, source);
+
   if (isFunction(source)) {
     const fn = source.bind(null);
-    fn.prototype = deepClone(source.prototype);
+    fn.prototype = deepClone(source.prototype, visited);
     return fn;
   }
 
@@ -45,7 +51,7 @@ export const deepClone = <T extends Object | Function | Array<any>>(
           k,
           keys(v).reduce(
             (subObj, subK) => {
-              set(subObj, subK, deepClone(v[subK]));
+              set(subObj, subK, deepClone(v[subK], visited));
               return subObj;
             },
             isArray(v) ? [] : {}

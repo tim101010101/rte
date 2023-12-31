@@ -9,4 +9,5 @@ export * from './render';
 export * from './interfaces';
 export * from './context';
 export * from './cursor';
+export * from './viewport';
 export * from './fence';

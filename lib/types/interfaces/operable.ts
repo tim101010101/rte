@@ -134,4 +134,12 @@ export interface Operable extends DoubleLinkedListNode {
    * @returns The state after this operation
    */
   delete(prevState: State, parse: (src: string) => SyntaxNode): State;
+
+  /**
+   * Copy the current node.
+   */
+  snapshot(): {
+    fence: Fence;
+    vNode: VirtualNode;
+  };
 }

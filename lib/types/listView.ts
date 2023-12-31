@@ -72,7 +72,3 @@ export interface State {
    */
   actived: Array<number>;
 }
-
-export interface Snapshot {
-  cursor: CursorInfo;
-}

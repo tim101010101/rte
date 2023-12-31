@@ -3,13 +3,12 @@ import {
   ClientRect,
   EditorConfig,
   FontInfo,
-  ListView,
-  Rect,
   RenderConfig,
+  RenderWindow,
   VirtualNode,
   VirtualNodeBehavior,
 } from 'lib/types';
-import { max, mixin, overlapNodes } from 'lib/utils';
+import { max, mixin, overlapNodes, set } from 'lib/utils';
 import { Paint } from './paint';
 
 const getRenderInfo = (
@@ -61,60 +60,14 @@ export class Renderer {
     return this.pagePainter.editableRect;
   }
 
-  renderVNode(vNode: VirtualNode) {
-    const rectList: Array<ClientRect> = [];
-    const lineRect = this.pagePainter.drawLine(
-      ({ clientX, clientY, maxWidth }) => {
-        let prevXOffset = clientX;
-        const prevYOffset = clientY;
-        let lineHeight = 0;
-        let totalLength = 0;
-
-        walkTextNode(vNode, (textNode, _, parent) => {
-          const { text, font, behavior } = textNode;
-          const fontSize = font.size;
-          // TODO maybe bug here
-          const renderInfo = getRenderInfo(
-            parent ? parent.isActive : false,
-            font,
-            behavior
-          );
-
-          if (renderInfo) {
-            lineHeight = max(fontSize, lineHeight);
-
-            const { rect, charRectList } = this.pagePainter.drawText(
-              text,
-              { clientX: prevXOffset, clientY: prevYOffset, maxWidth },
-              renderInfo
-            );
-
-            prevXOffset += rect.width;
-            totalLength += rect.width;
-            rectList.push(...charRectList);
-          }
-        });
-
-        rectList.push({
-          clientX: prevXOffset,
-          clientY: prevYOffset,
-          width: maxWidth - totalLength,
-          height: lineHeight || this.config.render.font.size,
-        });
-
-        return {
-          clientX,
-          clientY,
-          width: maxWidth,
-          height: lineHeight || this.config.render.font.size,
-        };
-      }
-    );
-
-    return {
-      lineRect,
-      rectList,
-    };
+  calcLineHeight(vNode: VirtualNode) {
+    let lineHeight = 0;
+    walkTextNode(vNode, textNode => {
+      const { font } = textNode;
+      const fontSize = font.size;
+      lineHeight = max(fontSize, lineHeight);
+    });
+    return lineHeight;
   }
 
   renderVNodeInto(vNode: VirtualNode, startPos: [number, number]) {
@@ -167,6 +120,45 @@ export class Renderer {
         height: lineHeight || this.config.render.font.size,
       },
     };
+  }
+
+  renderWindow(window: RenderWindow) {
+    const { gap, slice, excess } = window;
+
+    let currentOffsetY = -gap;
+    const { clientX, clientY, height, width } = this.viewportRect;
+
+    for (const node of slice) {
+      const { vNode } = node;
+      const { rectList, lineRect } = this.renderVNodeInto(vNode, [
+        clientX,
+
+        // Transform `Rect` to `ClientRect`
+        currentOffsetY + clientY,
+      ]);
+
+      // TODO render cursor
+
+      currentOffsetY += lineRect.height;
+      set(node, 'rect', lineRect);
+    }
+
+    const excessRect = {
+      clientX,
+      clientY: height + clientY,
+      width,
+      height: excess,
+    };
+    this.clearRect(excessRect);
+
+    const gapRect = {
+      clientX,
+      // Transform `Rect` to `ClientRect`
+      clientY: clientY - gap,
+      width,
+      height: gap,
+    };
+    this.clearRect(gapRect);
   }
 
   fillRect(rect: ClientRect) {

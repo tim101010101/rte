@@ -43,7 +43,7 @@ export abstract class OperableNode extends EventInteroperableObject implements O
    * 
    * @returns Current internal state
    */
-  abstract dump(): { rect?: ClientRect, vNode?: VirtualNode, fence?: Fence }
+  abstract snapshot(): { vNode: VirtualNode, fence: Fence }
 
   abstract patch(newVNode: VirtualNode): void;
 

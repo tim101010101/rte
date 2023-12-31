@@ -68,7 +68,6 @@ export class Page implements Context {
       //   this.eventBus.emit(FOCUS_ON, { block: line, offset });
       // });
     });
-    this.viewport.top = this.listView.head;
 
     this.selection.initEventListener();
     this.selection.addEventListener(KEYDOWN, e => {

@@ -12,4 +12,4 @@ const getText = (line: number) => {
 const e = new Editor(debugConfig);
 // e.init('# WELCOME');
 // e.init('# hello world\nline 1\nline 2\nline 3\nline 4');
-e.init(getText(100));
+e.init(getText(20));

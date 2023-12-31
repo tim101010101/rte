@@ -8,12 +8,20 @@ import {
   OperableNode,
   State,
 } from 'lib/types';
-import { insertAt, min, panicAt, removeAt, splitAt } from 'lib/utils';
+import {
+  deepClone,
+  insertAt,
+  min,
+  panicAt,
+  removeAt,
+  splitAt,
+} from 'lib/utils';
 import {
   tryActiveAndDeactive,
   getFenceLength,
   getFenceInfo,
   updateContent,
+  calcFence,
 } from './helper';
 
 /**
@@ -48,6 +56,7 @@ export class Line extends OperableNode {
   }
   set vNode(newVNode: VirtualNode) {
     this._vNode = newVNode;
+    this._fence = calcFence(newVNode);
   }
 
   get fence(): Fence {
@@ -60,16 +69,11 @@ export class Line extends OperableNode {
     this._fence = newFence;
   }
 
-  dump(): {
-    rect?: ClientRect | undefined;
-    vNode?: VirtualNode | undefined;
-    fence?: Fence | undefined;
-  } {
-    return {
-      rect: this._rect,
-      vNode: this._vNode,
-      fence: this._fence,
-    };
+  snapshot() {
+    return deepClone({
+      vNode: this.vNode,
+      fence: this.fence,
+    });
   }
 
   patch(newVNode: VirtualNode): void {

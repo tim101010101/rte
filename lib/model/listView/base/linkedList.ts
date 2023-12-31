@@ -1,5 +1,5 @@
 import { DoubleLinkedList, DoubleLinkedListNode } from 'lib/types';
-import { panicAt } from 'lib/utils';
+import { assign, deepClone, panicAt } from 'lib/utils';
 
 export class ListNode implements DoubleLinkedListNode {
   prev: this | null;
