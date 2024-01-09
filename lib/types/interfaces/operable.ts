@@ -141,5 +141,6 @@ export interface Operable extends DoubleLinkedListNode {
   snapshot(): {
     fence: Fence;
     vNode: VirtualNode;
+    _origin: Operable;
   };
 }

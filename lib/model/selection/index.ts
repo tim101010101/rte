@@ -16,6 +16,7 @@ import {
 import { lastItem, panicAt } from 'lib/utils';
 import { CursorInfo } from 'lib/types/cursor';
 import { getFenceLength } from '../listView/line/helper';
+import { Viewport } from '../viewport';
 
 const { KEYDOWN } = VNodeEventName;
 const { FOCUS_ON, UNFOCUS, UNINSTALL_BLOCK, INSTALL_BLOCK } = InnerEventName;
@@ -23,11 +24,19 @@ const { FOCUS_ON, UNFOCUS, UNINSTALL_BLOCK, INSTALL_BLOCK } = InnerEventName;
 export class Selection extends EventInteroperableObject {
   state: State | null;
 
+  private viewport: Viewport;
+
   private parser: (src: string) => SyntaxNode;
   private stateStack: Array<State>;
 
-  constructor(eventBus: EventBus, parser: (src: string) => SyntaxNode) {
+  constructor(
+    eventBus: EventBus,
+    viewport: Viewport,
+    parser: (src: string) => SyntaxNode
+  ) {
     super(eventBus);
+
+    this.viewport = viewport;
 
     this.state = null;
     this.parser = parser;
@@ -38,8 +47,15 @@ export class Selection extends EventInteroperableObject {
     return this.stateStack.length ? lastItem(this.stateStack) : null;
   }
 
-  private updateState(snapshot: State | null) {
-    this.state = snapshot;
+  private updateState(state: State | null) {
+    this.state = state;
+
+    if (state) {
+      const { block, offset } = state;
+      this.viewport.cursor = { block, offset, type: 'mark' };
+    } else {
+      this.viewport.cursor = null;
+    }
   }
 
   initEventListener() {

@@ -11,12 +11,18 @@ import {
 import { EventBus, Line, LinkedList, Selection } from 'lib/model';
 import { VNodeEventName, InnerEventName } from 'lib/static';
 import { Renderer } from 'lib/view';
-import { getNearestIdx, set, throttle } from 'lib/utils';
+import {
+  get,
+  getNearestIdx,
+  getTargetInterval,
+  set,
+  throttle,
+} from 'lib/utils';
 import { Schema } from 'lib/schema';
 import { proxyListView, proxySelection } from './helper';
 import { Viewport } from '../viewport';
 
-const { CLICK, MOUSE_DOWN, MOUSE_MOVE, MOUSE_UP } = VNodeEventName;
+const { CLICK, MOUSE_DOWN, MOUSE_MOVE, MOUSE_UP, WHEEL } = VNodeEventName;
 const { KEYDOWN, KEYUP } = VNodeEventName;
 const { FOCUS_ON, FULL_PATCH, UNINSTALL_BLOCK, INSTALL_BLOCK } = InnerEventName;
 
@@ -35,15 +41,19 @@ export class Page implements Context {
     this.eventBus = new EventBus();
     this.schema = new Schema(config);
 
-    this.selection = new Selection(this.eventBus, this.schema.parse);
     this.listView = new LinkedList();
 
     this.viewport = new Viewport(
       container,
       config,
       this.eventBus,
-      this.listView,
-      this.selection
+      this.listView
+    );
+
+    this.selection = new Selection(
+      this.eventBus,
+      this.viewport,
+      this.schema.parse
     );
 
     this.history = [];
@@ -56,18 +66,39 @@ export class Page implements Context {
       const line = new Line(this.eventBus);
       line.vNode = vNode;
       this.listView.insert(line);
-
-      // line.addEventListener(VNodeEventName.CLICK, e => {
-      //   const rectList = line.fence.reduce<Array<number>>((arr, cur) => {
-      //     cur.fenceList.forEach(({ rect }) => {
-      //       arr.push(rect.clientX);
-      //     });
-      //     return arr;
-      //   }, []);
-      //   const offset = getNearestIdx(rectList, e.clientPos[0]);
-      //   this.eventBus.emit(FOCUS_ON, { block: line, offset });
-      // });
     });
+
+    // TODO TEMP
+    this.eventBus.attach(VNodeEventName.CLICK, e => {
+      const slice = this.viewport.snapshot.window.slice;
+
+      const startPos = slice[0].rect.lineRect.clientY;
+      const verticalPos: Array<number> = [startPos];
+      slice.reduce((res, cur) => {
+        verticalPos.push(res + cur.rect.lineRect.height);
+
+        return res + cur.rect.lineRect.height;
+      }, startPos);
+
+      const vertialIdx = getTargetInterval(verticalPos, (e as any).clientY);
+      const target = slice[vertialIdx]._origin;
+      const {
+        rect: { rectList },
+      } = slice[vertialIdx];
+      const horizontalIdx = getNearestIdx(
+        rectList.map(({ clientX }) => clientX),
+        (e as any).clientX
+      );
+
+      this.selection.focusOn(target, horizontalIdx);
+    });
+
+    this.eventBus.attach(
+      VNodeEventName.WHEEL,
+      throttle(e => {
+        this.viewport.render(e.deltaY);
+      }, 1000 / 120)
+    );
 
     this.selection.initEventListener();
     this.selection.addEventListener(KEYDOWN, e => {
@@ -87,7 +118,7 @@ export class Page implements Context {
   }
 
   initEventListener() {
-    [CLICK, MOUSE_DOWN, MOUSE_MOVE, MOUSE_UP, KEYDOWN, KEYUP].forEach(
+    [CLICK, MOUSE_DOWN, MOUSE_MOVE, MOUSE_UP, KEYDOWN, KEYUP, WHEEL].forEach(
       eventName => {
         window.addEventListener(
           eventName,

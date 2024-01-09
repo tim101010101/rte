@@ -69,13 +69,6 @@ export class Line extends OperableNode {
     this._fence = newFence;
   }
 
-  snapshot() {
-    return deepClone({
-      vNode: this.vNode,
-      fence: this.fence,
-    });
-  }
-
   patch(newVNode: VirtualNode): void {
     if (isTextNode(newVNode)) {
       return panicAt('try to patch a single textNode');

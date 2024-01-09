@@ -1,14 +1,17 @@
 import { EventBus, walkTextNode } from 'lib/model';
 import {
   ClientRect,
+  CursorInfo,
   EditorConfig,
   FontInfo,
   RenderConfig,
   RenderWindow,
+  SliceItemWithRect,
+  Snapshot,
   VirtualNode,
   VirtualNodeBehavior,
 } from 'lib/types';
-import { max, mixin, overlapNodes, set } from 'lib/utils';
+import { get, max, mixin, overlapNodes, set } from 'lib/utils';
 import { Paint } from './paint';
 
 const getRenderInfo = (
@@ -122,7 +125,7 @@ export class Renderer {
     };
   }
 
-  renderWindow(window: RenderWindow) {
+  renderWindow(window: RenderWindow, cursor: CursorInfo | null) {
     const { gap, slice, excess } = window;
 
     let currentOffsetY = -gap;
@@ -138,16 +141,21 @@ export class Renderer {
       ]);
 
       // TODO render cursor
+      if (cursor) {
+        if (get(node, '_origin') === cursor.block) {
+          console.log('xxxxxxxx', cursor.offset);
+        }
+      }
 
       currentOffsetY += lineRect.height;
-      set(node, 'rect', lineRect);
+      set(node, 'rect', { lineRect, rectList });
     }
 
     const excessRect = {
       clientX,
       clientY: height + clientY,
       width,
-      height: excess,
+      height: excess - 2,
     };
     this.clearRect(excessRect);
 
@@ -156,9 +164,58 @@ export class Renderer {
       // Transform `Rect` to `ClientRect`
       clientY: clientY - gap,
       width,
-      height: gap,
+      height: gap - 2,
     };
     this.clearRect(gapRect);
+  }
+
+  renderSnapshot(snapshot: Snapshot): Snapshot<SliceItemWithRect> {
+    const { window, cursor } = snapshot;
+
+    const { gap, slice, excess } = window;
+
+    let currentOffsetY = -gap;
+    const { clientX, clientY, height, width } = this.viewportRect;
+
+    for (const node of slice) {
+      const { vNode } = node;
+      const { rectList, lineRect } = this.renderVNodeInto(vNode, [
+        clientX,
+
+        // Transform `Rect` to `ClientRect`
+        currentOffsetY + clientY,
+      ]);
+
+      // TODO render cursor
+      if (cursor) {
+        if (get(node, '_origin') === cursor.block) {
+          this.renderCursor(cursor, rectList[cursor.offset]);
+        }
+      }
+
+      currentOffsetY += lineRect.height;
+      set(node, 'rect', { lineRect, rectList });
+    }
+
+    const excessRect = {
+      clientX,
+      clientY: height + clientY,
+      width,
+      height: excess - 2,
+    };
+    this.clearRect(excessRect);
+
+    const gapRect = {
+      clientX,
+      // Transform `Rect` to `ClientRect`
+      clientY: clientY - gap,
+      width,
+      height: gap - 2,
+    };
+    this.clearRect(gapRect);
+
+    // TODO SAFETY
+    return snapshot as Snapshot<SliceItemWithRect>;
   }
 
   fillRect(rect: ClientRect) {
@@ -171,14 +228,18 @@ export class Renderer {
     this.pagePainter.clearRect(rect);
   }
 
-  renderCursor(rect: ClientRect, oldRect?: ClientRect | null) {
-    if (oldRect) {
-      this.clearCursor(oldRect);
-    }
-    this.cursorPainter.drawRect(rect, { fillStyle: 'green' }, true);
-  }
-  clearCursor(rect: ClientRect) {
-    this.cursorPainter.clearRect(rect);
+  renderCursor(cursor: CursorInfo, rect: ClientRect) {
+    this.cursorPainter.clearRect(this.cursorPainter.canvasRect);
+
+    // TODO rect
+    this.cursorPainter.drawRect(
+      {
+        ...rect,
+        width: 4,
+      },
+      { fillStyle: 'green' },
+      true
+    );
   }
 
   clearCanvasRect() {

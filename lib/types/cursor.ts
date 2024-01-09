@@ -1,9 +1,7 @@
-import { ClientRect } from './listView';
-
-// export interface CursroInfo {
-//   rect: ClientRect;
-// }
+import { Operable } from './interfaces';
 
 export type CursorInfo = {
-  // TODO
+  type: 'mark' | 'range';
+  block: Operable | null;
+  offset: number;
 };

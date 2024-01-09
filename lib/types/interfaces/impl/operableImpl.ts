@@ -11,6 +11,7 @@ import {
 
 //! ERROR cann't access EventInteroperable before initialization
 import { EventInteroperableObject } from './eventInteroperableImpl';
+import { deepClone } from 'lib/utils';
 
 // prettier-ignore
 /**
@@ -43,7 +44,17 @@ export abstract class OperableNode extends EventInteroperableObject implements O
    * 
    * @returns Current internal state
    */
-  abstract snapshot(): { vNode: VirtualNode, fence: Fence }
+  snapshot() {
+    const state = deepClone({
+      vNode: this.vNode,
+      fence: this.fence,
+
+    });
+    return {
+      ...state,
+      _origin: this,
+    };
+  }
 
   abstract patch(newVNode: VirtualNode): void;
 

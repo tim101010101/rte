@@ -2,13 +2,13 @@ import { InnerEventName, VNodeEventName } from 'lib/static';
 import { Point } from './basic';
 import { Operable } from './interfaces';
 import { ClientRect } from './listView';
-import { VirtualNode } from './virtualNode';
 
 export type VNodeMouseEventName =
   | VNodeEventName.CLICK
   | VNodeEventName.MOUSE_DOWN
   | VNodeEventName.MOUSE_MOVE
-  | VNodeEventName.MOUSE_UP;
+  | VNodeEventName.MOUSE_UP
+  | VNodeEventName.WHEEL;
 export type VNodeKeyboardEventName =
   | VNodeEventName.INPUT
   | VNodeEventName.KEYDOWN

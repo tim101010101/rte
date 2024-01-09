@@ -1,25 +1,23 @@
-import { EventBus, Selection } from 'lib/model';
+import { EventBus } from 'lib/model';
 import {
-  ClientRect,
+  CursorInfo,
   EditorConfig,
   ListView,
   Operable,
   RenderWindow,
-  Snapshot,
-  State,
+  SliceItemWithRect,
+  Snapshot as BaseSnapshot,
 } from 'lib/types';
-import { get, max, throttle } from 'lib/utils';
+import { assign, get, max } from 'lib/utils';
 import { Renderer } from 'lib/view';
+
+type Snapshot = BaseSnapshot<SliceItemWithRect>;
 
 export class Viewport {
   private renderer: Renderer;
   private config: EditorConfig;
 
   private listView: ListView;
-  private selection: Selection;
-
-  // TEMP
-  private cursorRect: ClientRect | null;
 
   private top: Operable | null;
   private bottom: Operable | null;
@@ -35,16 +33,12 @@ export class Viewport {
     container: HTMLElement,
     config: EditorConfig,
     eventBus: EventBus,
-    listView: ListView,
-    selection: Selection
+    listView: ListView
   ) {
     this.renderer = new Renderer(container, eventBus, config);
     this.config = config;
 
     this.listView = listView;
-    this.selection = selection;
-
-    this.cursorRect = null;
 
     this.top = null;
     this.bottom = null;
@@ -55,31 +49,19 @@ export class Viewport {
     this.excess = 0;
 
     this._snapshot = null;
-
-    // TODO debug
-    container.addEventListener(
-      'wheel',
-      throttle(e => {
-        this.render(e.deltaY);
-      }, 1000 / 120)
-    );
-
-    container.addEventListener('click', () => {
-      this.render(500);
-    });
   }
 
   get snapshot(): Snapshot {
     if (!this._snapshot) {
       this._snapshot = {
-        cursor: {
-          block: null,
-          offset: 0,
-        },
+        cursor: null,
         window: {
           gap: this.gap,
           top: this.top!,
-          slice: this.slice(this.top, this.bottom),
+
+          // TODO SAFETY
+          slice: this.slice(this.top, this.bottom) as Array<SliceItemWithRect>,
+
           excess: this.excess,
           bottom: this.bottom!,
         },
@@ -89,19 +71,24 @@ export class Viewport {
     return this._snapshot;
   }
   set snapshot(snapshot: Snapshot) {
-    const { cursor, window } = snapshot;
+    const snapshotWithRect = this.renderer.renderSnapshot(snapshot);
 
-    this.renderer.renderWindow(window);
-
-    // TODO render cursor
-
-    const { gap, top, excess, bottom } = window;
+    const { gap, top, excess, bottom } = snapshotWithRect.window;
     this.top = top;
     this.gap = gap;
     this.bottom = bottom;
     this.excess = excess;
 
-    this._snapshot = snapshot;
+    this._snapshot = snapshotWithRect;
+  }
+
+  set cursor(cursorInfo: CursorInfo | null) {
+    if (!this.snapshot) return;
+    this.snapshot = assign(this.snapshot, { cursor: cursorInfo });
+  }
+  set window(window: RenderWindow) {
+    if (!this.snapshot) return;
+    this.snapshot = assign(this.snapshot, { window });
   }
 
   private slice(top: Operable | null, bottom: Operable | null) {
@@ -109,7 +96,8 @@ export class Viewport {
 
     let cur = top;
     while (cur && cur.prev !== bottom) {
-      res.push(cur.snapshot());
+      const snapshot = cur.snapshot();
+      res.push(snapshot);
       cur = cur.next;
     }
 
@@ -125,14 +113,7 @@ export class Viewport {
       offset > 0 ? this.moveWindowDown(offset) : this.moveWindowUp(offset);
 
     if (window) {
-      this.snapshot = {
-        cursor: {
-          block: null,
-          offset: 0,
-        },
-        window,
-      };
-
+      this.window = window;
       this.debug(window);
     }
   }
@@ -228,25 +209,14 @@ export class Viewport {
     });
 
     for (const node of slice) {
-      const rect = get(node, 'rect') || {};
+      const rect = get(node, 'rect').lineRect || {};
 
       this.renderer.renderRect({
         ...rect,
         clientX: rect?.clientX + this.renderer.viewportRect.width / 2,
       });
     }
-  }
 
-  private renderCursor(
-    rect: ClientRect,
-    // TEMP
-    _rectList: Array<ClientRect>,
-    _state: State
-  ) {
-    const { height, clientX, clientY } = rect;
-    this.renderer.renderCursor(
-      { clientX, clientY, height, width: 2 },
-      this.cursorRect
-    );
+    // console.log('snapshot', window);
   }
 }

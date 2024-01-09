@@ -33,14 +33,15 @@ export function tryActiveAndDeactive(
     flushBuffer(true);
 
     const { block } = curPos;
-    const { rect, textOffset } = getFenceInfo({ block, offset: finalOffset });
+    const { textOffset } = getFenceInfo({ block, offset: finalOffset });
 
     return {
       block,
       vNode: block.vNode,
       fence: block.fence,
 
-      cursor: { ...prevState?.cursor, rect },
+      // TODO FIXME
+      cursor: { ...prevState?.cursor, type: 'mark' } as any,
       offset: finalOffset,
       textOffset,
       actived: finalActive,
