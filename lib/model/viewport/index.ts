@@ -1,4 +1,4 @@
-import { EventBus } from 'lib/model';
+import { EventBus, textContent } from 'lib/model';
 import {
   CursorInfo,
   EditorConfig,
@@ -51,7 +51,9 @@ export class Viewport {
     this._snapshot = null;
   }
 
+  // TODO PREF reduce the number of calls
   get snapshot(): Snapshot {
+    // TODO FIXME update the snapshot of window
     if (!this._snapshot) {
       this._snapshot = {
         cursor: null,
@@ -86,9 +88,15 @@ export class Viewport {
     if (!this.snapshot) return;
     this.snapshot = assign(this.snapshot, { cursor: cursorInfo });
   }
+  get cursor() {
+    return this.snapshot.cursor;
+  }
   set window(window: RenderWindow) {
     if (!this.snapshot) return;
     this.snapshot = assign(this.snapshot, { window });
+  }
+  get window() {
+    return this.snapshot.window;
   }
 
   private slice(top: Operable | null, bottom: Operable | null) {
@@ -105,12 +113,19 @@ export class Viewport {
   }
 
   render(offset = 0) {
-    if (!this.top) this.top = this.listView.head;
-
-    this.renderer.clearCanvasRect();
+    if (!this.top) {
+      this.top = this.listView.head;
+      this.bottom = this.top;
+      this.excess = -(
+        this.renderer.viewportRect.height -
+        this.renderer.calcLineHeight(this.top!.vNode)
+      );
+    }
 
     const window =
       offset > 0 ? this.moveWindowDown(offset) : this.moveWindowUp(offset);
+
+    this.positionWindow(offset);
 
     if (window) {
       this.window = window;
@@ -118,6 +133,35 @@ export class Viewport {
     }
   }
 
+  positionWindow(expectOffset: number) {
+    let actualOffset = 0;
+
+    let bottom = this.bottom;
+    let excess = this.excess;
+
+    if (expectOffset >= 0) {
+      while (bottom?.next) {
+        const height = this.renderer.calcLineHeight(bottom.next.vNode);
+        if (actualOffset + height < expectOffset) {
+          actualOffset += height;
+          bottom = bottom.next;
+        } else if (excess < 0) {
+          actualOffset += height;
+          bottom = bottom.next;
+        } else {
+          break;
+        }
+      }
+
+      if (actualOffset) {
+        excess = excess + actualOffset - expectOffset;
+      } else if (expectOffset > actualOffset) {
+        excess = 0;
+      }
+    }
+  }
+
+  // TODO PREF Viewport::moveNext, Viewport::movePrev
   private moveWindowDown(offset: number): RenderWindow | null {
     if (!this.bottom?.next && !this.excess && !offset) return null;
 
