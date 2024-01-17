@@ -3,28 +3,19 @@ import {
   EditorConfig,
   InnerEventListener,
   ListView,
-  Operable,
   OperableNode,
   Snapshot,
   VirtualNode,
 } from 'lib/types';
 import { EventBus, Line, LinkedList, Selection } from 'lib/model';
 import { VNodeEventName, InnerEventName } from 'lib/static';
-import { Renderer } from 'lib/view';
-import {
-  get,
-  getNearestIdx,
-  getTargetInterval,
-  set,
-  throttle,
-} from 'lib/utils';
+import { throttle } from 'lib/utils';
 import { Schema } from 'lib/schema';
-import { proxyListView, proxySelection } from './helper';
 import { Viewport } from '../viewport';
 
 const { CLICK, MOUSE_DOWN, MOUSE_MOVE, MOUSE_UP, WHEEL } = VNodeEventName;
 const { KEYDOWN, KEYUP } = VNodeEventName;
-const { FOCUS_ON, FULL_PATCH, UNINSTALL_BLOCK, INSTALL_BLOCK } = InnerEventName;
+const { FULL_PATCH, UNINSTALL_BLOCK, INSTALL_BLOCK } = InnerEventName;
 
 export class Page implements Context {
   private eventBus: EventBus;
@@ -53,67 +44,25 @@ export class Page implements Context {
     this.selection = new Selection(
       this.eventBus,
       this.viewport,
-      this.schema.parse
+      this.schema.parse.bind(this.schema)
     );
 
     this.history = [];
   }
 
   init(text: string) {
-    const lineVNodes = text.split('\n').map(line => this.schema.parse(line));
-
-    lineVNodes.forEach(vNode => {
-      const line = new Line(this.eventBus);
-      line.vNode = vNode;
-      this.listView.insert(line);
-    });
-
-    // TODO TEMP
-    this.eventBus.attach(VNodeEventName.CLICK, e => {
-      const slice = this.viewport.snapshot.window.slice;
-
-      const startPos = slice[0].rect.lineRect.clientY;
-      const verticalPos: Array<number> = [startPos];
-      slice.reduce((res, cur) => {
-        verticalPos.push(res + cur.rect.lineRect.height);
-
-        return res + cur.rect.lineRect.height;
-      }, startPos);
-
-      const vertialIdx = getTargetInterval(verticalPos, (e as any).clientY);
-      const target = slice[vertialIdx]._origin;
-      const {
-        rect: { rectList },
-      } = slice[vertialIdx];
-      const horizontalIdx = getNearestIdx(
-        rectList.map(({ clientX }) => clientX),
-        (e as any).clientX
-      );
-
-      this.selection.focusOn(target, horizontalIdx);
-    });
-
-    this.eventBus.attach(
-      VNodeEventName.WHEEL,
-      throttle(e => {
-        this.viewport.render(e.deltaY);
-      }, 1000 / 120)
-    );
+    text
+      .split('\n')
+      .map(line => this.schema.parse(line))
+      .forEach(vNode => {
+        const line = new Line(this.eventBus);
+        line.vNode = vNode;
+        this.listView.insert(line);
+      });
 
     this.selection.initEventListener();
-    this.selection.addEventListener(KEYDOWN, e => {
-      if (e.key === 'Tab' && !this.selection.state && this.listView.head) {
-        this.selection.focusOn(this.listView.head, 0);
-        // TODO render
-        this.viewport.render();
-      } else if (e.key === 'Escape' && this.selection.state) {
-        this.selection.unFocus();
-      }
-    });
     this.initEventListener();
 
-    // this.eventBus.emit(FULL_PATCH, lineVNodes);
-    // TODO debug
     this.viewport.render();
   }
 

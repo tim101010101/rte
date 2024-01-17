@@ -70,7 +70,9 @@ export class Renderer {
       const fontSize = font.size;
       lineHeight = max(fontSize, lineHeight);
     });
-    return lineHeight;
+
+    // If the current behavior is empty, return the default line height.
+    return lineHeight || this.config.render.font.size;
   }
 
   renderVNodeInto(vNode: VirtualNode, startPos: [number, number]) {
@@ -170,9 +172,14 @@ export class Renderer {
   }
 
   renderSnapshot(snapshot: Snapshot): Snapshot<SliceItemWithRect> {
+    this.pagePainter.clearRect(this.pagePainter.canvasRect);
+
     const { window, cursor } = snapshot;
 
     const { gap, slice, excess } = window;
+
+    const needToRenderCursor =
+      !!cursor && slice.find(node => node._origin === cursor.block);
 
     let currentOffsetY = -gap;
     const { clientX, clientY, height, width } = this.viewportRect;
@@ -187,14 +194,20 @@ export class Renderer {
       ]);
 
       // TODO render cursor
-      if (cursor) {
-        if (get(node, '_origin') === cursor.block) {
+      if (needToRenderCursor) {
+        if (node._origin === cursor.block) {
           this.renderCursor(cursor, rectList[cursor.offset]);
         }
       }
 
       currentOffsetY += lineRect.height;
+
+      // Update the `rect` property to snapshot by side-effect
       set(node, 'rect', { lineRect, rectList });
+    }
+
+    if (!cursor || !needToRenderCursor) {
+      this.cursorPainter.clearRect(this.cursorPainter.canvasRect);
     }
 
     const excessRect = {
@@ -203,7 +216,8 @@ export class Renderer {
       width,
       height: excess - 2,
     };
-    this.clearRect(excessRect);
+    this.pagePainter.clearRect(excessRect);
+    this.cursorPainter.clearRect(excessRect);
 
     const gapRect = {
       clientX,
@@ -212,7 +226,8 @@ export class Renderer {
       width,
       height: gap - 2,
     };
-    this.clearRect(gapRect);
+    this.pagePainter.clearRect(gapRect);
+    this.cursorPainter.clearRect(gapRect);
 
     // TODO SAFETY
     return snapshot as Snapshot<SliceItemWithRect>;

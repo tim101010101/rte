@@ -1,19 +1,20 @@
 import { Operable, VirtualNode } from 'lib/types';
 import { max, warningAt } from 'lib/utils';
 
-interface Window {
+interface Edges {
   top: Operable;
   bottom: Operable;
   gap: number;
   excess: number;
 }
 
+//! FIXME: docs/roadmap/2024/1-17.md
 export const calcWindow = (
-  window: Window,
+  window: Edges,
   expectOffset: number,
   viewportHeight: number,
   getHeight: (vNode: VirtualNode) => number
-): Window => {
+): Edges => {
   const {
     top: prevTop,
     bottom: prevBottom,
@@ -32,6 +33,9 @@ export const calcWindow = (
   ) {
     return window;
   }
+
+  if (!prevTop.prev && prevGap < 0) return window;
+  if (!prevBottom.next && !prevExcess && !expectOffset) return window;
 
   let bottom = prevBottom;
   let excess = prevExcess;

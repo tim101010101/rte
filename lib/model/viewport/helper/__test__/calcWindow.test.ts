@@ -260,6 +260,10 @@ describe('[unit] calcWindow', () => {
           macro([0, 4, 30, 10, 6], 30, [1, 5, 20, 20]);
           macro([0, 4, 30, 10, 6], 99, [2, 5, 0, 0]);
         });
+
+        // it('should be able to move correctly when the offset is less than the height of the current node.', () => {
+        //   macro([1, 5, 30, 10, 6], 5, [1, 5, 35, 5]);
+        // });
       });
 
       describe('move up', () => {

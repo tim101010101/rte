@@ -1,25 +1,22 @@
 import {
   Operable,
   EventInteroperableObject,
-  ClientRect,
   SyntaxNode,
   State,
 } from 'lib/types';
-import { EventBus, isEmptyNode, isShowableKey, textContent } from 'lib/model';
-import { Renderer } from 'lib/view';
+import { EventBus, isShowableKey, textContent } from 'lib/model';
+import { InnerEventName, VNodeEventName, ControlKey } from 'lib/static';
 import {
-  InnerEventName,
-  VNodeEventName,
-  ControlKey,
-  ShowableKey,
-} from 'lib/static';
-import { lastItem, panicAt } from 'lib/utils';
-import { CursorInfo } from 'lib/types/cursor';
+  getNearestIdx,
+  getTargetInterval,
+  lastItem,
+  throttle,
+} from 'lib/utils';
 import { getFenceLength } from '../listView/line/helper';
 import { Viewport } from '../viewport';
 
-const { KEYDOWN } = VNodeEventName;
-const { FOCUS_ON, UNFOCUS, UNINSTALL_BLOCK, INSTALL_BLOCK } = InnerEventName;
+const { KEYDOWN, CLICK, WHEEL } = VNodeEventName;
+const { FOCUS_ON } = InnerEventName;
 
 export class Selection extends EventInteroperableObject {
   state: State | null;
@@ -52,6 +49,8 @@ export class Selection extends EventInteroperableObject {
 
     if (state) {
       const { block, offset } = state;
+
+      // TODO status of cursor
       this.viewport.cursor = { block, offset, type: 'mark' };
     } else {
       this.viewport.cursor = null;
@@ -89,15 +88,53 @@ export class Selection extends EventInteroperableObject {
           this.newLine(this.parser);
           break;
 
-        // case 'a':
-        // case '*':
-        //   this.updateBlockContent(e.key, this.parser);
-        //   break;
+        case ControlKey.TAB:
+          if (!this.state && this.viewport.window.top) {
+            this.focusOn(this.viewport.window.top, 0);
+          }
+          break;
+        case ControlKey.ESC:
+          if (this.state) {
+            this.unFocus();
+          }
+          break;
 
         default:
           break;
       }
     });
+    this.addEventListener(CLICK, e => {
+      const slice = this.viewport.snapshot.window.slice;
+
+      const startPos = slice[0].rect.lineRect.clientY;
+      const verticalPos: Array<number> = [startPos];
+      slice.reduce((res, cur) => {
+        verticalPos.push(res + cur.rect.lineRect.height);
+
+        return res + cur.rect.lineRect.height;
+      }, startPos);
+
+      const vertialIdx = getTargetInterval(verticalPos, (e as any).clientY);
+      const target = slice[vertialIdx]._origin;
+      const {
+        rect: { rectList },
+      } = slice[vertialIdx];
+      const horizontalIdx = getNearestIdx(
+        rectList.map(({ clientX }) => clientX),
+        (e as any).clientX
+      );
+
+      this.focusOn(target, horizontalIdx);
+
+      // TODO DEBUG
+      // this.viewport.render(-1);
+    });
+    this.addEventListener(
+      WHEEL,
+      throttle(e => {
+        this.viewport.render(e.deltaY);
+      }, 1000 / 120)
+    );
   }
 
   focusOn(block: Operable, offset: number) {

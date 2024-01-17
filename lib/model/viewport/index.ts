@@ -1,4 +1,4 @@
-import { EventBus, textContent } from 'lib/model';
+import { EventBus } from 'lib/model';
 import {
   CursorInfo,
   EditorConfig,
@@ -73,6 +73,14 @@ export class Viewport {
     return this._snapshot;
   }
   set snapshot(snapshot: Snapshot) {
+    const { window } = snapshot;
+    snapshot = assign(snapshot, {
+      window: {
+        ...window,
+        slice: this.slice(window.top, window.bottom),
+      },
+    });
+
     const snapshotWithRect = this.renderer.renderSnapshot(snapshot);
 
     const { gap, top, excess, bottom } = snapshotWithRect.window;
@@ -122,46 +130,21 @@ export class Viewport {
       );
     }
 
-    const window =
-      offset > 0 ? this.moveWindowDown(offset) : this.moveWindowUp(offset);
-
-    this.positionWindow(offset);
-
+    const window = this.updateWindow(offset);
     if (window) {
       this.window = window;
-      this.debug(window);
+      // this.debug(window);
     }
   }
 
-  positionWindow(expectOffset: number) {
-    let actualOffset = 0;
-
-    let bottom = this.bottom;
-    let excess = this.excess;
-
-    if (expectOffset >= 0) {
-      while (bottom?.next) {
-        const height = this.renderer.calcLineHeight(bottom.next.vNode);
-        if (actualOffset + height < expectOffset) {
-          actualOffset += height;
-          bottom = bottom.next;
-        } else if (excess < 0) {
-          actualOffset += height;
-          bottom = bottom.next;
-        } else {
-          break;
-        }
-      }
-
-      if (actualOffset) {
-        excess = excess + actualOffset - expectOffset;
-      } else if (expectOffset > actualOffset) {
-        excess = 0;
-      }
+  private updateWindow(offset: number): RenderWindow | null {
+    if (offset > 0) {
+      return this.moveWindowDown(offset);
+    } else {
+      return this.moveWindowUp(offset);
     }
   }
 
-  // TODO PREF Viewport::moveNext, Viewport::movePrev
   private moveWindowDown(offset: number): RenderWindow | null {
     if (!this.bottom?.next && !this.excess && !offset) return null;
 
@@ -208,7 +191,7 @@ export class Viewport {
     gap += offset;
     this._totalGap += offset;
     while (top && top.prev && gap < 0) {
-      gap += this.renderer.calcLineHeight(top.vNode);
+      gap += this.renderer.calcLineHeight(top.prev.vNode);
       top = top.prev;
     }
 
