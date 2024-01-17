@@ -30,7 +30,7 @@
     "test": "jest --no-cache",
     "test:cover": "jest --coverage",
     "lint": "eslint --fix --ext .js,.ts lib",
-    "prepare": "husky install"
+    "prepare": "node_modules/.bin/husky-run install"
   },
   "devDependencies": {
     "@babel/core": "^7.20.5",
