@@ -1,7 +1,12 @@
 import { values } from 'lib/utils';
 import { s } from 'lib/model';
 import { NodeType } from 'lib/static';
-import { FontConfig, SchemaConfigItem, VirtualNode } from 'lib/types';
+import {
+  FontConfig,
+  SchemaConfigItem,
+  SyntaxNode,
+  VirtualNode,
+} from 'lib/types';
 
 const { LINE } = NodeType;
 
@@ -16,7 +21,7 @@ export const parseLine = (
     content: string,
     fontConfig?: FontConfig
   ) => Array<VirtualNode>
-) => {
+): SyntaxNode => {
   if (src.length === 0) return line();
 
   const target = values(lineConfig).find(({ reg }) => reg.test(src));

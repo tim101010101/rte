@@ -10,7 +10,7 @@ import {
 import { NodeType } from 'lib/static';
 import { entries, get, has, panicAt, set } from 'lib/utils';
 
-const { PLAIN_TEXT, PREFIX, SUFFIX } = NodeType;
+const { PLAIN_TEXT } = NodeType;
 
 export const getFont = (fontInfo: FontInfo) => {
   const { size, family, bold, italic } = fontInfo;
@@ -19,8 +19,8 @@ export const getFont = (fontInfo: FontInfo) => {
   } ${size}px ${family}`;
 };
 
-export const isMarkerNode = (vNode: VirtualNode): vNode is SyntaxNode =>
-  vNode.type === PREFIX || vNode.type === SUFFIX;
+// export const isMarkerNode = (vNode: VirtualNode): vNode is SyntaxNode =>
+//   vNode.type === PREFIX || vNode.type === SUFFIX;
 
 export const isTextNode = (vNode: VirtualNode): vNode is TextNode =>
   vNode.type === PLAIN_TEXT;
@@ -95,7 +95,7 @@ export function walkTextNode(
       }
     } else {
       const { children } = cur;
-      children.forEach((child, i) => {
+      children.forEach(child => {
         dfs(child, cur, ancestor || child);
       });
     }

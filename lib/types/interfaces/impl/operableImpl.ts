@@ -44,7 +44,11 @@ export abstract class OperableNode extends EventInteroperableObject implements O
    * 
    * @returns Current internal state
    */
-  snapshot() {
+  snapshot(): {
+    fence: Fence;
+    vNode: VirtualNode;
+    _origin: Operable;
+  } {
     const state = deepClone({
       vNode: this.vNode,
       fence: this.fence,

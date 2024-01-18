@@ -7,7 +7,7 @@ export class Editor {
   private page: Page;
 
   constructor(options: EditorConfig) {
-    const { container, schema: schemaConfig } = options;
+    const { container } = options;
     this.options = options;
     this.container = document.querySelector(container)!;
     this.page = new Page(this.container, options);
