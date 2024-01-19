@@ -204,6 +204,8 @@ export class Selection extends EventInteroperableObject {
     if (!this.state || !this.topState) return;
 
     const { block, offset } = this.topState;
+
+    // TODO Move to `Operable` ?
     if (offset === 0 && block.prev) {
       const { vNode: prevBlock } = block.prev;
       const newVNode = parse(

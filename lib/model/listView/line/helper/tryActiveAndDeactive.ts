@@ -2,6 +2,10 @@ import { ActivePos, FenceInfoItem, Pos, State } from 'lib/types';
 import { getFenceInfo } from './getFenceInfo';
 import { initPatchBuffer } from './patchBuffer';
 
+const stateToActived = ({ block, actived }: State): Array<ActivePos> => {
+  return actived.map(ancestorIdx => ({ block, ancestorIdx }));
+};
+
 export function tryActiveAndDeactive(
   curPos: Pos,
   prevState: State | null
@@ -47,16 +51,12 @@ export function tryActiveAndDeactive(
       actived: finalActive,
     };
   } else if (prevState) {
-    snapshotToActived(prevState).forEach(({ block, ancestorIdx }) => {
+    stateToActived(prevState).forEach(({ block, ancestorIdx }) => {
       addTarget(block, ancestorIdx);
     });
     flushBuffer(false);
   }
 }
-
-const snapshotToActived = ({ block, actived }: State): Array<ActivePos> => {
-  return actived.map(ancestorIdx => ({ block, ancestorIdx }));
-};
 
 const diffFence = (
   curPos: Pos,
@@ -94,7 +94,7 @@ const diffFence = (
     });
   }
 
-  const actived = prevState ? snapshotToActived(prevState) : null;
+  const actived = prevState ? stateToActived(prevState) : null;
   curFenceInfo.forEach(({ ancestorIdx: curIdx, prefixChange }) => {
     const finder = ({
       ancestorIdx: activedIdx,

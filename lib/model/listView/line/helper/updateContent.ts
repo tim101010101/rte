@@ -1,4 +1,4 @@
-import { isEmptyNode, isTextNode, textContent } from 'lib/model';
+import { isEmptyNode, isSameNode, isTextNode } from 'lib/model';
 import { State, SyntaxNode, VirtualNode } from 'lib/types';
 import { min, panicAt } from 'lib/utils';
 import { getFenceInfo } from './getFenceInfo';
@@ -15,12 +15,24 @@ export const updateContent = (
 
   if (newVNode.children.length) {
     let finalOffset = offset;
-    const maxUnchangeLength = diffNode(oldVNode, newVNode);
-    const ancestorIdxToBeActived =
-      oldVNode.children.length === 0 ||
-      oldVNode.children.length === newVNode.children.length
-        ? maxUnchangeLength
-        : maxUnchangeLength + 1;
+    const maxUnchangeLength = findSamePart(oldVNode, newVNode);
+
+    // Flag of the node which gona to be actived
+    let ancestorIdxToBeActived = maxUnchangeLength + 1;
+    // TODO ?
+    if (oldVNode.children.length === 0) {
+      ancestorIdxToBeActived = maxUnchangeLength;
+    }
+
+    // `**hello*` -> `**hello**`
+    else if (oldVNode.children.length === newVNode.children.length) {
+      ancestorIdxToBeActived = maxUnchangeLength;
+    }
+
+    // `#hello` -> `# hello`
+    else if (oldVNode.children.length === newVNode.children.length - 1) {
+      ancestorIdxToBeActived = maxUnchangeLength;
+    }
 
     const { fenceInfoList } = getFenceInfo({
       block,
@@ -63,40 +75,22 @@ export const updateContent = (
   }
 };
 
-const diffAncestor = (
-  oldVNode: VirtualNode,
-  newVNode: VirtualNode
-): boolean => {
-  if (isTextNode(oldVNode) !== isTextNode(newVNode)) {
-    return false;
-  }
-
-  if (isTextNode(oldVNode) && isTextNode(newVNode)) {
-    return oldVNode.text === newVNode.text;
-  } else {
-    return (
-      (oldVNode as SyntaxNode).isActive === (newVNode as SyntaxNode).isActive &&
-      textContent(oldVNode) === textContent(newVNode)
-    );
-  }
-};
-
-const diffNode = (oldVNode: VirtualNode, newVNode: VirtualNode): number => {
-  if (isTextNode(oldVNode) || isTextNode(newVNode)) {
+const findSamePart = (node1: VirtualNode, node2: VirtualNode): number => {
+  if (isTextNode(node1) || isTextNode(node2)) {
     return panicAt('');
   }
 
-  if (isEmptyNode(oldVNode)) {
+  if (isEmptyNode(node1)) {
     return 0;
   }
 
-  const { children: oldChildren } = oldVNode;
-  const { children: newChildren } = newVNode;
+  const { children: children1 } = node1;
+  const { children: children2 } = node2;
 
-  for (let i = 0; i < min(oldChildren.length, newChildren.length); i++) {
-    const c1 = oldChildren[i];
-    const c2 = newChildren[i];
-    if (!diffAncestor(c1, c2)) {
+  for (let i = 0; i < min(children1.length, children2.length); i++) {
+    const n1 = children1[i];
+    const n2 = children2[i];
+    if (!isSameNode(n1, n2)) {
       return i;
     }
   }

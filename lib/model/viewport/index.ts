@@ -7,6 +7,8 @@ import {
   RenderWindow,
   SliceItemWithRect,
   Snapshot as BaseSnapshot,
+  Ref,
+  RenderSnapshot,
 } from 'lib/types';
 import { assign, get, max } from 'lib/utils';
 import { Renderer } from 'lib/view';
@@ -52,27 +54,38 @@ export class Viewport {
   }
 
   // TODO PREF reduce the number of calls
-  get snapshot(): Snapshot {
+  get snapshot(): RenderSnapshot<SliceItemWithRect> {
     // TODO FIXME update the snapshot of window
     if (!this._snapshot) {
       this._snapshot = {
         cursor: null,
         window: {
           gap: this.gap,
-          top: this.top!,
+          top: this.ref(this.top!)!,
 
           // TODO SAFETY
           slice: this.slice(this.top, this.bottom) as Array<SliceItemWithRect>,
 
           excess: this.excess,
-          bottom: this.bottom!,
+          bottom: this.ref(this.bottom!)!,
         },
       };
     }
 
-    return this._snapshot;
+    const {
+      window: { top, bottom },
+    } = this._snapshot;
+
+    return {
+      ...this._snapshot,
+      window: {
+        ...this._snapshot.window,
+        top: this.deref(top)!,
+        bottom: this.deref(bottom)!,
+      },
+    };
   }
-  set snapshot(snapshot: Snapshot) {
+  set snapshot(snapshot: RenderSnapshot) {
     const { window } = snapshot;
     snapshot = assign(snapshot, {
       window: {
@@ -89,7 +102,13 @@ export class Viewport {
     this.bottom = bottom;
     this.excess = excess;
 
-    this._snapshot = snapshotWithRect;
+    this._snapshot = assign(snapshotWithRect, {
+      window: {
+        ...snapshotWithRect.window,
+        top: this.ref(top)!,
+        bottom: this.ref(bottom)!,
+      },
+    });
   }
 
   set cursor(cursorInfo: CursorInfo | null) {
@@ -105,6 +124,13 @@ export class Viewport {
   }
   get window() {
     return this.snapshot.window;
+  }
+
+  private ref(node: Operable): Ref<Operable> {
+    return this.listView.offset(node);
+  }
+  private deref(ref: Ref<Operable>): Operable | null {
+    return this.listView.find(ref);
   }
 
   private slice(top: Operable | null, bottom: Operable | null) {

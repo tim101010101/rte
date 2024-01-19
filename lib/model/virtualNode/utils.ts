@@ -70,6 +70,21 @@ export function getAncestorByIdx(
   }
 }
 
+export const isSameNode = (node1: VirtualNode, node2: VirtualNode): boolean => {
+  if (isTextNode(node1) !== isTextNode(node2)) {
+    return false;
+  }
+
+  if (isTextNode(node1) && isTextNode(node2)) {
+    return node1.text === node2.text;
+  } else {
+    return (
+      (node1 as SyntaxNode).isActive === (node2 as SyntaxNode).isActive &&
+      textContent(node1) === textContent(node2)
+    );
+  }
+};
+
 export function walkTextNode(
   vNode: VirtualNode,
   callback: (

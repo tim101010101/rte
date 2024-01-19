@@ -8,14 +8,7 @@ import {
   OperableNode,
   State,
 } from 'lib/types';
-import {
-  deepClone,
-  insertAt,
-  min,
-  panicAt,
-  removeAt,
-  splitAt,
-} from 'lib/utils';
+import { insertAt, min, panicAt, removeAt, splitAt } from 'lib/utils';
 import {
   tryActiveAndDeactive,
   getFenceLength,
@@ -87,18 +80,21 @@ export class Line extends OperableNode {
     const { vNode, textOffset } = prevState;
     const [line1, line2] = splitAt(textContent(vNode), textOffset).map(parse);
 
+    // TODO Line ?
     const newLine = new Line(this.eventBus);
-
-    this.patch(line1);
     newLine.patch(line2);
-
     const proxiedNewLine = this.eventBus.emit(
       InnerEventName.INSTALL_BLOCK,
       newLine,
       this
     );
+    const nextState = proxiedNewLine.focusOn(prevState, 0);
 
-    return proxiedNewLine.focusOn(prevState, 0);
+    // In order to avoid getting dirty data during `focusOn` calculation,
+    // `focusOn` first and then patch.
+    this.patch(line1);
+
+    return nextState;
   }
 
   update(

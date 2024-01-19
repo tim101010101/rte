@@ -18,6 +18,19 @@ export type SliceItemWithRect = SliceItem & {
   };
 };
 
+export type Ref<_T> = number;
+export type Deref<T extends Ref<any>> = T extends Ref<infer U> ? U : never;
+
+export interface SnapshotWindow<
+  T extends SliceItem | SliceItemWithRect = SliceItem
+> {
+  gap: number;
+  top: Ref<Operable>;
+  slice: Array<T>;
+  excess: number;
+  bottom: Ref<Operable>;
+}
+
 export interface RenderWindow<
   T extends SliceItem | SliceItemWithRect = SliceItem
 > {
@@ -29,6 +42,13 @@ export interface RenderWindow<
 }
 
 export interface Snapshot<T extends SliceItem | SliceItemWithRect = SliceItem> {
+  cursor: CursorInfo | null;
+  window: SnapshotWindow<T>;
+}
+
+export interface RenderSnapshot<
+  T extends SliceItem | SliceItemWithRect = SliceItem
+> {
   cursor: CursorInfo | null;
   window: RenderWindow<T>;
 }

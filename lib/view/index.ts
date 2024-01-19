@@ -5,9 +5,9 @@ import {
   EditorConfig,
   FontInfo,
   RenderConfig,
+  RenderSnapshot,
   RenderWindow,
   SliceItemWithRect,
-  Snapshot,
   VirtualNode,
   VirtualNodeBehavior,
 } from 'lib/types';
@@ -171,7 +171,7 @@ export class Renderer {
     this.clearRect(gapRect);
   }
 
-  renderSnapshot(snapshot: Snapshot): Snapshot<SliceItemWithRect> {
+  renderSnapshot(snapshot: RenderSnapshot): RenderSnapshot<SliceItemWithRect> {
     this.pagePainter.clearRect(this.pagePainter.canvasRect);
 
     const { window, cursor } = snapshot;
@@ -230,7 +230,7 @@ export class Renderer {
     this.cursorPainter.clearRect(gapRect);
 
     // TODO SAFETY
-    return snapshot as Snapshot<SliceItemWithRect>;
+    return snapshot as RenderSnapshot<SliceItemWithRect>;
   }
 
   fillRect(rect: ClientRect) {
