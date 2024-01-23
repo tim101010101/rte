@@ -4,6 +4,7 @@ import { pathsToModuleNameMapper } from 'ts-jest';
 
 export default async (): Promise<Config> => {
   return {
+    roots: ['<rootDir>/lib/', '<rootDir>/test/'],
     preset: 'ts-jest',
     verbose: true,
     testEnvironment: 'jsdom',

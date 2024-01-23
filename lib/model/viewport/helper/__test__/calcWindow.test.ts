@@ -13,11 +13,19 @@ const mockListView = (len: number) => {
 };
 const getHeight = jest.fn((_: any) => 40);
 
+let warnCount = 0;
+beforeEach(() => {
+  warnCount = 0;
+});
+
+const warnMessage = '[WARN]: init first plz';
+
 const getTestingMacro = (getWindow: any, getHeight: any) => {
   return (
     initWindow: [number, number, number, number, number],
     offset: number,
-    windowArr?: [number, number, number, number]
+    windowArr?: [number, number, number, number],
+    warn = false
   ) => {
     const [topOffset, bottomOffset, gap, excess, len] = initWindow;
     const { window, ll } = getWindow(topOffset, bottomOffset, gap, excess, len);
@@ -33,6 +41,11 @@ const getTestingMacro = (getWindow: any, getHeight: any) => {
     }
 
     expect(res).toStrictEqual(expectWindow);
+    if (warn) {
+      warnCount++;
+      expect(warnMessage).toHaveBeenWarned();
+    }
+    expect(warnMessage).toHaveBeenWarnedTimes(warnCount);
   };
 };
 
@@ -122,16 +135,16 @@ describe('[unit] calcWindow', () => {
         });
 
         it('should move `bottom` to the tail when there is more node after `bottom`', () => {
-          macro([0, 0, 0, 0, 3], 39, [0, 2, 0, -40]);
-          macro([0, 1, 0, 0, 3], 39, [0, 2, 0, -40]);
+          macro([0, 0, 0, 0, 3], 39, [0, 2, 0, -40], true);
+          macro([0, 1, 0, 0, 3], 39, [0, 2, 0, -40], true);
           macro([0, 2, 0, 0, 3], 39, [0, 2, 0, -40]);
 
-          macro([0, 0, 0, 0, 3], 40, [0, 2, 0, -40]);
-          macro([0, 1, 0, 0, 3], 40, [0, 2, 0, -40]);
+          macro([0, 0, 0, 0, 3], 40, [0, 2, 0, -40], true);
+          macro([0, 1, 0, 0, 3], 40, [0, 2, 0, -40], true);
           macro([0, 2, 0, 0, 3], 40, [0, 2, 0, -40]);
 
-          macro([0, 0, 0, 0, 3], 41, [0, 2, 0, -40]);
-          macro([0, 1, 0, 0, 3], 41, [0, 2, 0, -40]);
+          macro([0, 0, 0, 0, 3], 41, [0, 2, 0, -40], true);
+          macro([0, 1, 0, 0, 3], 41, [0, 2, 0, -40], true);
           macro([0, 2, 0, 0, 3], 41, [0, 2, 0, -40]);
         });
       });
@@ -191,29 +204,29 @@ describe('[unit] calcWindow', () => {
         macro([0, 2, 0, 0, 4], 0, [0, 3, 0, 0]);
         macro([0, 3, 0, 0, 4], 0, [0, 3, 0, 0]);
 
-        macro([0, 0, 0, 0, 4], 39, [0, 3, 0, 0]);
-        macro([0, 1, 0, 0, 4], 40, [0, 3, 0, 0]);
-        macro([0, 2, 0, 0, 4], 41, [0, 3, 0, 0]);
+        macro([0, 0, 0, 0, 4], 39, [0, 3, 0, 0], true);
+        macro([0, 1, 0, 0, 4], 40, [0, 3, 0, 0], true);
+        macro([0, 2, 0, 0, 4], 41, [0, 3, 0, 0], true);
         macro([0, 3, 0, 0, 4], 9999, [0, 3, 0, 0]);
       });
     });
 
     describe('move up', () => {
       it('should move `bottom` correctly when there is no more node before `top` on matter what offset is', () => {
-        macro([0, 0, 0, -120, 4], -39, [0, 3, 0, 0]);
-        macro([0, 0, 0, -120, 4], -40, [0, 3, 0, 0]);
-        macro([0, 0, 0, -120, 4], -41, [0, 3, 0, 0]);
-        macro([0, 0, 0, -120, 4], -9999, [0, 3, 0, 0]);
+        macro([0, 0, 0, -120, 4], -39, [0, 3, 0, 0], true);
+        macro([0, 0, 0, -120, 4], -40, [0, 3, 0, 0], true);
+        macro([0, 0, 0, -120, 4], -41, [0, 3, 0, 0], true);
+        macro([0, 0, 0, -120, 4], -9999, [0, 3, 0, 0], true);
 
-        macro([0, 1, 0, -80, 4], -39, [0, 3, 0, 0]);
-        macro([0, 1, 0, -80, 4], -40, [0, 3, 0, 0]);
-        macro([0, 1, 0, -80, 4], -41, [0, 3, 0, 0]);
-        macro([0, 1, 0, -80, 4], -9999, [0, 3, 0, 0]);
+        macro([0, 1, 0, -80, 4], -39, [0, 3, 0, 0], true);
+        macro([0, 1, 0, -80, 4], -40, [0, 3, 0, 0], true);
+        macro([0, 1, 0, -80, 4], -41, [0, 3, 0, 0], true);
+        macro([0, 1, 0, -80, 4], -9999, [0, 3, 0, 0], true);
 
-        macro([0, 2, 0, -40, 4], -39, [0, 3, 0, 0]);
-        macro([0, 2, 0, -40, 4], -40, [0, 3, 0, 0]);
-        macro([0, 2, 0, -40, 4], -41, [0, 3, 0, 0]);
-        macro([0, 2, 0, -40, 4], -9999, [0, 3, 0, 0]);
+        macro([0, 2, 0, -40, 4], -39, [0, 3, 0, 0], true);
+        macro([0, 2, 0, -40, 4], -40, [0, 3, 0, 0], true);
+        macro([0, 2, 0, -40, 4], -41, [0, 3, 0, 0], true);
+        macro([0, 2, 0, -40, 4], -9999, [0, 3, 0, 0], true);
 
         macro([0, 3, 0, 0, 4], -39, [0, 3, 0, 0]);
         macro([0, 3, 0, 0, 4], -40, [0, 3, 0, 0]);
