@@ -1,4 +1,4 @@
-import { panicAt } from './errorCature';
+import { panicAt } from './debug';
 import { is } from './obj';
 
 export const isEmptyArray = <T extends Array<any>>(arr: T): boolean => {

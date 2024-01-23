@@ -1,3 +1,4 @@
+import { __DEBUG_time_logger, registerGlobalSwitcher } from 'lib/debug';
 import { EventBus } from 'lib/model';
 import {
   CursorInfo,
@@ -10,7 +11,7 @@ import {
   Ref,
   RenderSnapshot,
 } from 'lib/types';
-import { assign, get, max } from 'lib/utils';
+import { assign, max } from 'lib/utils';
 import { Renderer } from 'lib/view';
 
 type Snapshot = BaseSnapshot<SliceItemWithRect>;
@@ -109,6 +110,11 @@ export class Viewport {
         bottom: this.ref(bottom)!,
       },
     });
+
+    // Debug
+    if (__DEV__) {
+      __DEBUG_draw_helper_rect(this, this.renderer, snapshotWithRect);
+    }
   }
 
   set cursor(cursorInfo: CursorInfo | null) {
@@ -133,6 +139,7 @@ export class Viewport {
     return this.listView.find(ref);
   }
 
+  @__DEBUG_time_logger
   private slice(top: Operable | null, bottom: Operable | null) {
     const res = [];
 
@@ -159,7 +166,6 @@ export class Viewport {
     const window = this.updateWindow(offset);
     if (window) {
       this.window = window;
-      // this.debug(window);
     }
   }
 
@@ -171,6 +177,7 @@ export class Viewport {
     }
   }
 
+  @__DEBUG_time_logger
   private moveWindowDown(offset: number): RenderWindow | null {
     if (!this.bottom?.next && !this.excess && !offset) return null;
 
@@ -208,6 +215,7 @@ export class Viewport {
       bottom,
     };
   }
+  @__DEBUG_time_logger
   private moveWindowUp(offset: number): RenderWindow | null {
     if (!this.top?.prev && this.gap < 0) return null;
 
@@ -241,35 +249,41 @@ export class Viewport {
       bottom,
     };
   }
-
-  private debug(window: RenderWindow) {
-    const { gap, slice, excess } = window;
-
-    this.renderer.renderRect(this.renderer.viewportRect);
-
-    this.renderer.fillRect({
-      clientX: this.renderer.viewportRect.width / 2,
-      clientY: this.renderer.viewportRect.clientY - gap,
-      width: this.renderer.viewportRect.width / 2,
-      height: gap,
-    });
-    this.renderer.fillRect({
-      clientX: this.renderer.viewportRect.width / 2,
-      clientY:
-        this.renderer.viewportRect.clientY + this.renderer.viewportRect.height,
-      width: this.renderer.viewportRect.width / 2,
-      height: excess,
-    });
-
-    for (const node of slice) {
-      const rect = get(node, 'rect').lineRect || {};
-
-      this.renderer.renderRect({
-        ...rect,
-        clientX: rect?.clientX + this.renderer.viewportRect.width / 2,
-      });
-    }
-
-    // console.log('snapshot', window);
-  }
 }
+
+const __DEBUG_draw_helper_rect = (
+  _viewport: Viewport,
+  renderer: Renderer,
+  snapshot: RenderSnapshot<SliceItemWithRect>
+) => {
+  registerGlobalSwitcher(
+    'viewport_draw_helper_rect',
+    () => {
+      const { gap, slice, excess } = snapshot.window;
+
+      renderer.renderRect(renderer.viewportRect);
+
+      renderer.fillRect({
+        clientX: renderer.viewportRect.width / 2,
+        clientY: renderer.viewportRect.clientY - gap,
+        width: renderer.viewportRect.width / 2,
+        height: gap,
+      });
+      renderer.fillRect({
+        clientX: renderer.viewportRect.width / 2,
+        clientY: renderer.viewportRect.clientY + renderer.viewportRect.height,
+        width: renderer.viewportRect.width / 2,
+        height: excess,
+      });
+
+      for (const node of slice) {
+        const rect = node.rect.lineRect;
+        renderer.renderRect({
+          ...rect,
+          clientX: rect?.clientX + renderer.viewportRect.width / 2,
+        });
+      }
+    },
+    true
+  );
+};

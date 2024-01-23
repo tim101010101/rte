@@ -1,4 +1,4 @@
-import { panicAt } from './errorCature';
+import { panicAt } from './debug';
 import { isObject } from './typeJudgument';
 
 export function createCanvasAndContext(

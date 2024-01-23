@@ -13,6 +13,7 @@ import {
 } from 'lib/types';
 import { get, max, mixin, overlapNodes, set } from 'lib/utils';
 import { Paint } from './paint';
+import { __DEBUG_time_logger } from 'lib/debug';
 
 const getRenderInfo = (
   isActive: boolean,
@@ -171,6 +172,7 @@ export class Renderer {
     this.clearRect(gapRect);
   }
 
+  @__DEBUG_time_logger
   renderSnapshot(snapshot: RenderSnapshot): RenderSnapshot<SliceItemWithRect> {
     this.pagePainter.clearRect(this.pagePainter.canvasRect);
 

@@ -7,11 +7,10 @@ import {
   Snapshot,
   VirtualNode,
 } from 'lib/types';
-import { EventBus, Line, LinkedList, Selection } from 'lib/model';
+import { EventBus, Line, LinkedList, Selection, Viewport } from 'lib/model';
 import { VNodeEventName, InnerEventName } from 'lib/static';
 import { throttle } from 'lib/utils';
 import { Schema } from 'lib/schema';
-import { Viewport } from '../viewport';
 
 const { CLICK, MOUSE_DOWN, MOUSE_MOVE, MOUSE_UP, WHEEL } = VNodeEventName;
 const { KEYDOWN, KEYUP } = VNodeEventName;
